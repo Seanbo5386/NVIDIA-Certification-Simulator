@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(for file in mellanoxSimulator.ts bcmSimulator.ts infinibandSimulator.ts ipmitoolSimulator.ts)",
+      "Bash(do echo '=== $file ===')",
+      "Bash(grep:*)",
+      "Bash(done)",
+      "Bash(find:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run test:run:*)",
+      "Bash(npm test:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

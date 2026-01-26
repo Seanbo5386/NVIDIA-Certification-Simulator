@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-900 text-gray-100 font-mono;
+  }
+}
+
+/* XTerm.js terminal styling */
+.terminal-container {
+  @apply w-full h-full bg-black rounded-lg;
+  overflow: auto;
+  position: relative;
+}
+
+.xterm {
+  padding: 10px;
+  height: 100% !important;
+  width: 100% !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  font-size: 14px !important;
+}
+
+.xterm-viewport {
+  overflow-y: scroll !important;
+}
+
+.xterm-screen {
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+.xterm-rows {
+  font-family: 'Courier New', Courier, monospace !important;
+  letter-spacing: 0;
+}
+
+.xterm-char {
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-600 rounded-lg;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* Health status colors */
+.health-ok {
+  @apply text-green-500;
+}
+
+.health-warning {
+  @apply text-yellow-500;
+}
+
+.health-critical {
+  @apply text-red-500;
+}
+
+/* NVIDIA accent colors */
+.nvidia-accent {
+  @apply text-nvidia-green;
+}
+
+.nvidia-bg {
+  @apply bg-nvidia-green;
+}
+
+/* GPU utilization bars */
+.gpu-bar {
+  @apply h-4 bg-nvidia-green rounded-full transition-all duration-300;
+}
+
+.gpu-bar-container {
+  @apply w-full h-4 bg-gray-700 rounded-full overflow-hidden;
+}

@@ -1,0 +1,864 @@
+{
+  "examId": "ncp-aii-practice",
+  "title": "NCP-AII Practice Examination",
+  "description": "Practice exam for NVIDIA Certified Professional - AI Infrastructure (NCP-AII) certification. This exam covers all five domains with appropriate weighting.",
+  "duration": 90,
+  "passingScore": 70,
+  "domainWeights": {
+    "domain1": 31,
+    "domain2": 5,
+    "domain3": 19,
+    "domain4": 33,
+    "domain5": 12
+  },
+  "questions": [
+    {
+      "id": "q001",
+      "domain": "domain1",
+      "questionText": "Which command is used to view the BIOS version on a DGX system via IPMI?",
+      "type": "multiple-choice",
+      "choices": [
+        "ipmitool fru print 0",
+        "ipmitool bios version",
+        "ipmitool mc info",
+        "dmidecode -t bios"
+      ],
+      "correctAnswer": 0,
+      "explanation": "'ipmitool fru print 0' displays Field Replaceable Unit information including BIOS version. While 'dmidecode -t bios' also works from the OS, the question specifically asks about IPMI access.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q002",
+      "domain": "domain1",
+      "questionText": "What is the purpose of the BMC (Baseboard Management Controller)?",
+      "type": "multiple-choice",
+      "choices": [
+        "To manage GPU memory allocation",
+        "To provide out-of-band management and monitoring of server hardware",
+        "To control network traffic between nodes",
+        "To schedule workloads on the cluster"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The BMC provides out-of-band management, allowing administrators to monitor and control server hardware (power, sensors, inventory) even when the OS is down.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q003",
+      "domain": "domain1",
+      "questionText": "Which IPMI command shows real-time sensor readings for temperature, voltage, and fan speed?",
+      "type": "multiple-choice",
+      "choices": [
+        "ipmitool sel list",
+        "ipmitool sensor list",
+        "ipmitool chassis status",
+        "ipmitool fru print"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'ipmitool sensor list' displays real-time readings from all sensors. 'ipmitool sel list' shows the System Event Log (historical events), not real-time sensors.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q004",
+      "domain": "domain1",
+      "questionText": "What does the nvidia-smi command 'nvidia-smi -pm 1' do?",
+      "type": "multiple-choice",
+      "choices": [
+        "Sets GPU power limit to 1 watt",
+        "Enables persistence mode",
+        "Enables MIG mode",
+        "Resets GPU 1"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The '-pm 1' flag enables persistence mode, which keeps the NVIDIA driver loaded even when no processes are using the GPU. This reduces job initialization latency.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q005",
+      "domain": "domain1",
+      "questionText": "Which command verifies that all installed memory modules are detected after POST?",
+      "type": "multiple-choice",
+      "choices": [
+        "lspci",
+        "nvidia-smi",
+        "free -h",
+        "ipmitool sensor list"
+      ],
+      "correctAnswer": 2,
+      "explanation": "'free -h' shows total available system memory. Compare this against the expected physical installation to verify all memory was detected during POST.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q006",
+      "domain": "domain1",
+      "questionText": "What is the NVIDIA vendor ID shown in lspci output?",
+      "type": "multiple-choice",
+      "choices": [
+        "8086",
+        "1022",
+        "10de",
+        "15b3"
+      ],
+      "correctAnswer": 2,
+      "explanation": "10de is NVIDIA's PCI vendor ID. This can be used with 'lspci -d 10de:' to list all NVIDIA devices. 8086=Intel, 1022=AMD, 15b3=Mellanox.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q007",
+      "domain": "domain1",
+      "questionText": "After installing a new NVIDIA driver, what must be done for the driver to load?",
+      "type": "multiple-choice",
+      "choices": [
+        "Run nvidia-smi",
+        "Reboot the system or reload the nvidia kernel module",
+        "Run dcgmi discovery",
+        "Enable persistence mode"
+      ],
+      "correctAnswer": 1,
+      "explanation": "After driver installation, the system must be rebooted or the nvidia kernel modules manually unloaded and reloaded for the new driver to take effect.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q008",
+      "domain": "domain1",
+      "questionText": "Which file contains the NVIDIA driver version information?",
+      "type": "multiple-choice",
+      "choices": [
+        "/proc/version",
+        "/proc/driver/nvidia/version",
+        "/sys/module/nvidia/version",
+        "/etc/nvidia/version"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The file /proc/driver/nvidia/version contains the loaded NVIDIA driver version. This can also be checked with 'modinfo nvidia' or 'nvidia-smi'.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q009",
+      "domain": "domain1",
+      "questionText": "What does a 'POST Error' in the System Event Log typically indicate?",
+      "type": "multiple-choice",
+      "choices": [
+        "GPU driver failure",
+        "Hardware initialization failure during boot",
+        "Network connectivity issue",
+        "Slurm scheduling problem"
+      ],
+      "correctAnswer": 1,
+      "explanation": "POST (Power-On Self-Test) errors indicate hardware failed to initialize properly during the boot sequence. This could be CPU, memory, PCIe devices, etc.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q010",
+      "domain": "domain1",
+      "questionText": "Which command shows detailed PCIe link information including current link speed and width?",
+      "type": "multiple-choice",
+      "choices": [
+        "lspci -tv",
+        "lspci -vv",
+        "nvidia-smi",
+        "dmidecode"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'lspci -vv' shows verbose PCIe device information including link speed (Gen3/Gen4), link width (x16), and capabilities. The -tv flag shows topology only.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q011",
+      "domain": "domain2",
+      "questionText": "What does MIG (Multi-Instance GPU) allow you to do?",
+      "type": "multiple-choice",
+      "choices": [
+        "Connect multiple GPUs with NVLink",
+        "Partition a single GPU into multiple isolated instances",
+        "Run multiple processes on one GPU",
+        "Increase GPU memory capacity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "MIG allows partitioning a single GPU into up to 7 isolated instances, each with dedicated compute, memory, and bandwidth resources. This provides strong isolation for multi-tenant scenarios.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q012",
+      "domain": "domain2",
+      "questionText": "Which NVIDIA GPUs support MIG mode?",
+      "type": "multiple-select",
+      "choices": [
+        "A100",
+        "V100",
+        "H100",
+        "A30"
+      ],
+      "correctAnswer": [0, 2, 3],
+      "explanation": "MIG is supported on A100, A30, and H100 GPUs. V100 and earlier generations do not support MIG. MIG requires Ampere architecture or newer.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q013",
+      "domain": "domain3",
+      "questionText": "What is the purpose of Slurm GRES (Generic Resources)?",
+      "type": "multiple-choice",
+      "choices": [
+        "To schedule jobs across multiple clusters",
+        "To track consumable resources like GPUs for job scheduling",
+        "To manage user accounts and permissions",
+        "To monitor GPU health"
+      ],
+      "correctAnswer": 1,
+      "explanation": "GRES allows Slurm to track and schedule consumable resources like GPUs. Users request GPUs with --gres=gpu:N, and Slurm ensures proper allocation and isolation.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q014",
+      "domain": "domain3",
+      "questionText": "Which Slurm command shows detailed information about all nodes including state and GRES?",
+      "type": "multiple-choice",
+      "choices": [
+        "squeue",
+        "sinfo -Nel",
+        "sacct",
+        "scontrol show jobs"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'sinfo -Nel' shows detailed node information including state, partitions, and GRES. squeue shows jobs, sacct shows job history.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q015",
+      "domain": "domain3",
+      "questionText": "What does the '--gres=gpu:h100:2' sbatch option request?",
+      "type": "multiple-choice",
+      "choices": [
+        "2 H100 GPUs",
+        "GPU 2 only",
+        "2 GB of GPU memory",
+        "2 MIG instances"
+      ],
+      "correctAnswer": 0,
+      "explanation": "The format is --gres=type:name:count. This requests 2 GPUs of type h100. Without the name, --gres=gpu:2 would request any 2 GPUs.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q016",
+      "domain": "domain3",
+      "questionText": "Which tool is used to run GPU-accelerated containers with proper GPU access?",
+      "type": "multiple-choice",
+      "choices": [
+        "Docker with --runtime=nvidia",
+        "Docker with --gpus flag",
+        "NVIDIA Container Toolkit",
+        "Both B and C"
+      ],
+      "correctAnswer": 3,
+      "explanation": "NVIDIA Container Toolkit enables GPU access in containers. Modern usage is 'docker run --gpus all', while older versions used --runtime=nvidia.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q017",
+      "domain": "domain3",
+      "questionText": "What is Enroot primarily designed for?",
+      "type": "multiple-choice",
+      "choices": [
+        "GPU monitoring",
+        "Unprivileged container execution in HPC environments",
+        "Network configuration",
+        "Storage management"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Enroot is designed for unprivileged container execution in HPC environments, with native Slurm integration via pyxis. It doesn't require a daemon like Docker.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q018",
+      "domain": "domain3",
+      "questionText": "Where are optimized AI framework containers hosted by NVIDIA?",
+      "type": "multiple-choice",
+      "choices": [
+        "Docker Hub",
+        "NVIDIA NGC (nvcr.io)",
+        "GitHub Container Registry",
+        "AWS ECR"
+      ],
+      "correctAnswer": 1,
+      "explanation": "NVIDIA GPU Cloud (NGC) at nvcr.io hosts optimized containers for PyTorch, TensorFlow, and other AI frameworks with latest CUDA/cuDNN versions.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q019",
+      "domain": "domain3",
+      "questionText": "What Slurm command cancels a running job?",
+      "type": "multiple-choice",
+      "choices": [
+        "srun --cancel <jobid>",
+        "scancel <jobid>",
+        "scontrol delete <jobid>",
+        "skillall <jobid>"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'scancel <jobid>' cancels the specified job. You can also use 'scancel -u <username>' to cancel all jobs for a user.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q020",
+      "domain": "domain4",
+      "questionText": "What does DCGM Level 1 diagnostics test?",
+      "type": "multiple-choice",
+      "choices": [
+        "GPU hardware stress tests",
+        "Software deployment and basic GPU properties",
+        "Multi-hour burn-in tests",
+        "Network bandwidth"
+      ],
+      "correctAnswer": 1,
+      "explanation": "DCGM Level 1 tests software deployment, permissions, libraries, and basic GPU properties. It's non-intrusive and completes in seconds. Levels 2-3 include stress tests.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q021",
+      "domain": "domain4",
+      "questionText": "How long does DCGM Level 3 diagnostics typically take per GPU?",
+      "type": "multiple-choice",
+      "choices": [
+        "10-30 seconds",
+        "1-2 minutes",
+        "10-15 minutes",
+        "1-2 hours"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Level 3 diagnostics run extended stress tests and take 10-15 minutes per GPU. Use Level 3 for new hardware acceptance or after repairs.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q022",
+      "domain": "domain4",
+      "questionText": "Which NCCL collective operation is typically used in distributed training to aggregate gradients?",
+      "type": "multiple-choice",
+      "choices": [
+        "all-gather",
+        "all-reduce",
+        "broadcast",
+        "reduce-scatter"
+      ],
+      "correctAnswer": 1,
+      "explanation": "All-reduce is used to sum gradients across all GPUs and distribute the result back to all GPUs. This is the core operation in data-parallel training.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q023",
+      "domain": "domain4",
+      "questionText": "What does 'algBW' represent in NCCL test output?",
+      "type": "multiple-choice",
+      "choices": [
+        "Algorithm bandwidth - effective bandwidth for the operation",
+        "Algebraic bandwidth - theoretical maximum",
+        "Allocated bandwidth - reserved capacity",
+        "Aggregate bandwidth - total across all GPUs"
+      ],
+      "correctAnswer": 0,
+      "explanation": "algBW (algorithm bandwidth) is the effective bandwidth from the application's perspective. busBW accounts for actual data moved on the interconnect.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q024",
+      "domain": "domain4",
+      "questionText": "For optimal NCCL performance on DGX systems, which interconnect should be used for intra-node communication?",
+      "type": "multiple-choice",
+      "choices": [
+        "PCIe",
+        "NVLink",
+        "Ethernet",
+        "InfiniBand"
+      ],
+      "correctAnswer": 1,
+      "explanation": "NVLink provides the highest bandwidth for GPU-to-GPU communication within a node. NCCL automatically detects and uses NVLink when available.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q025",
+      "domain": "domain4",
+      "questionText": "What does setting NCCL_DEBUG=INFO do?",
+      "type": "multiple-choice",
+      "choices": [
+        "Disables NCCL",
+        "Shows detailed initialization and configuration information",
+        "Enables performance profiling",
+        "Forces CPU fallback mode"
+      ],
+      "correctAnswer": 1,
+      "explanation": "NCCL_DEBUG=INFO provides detailed logging about NCCL initialization, topology detection, and communication setup. Very useful for troubleshooting.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q026",
+      "domain": "domain4",
+      "questionText": "Which command runs DCGM diagnostics in Level 2 mode?",
+      "type": "multiple-choice",
+      "choices": [
+        "dcgmi diag -r 2",
+        "dcgmi test --level 2",
+        "dcgmi validate -l2",
+        "dcgmi health -r 2"
+      ],
+      "correctAnswer": 0,
+      "explanation": "'dcgmi diag -r 2' (or --mode 2) runs Level 2 diagnostics. Level 2 includes short stress tests and takes 1-2 minutes per GPU.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q027",
+      "domain": "domain4",
+      "questionText": "What is the expected NVLink bandwidth per direction on an H100 GPU with 18 links?",
+      "type": "multiple-choice",
+      "choices": [
+        "300 GB/s",
+        "450 GB/s",
+        "600 GB/s",
+        "900 GB/s"
+      ],
+      "correctAnswer": 1,
+      "explanation": "H100 has 18 NVLink 4.0 links at 25 GB/s each = 450 GB/s per direction, 900 GB/s bidirectional total. A100 has 12 links = 300 GB/s per direction.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q028",
+      "domain": "domain4",
+      "questionText": "Which DCGM command monitors GPU metrics in real-time?",
+      "type": "multiple-choice",
+      "choices": [
+        "dcgmi stats",
+        "dcgmi dmon",
+        "dcgmi watch",
+        "dcgmi monitor"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'dcgmi dmon' provides real-time monitoring of GPU metrics (utilization, temperature, power, etc.) similar to nvidia-smi dmon.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q029",
+      "domain": "domain4",
+      "questionText": "What does the BCM command 'bcm validate pod' do?",
+      "type": "multiple-choice",
+      "choices": [
+        "Validates Kubernetes pod configuration",
+        "Runs comprehensive SuperPOD configuration checks",
+        "Validates container images",
+        "Checks pod network connectivity"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'bcm validate pod' runs comprehensive validation checks on a SuperPOD configuration including nodes, GPUs, network, storage, and Slurm.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q030",
+      "domain": "domain4",
+      "questionText": "Which metric indicates GPU compute utilization in nvidia-smi?",
+      "type": "multiple-choice",
+      "choices": [
+        "Pwr:Usage/Cap",
+        "Temp",
+        "GPU-Util",
+        "Mem-Util"
+      ],
+      "correctAnswer": 2,
+      "explanation": "GPU-Util shows the percentage of time the GPU was actively processing. Mem-Util shows memory bandwidth utilization (separate metric).",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q031",
+      "domain": "domain4",
+      "questionText": "What is a good NCCL all-reduce bandwidth for 8x H100 GPUs at 128MB message size?",
+      "type": "multiple-choice",
+      "choices": [
+        "50-80 GB/s",
+        "100-150 GB/s",
+        "200-300 GB/s",
+        "400-500 GB/s"
+      ],
+      "correctAnswer": 2,
+      "explanation": "On DGX H100 with NVSwitch, expect 200-300 GB/s algBW for all-reduce at large message sizes. Lower values indicate topology or configuration issues.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q032",
+      "domain": "domain5",
+      "questionText": "What does Xid 79 indicate?",
+      "type": "multiple-choice",
+      "choices": [
+        "GPU thermal throttling",
+        "ECC memory error",
+        "GPU has fallen off the bus",
+        "Driver version mismatch"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Xid 79 means the GPU has fallen off the bus - PCIe communication failure. This is a critical error often requiring reboot or hardware replacement.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q033",
+      "domain": "domain5",
+      "questionText": "Where are XID errors logged?",
+      "type": "multiple-choice",
+      "choices": [
+        "nvidia-smi output only",
+        "Kernel logs (dmesg)",
+        "/var/log/nvidia/xid.log",
+        "BMC System Event Log"
+      ],
+      "correctAnswer": 1,
+      "explanation": "XID errors are logged to kernel logs viewable with dmesg. Look for 'NVRM: Xid' messages. They may also appear in journalctl output.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q034",
+      "domain": "domain5",
+      "questionText": "At what temperature do datacenter GPUs typically begin thermal throttling?",
+      "type": "multiple-choice",
+      "choices": [
+        "70°C",
+        "85-90°C",
+        "100°C",
+        "120°C"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Datacenter GPUs typically begin thermal throttling around 85-90°C depending on the model. Maximum safe operating temperature is usually 90-95°C.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q035",
+      "domain": "domain5",
+      "questionText": "Which nvidia-smi flag shows the reasons for GPU clock throttling?",
+      "type": "multiple-choice",
+      "choices": [
+        "--query-gpu=clocks.throttle_reasons",
+        "--query-gpu=clocks_throttle_reasons.active",
+        "--query-gpu=throttle.status",
+        "--show-throttling"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'--query-gpu=clocks_throttle_reasons.active' shows active throttle reasons: thermal, power, sw_thermal, hw_slowdown, etc.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q036",
+      "domain": "domain1",
+      "questionText": "Which command shows the installed CUDA Toolkit version on a system?",
+      "type": "multiple-choice",
+      "choices": [
+        "nvidia-smi",
+        "nvcc --version",
+        "cuda-version",
+        "cat /usr/local/cuda/version"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'nvcc --version' shows the CUDA compiler version, which corresponds to the installed CUDA Toolkit version. nvidia-smi shows the maximum CUDA version supported by the driver.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q037",
+      "domain": "domain1",
+      "questionText": "What is the purpose of the NVIDIA Fabric Manager?",
+      "type": "multiple-choice",
+      "choices": [
+        "Manages container deployments",
+        "Controls NVSwitch and manages GPU-to-GPU communication on NVLink systems",
+        "Configures network fabrics for InfiniBand",
+        "Manages Slurm job scheduling"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Fabric Manager controls NVSwitch and manages GPU-to-GPU communication topology on systems with NVLink. Required for DGX A100/H100 systems with NVSwitch.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q038",
+      "domain": "domain1",
+      "questionText": "Which log file should you check first when investigating GPU initialization failures during boot?",
+      "type": "multiple-choice",
+      "choices": [
+        "/var/log/nvidia-installer.log",
+        "dmesg output",
+        "/var/log/Xorg.0.log",
+        "/proc/driver/nvidia/version"
+      ],
+      "correctAnswer": 1,
+      "explanation": "dmesg shows kernel ring buffer messages including GPU driver initialization. Look for NVIDIA driver load messages and any error codes like XID errors.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q039",
+      "domain": "domain1",
+      "questionText": "What does the 'ipmitool chassis power cycle' command do?",
+      "type": "multiple-choice",
+      "choices": [
+        "Gracefully shuts down the OS then powers on",
+        "Immediately cuts power, waits briefly, then powers on",
+        "Puts the system into standby mode",
+        "Restarts only the BMC"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Power cycle immediately cuts AC power (hard power off), waits a few seconds, then powers back on. This is a last resort for unresponsive systems.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q040",
+      "domain": "domain2",
+      "questionText": "Which command enables MIG mode on GPU 0?",
+      "type": "multiple-choice",
+      "choices": [
+        "nvidia-smi -i 0 --mig-enable",
+        "nvidia-smi -i 0 -mig 1",
+        "dcgmi mig --enable --gpuId 0",
+        "mig-config enable 0"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'nvidia-smi -i 0 -mig 1' enables MIG mode on GPU 0. After enabling, system reboot is required for the change to take effect.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q041",
+      "domain": "domain2",
+      "questionText": "What is the maximum number of MIG instances on an A100 80GB GPU?",
+      "type": "multiple-choice",
+      "choices": [
+        "4",
+        "7",
+        "8",
+        "16"
+      ],
+      "correctAnswer": 1,
+      "explanation": "An A100 can be partitioned into up to 7 MIG instances (using 1g.10gb profile). Different profiles are available: 1g, 2g, 3g, 4g, 7g representing GPU slice sizes.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q042",
+      "domain": "domain2",
+      "questionText": "Which command displays the current NVLink topology and connection status?",
+      "type": "multiple-choice",
+      "choices": [
+        "nvidia-smi nvlink --status",
+        "nvidia-smi topo -m",
+        "nvlink-config show",
+        "dcgmi topo"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'nvidia-smi topo -m' shows the NVLink/NVSwitch topology matrix, indicating which GPUs are connected and via which interconnect (NV1-NV18, SYS, etc.).",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q043",
+      "domain": "domain3",
+      "questionText": "What is the purpose of the 'scontrol update NodeName=node01 State=RESUME' command?",
+      "type": "multiple-choice",
+      "choices": [
+        "Reboots the node",
+        "Returns a DRAINED node to service",
+        "Pauses all jobs on the node",
+        "Updates node configuration"
+      ],
+      "correctAnswer": 1,
+      "explanation": "This command returns a DRAINED node to active service. Use 'State=DRAIN' to remove a node from scheduling, 'State=RESUME' to return it.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q044",
+      "domain": "domain3",
+      "questionText": "Which file defines Slurm GPU GRES configuration?",
+      "type": "multiple-choice",
+      "choices": [
+        "/etc/slurm/slurm.conf",
+        "/etc/slurm/gres.conf",
+        "/etc/slurm/gpu.conf",
+        "/etc/slurm/topology.conf"
+      ],
+      "correctAnswer": 1,
+      "explanation": "gres.conf defines GRES (Generic Resources) including GPU configurations with names, types, and device files. slurm.conf references this configuration.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q045",
+      "domain": "domain3",
+      "questionText": "What does the BCM (Base Command Manager) primarily manage?",
+      "type": "multiple-choice",
+      "choices": [
+        "Individual DGX workstations",
+        "NVIDIA SuperPOD clusters and infrastructure",
+        "GPU firmware updates only",
+        "Container registries"
+      ],
+      "correctAnswer": 1,
+      "explanation": "BCM is NVIDIA's cluster management software for SuperPOD infrastructure, providing node provisioning, monitoring, health checks, and configuration management.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q046",
+      "domain": "domain3",
+      "questionText": "Which storage protocol is commonly used for high-performance shared storage in HPC clusters?",
+      "type": "multiple-choice",
+      "choices": [
+        "NFS",
+        "iSCSI",
+        "Lustre or BeeGFS",
+        "CIFS/SMB"
+      ],
+      "correctAnswer": 2,
+      "explanation": "Lustre and BeeGFS are parallel distributed file systems designed for HPC, providing high throughput and scalability. NFS is simpler but lower performance.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q047",
+      "domain": "domain4",
+      "questionText": "What does a low 'busBW' relative to 'algBW' in NCCL tests indicate?",
+      "type": "multiple-choice",
+      "choices": [
+        "Good performance - efficient algorithm",
+        "Poor performance - interconnect saturation",
+        "Memory bandwidth bottleneck",
+        "CPU bottleneck"
+      ],
+      "correctAnswer": 0,
+      "explanation": "algBW is application-level bandwidth, busBW is actual data transferred. For all-reduce, each byte is sent/received once but travels across links, so busBW is typically 2x algBW. Lower ratio means efficient ring algorithm.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q048",
+      "domain": "domain4",
+      "questionText": "Which DCGM command discovers all GPUs in the system?",
+      "type": "multiple-choice",
+      "choices": [
+        "dcgmi discover",
+        "dcgmi discovery -l",
+        "dcgmi list --gpus",
+        "dcgmi gpu-list"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'dcgmi discovery -l' lists all discovered GPUs with IDs, UUIDs, and basic information. Use '-c' flag to include compute instances (MIG).",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q049",
+      "domain": "domain4",
+      "questionText": "What is the purpose of running HPL (High-Performance Linpack) on a cluster?",
+      "type": "multiple-choice",
+      "choices": [
+        "Testing network latency",
+        "Benchmarking peak computational performance (FLOPs)",
+        "Validating storage performance",
+        "Testing container deployment"
+      ],
+      "correctAnswer": 1,
+      "explanation": "HPL measures peak floating-point performance in FLOPs (TeraFLOPS or PetaFLOPS). Used for system validation and TOP500 rankings.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q050",
+      "domain": "domain4",
+      "questionText": "Which environment variable forces NCCL to use a specific network interface?",
+      "type": "multiple-choice",
+      "choices": [
+        "NCCL_NET_IF",
+        "NCCL_SOCKET_IFNAME",
+        "NCCL_IB_HCA",
+        "NCCL_INTERFACE"
+      ],
+      "correctAnswer": 1,
+      "explanation": "NCCL_SOCKET_IFNAME specifies which network interface to use (e.g., 'eth0' or 'ib0'). Use NCCL_IB_HCA to select specific InfiniBand adapters.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q051",
+      "domain": "domain5",
+      "questionText": "What is the first step when troubleshooting an NVLink degradation?",
+      "type": "multiple-choice",
+      "choices": [
+        "Reboot the system immediately",
+        "Check 'nvidia-smi nvlink --status' for link errors and replay counts",
+        "Replace the GPU",
+        "Update the NVIDIA driver"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Check NVLink status and error counters first. High replay counts indicate signal integrity issues. Also verify topology with 'nvidia-smi topo -m'.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q052",
+      "domain": "domain5",
+      "questionText": "What does Xid 48 typically indicate?",
+      "type": "multiple-choice",
+      "choices": [
+        "Double-bit ECC error",
+        "GPU overheating",
+        "PCIe bus error",
+        "Driver timeout"
+      ],
+      "correctAnswer": 0,
+      "explanation": "Xid 48 indicates a double-bit ECC error (uncorrectable memory error). This is a serious hardware issue that may require GPU replacement.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q053",
+      "domain": "domain5",
+      "questionText": "Which nvidia-smi query shows ECC error counts?",
+      "type": "multiple-choice",
+      "choices": [
+        "--query-gpu=ecc.errors.corrected.aggregate.total",
+        "--query-gpu=ecc.mode.current,ecc.errors.corrected.volatile.total",
+        "--query-gpu=memory.ecc",
+        "--show-ecc-errors"
+      ],
+      "correctAnswer": 1,
+      "explanation": "Query 'ecc.mode.current' to verify ECC is enabled, and 'ecc.errors.corrected.volatile.total' and 'ecc.errors.uncorrected.volatile.total' for error counts since driver load.",
+      "points": 1,
+      "difficulty": "intermediate"
+    }
+  ]
+}
