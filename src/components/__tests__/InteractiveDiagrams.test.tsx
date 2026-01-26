@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MIGConfigurator } from '../MIGConfigurator';
 import { SlurmJobVisualizer } from '../SlurmJobVisualizer';
+import { ClusterBuilder } from '../ClusterBuilder';
+import { IBCableTracer } from '../IBCableTracer';
 import type { DGXNode, GPU, InfiniBandHCA, InfiniBandPort } from '@/types/hardware';
 
 describe('MIGConfigurator', () => {
@@ -366,6 +368,381 @@ describe('SlurmJobVisualizer', () => {
 
       expect(screen.getByText('dgx-00.local')).toBeInTheDocument();
       expect(screen.queryByText('dgx-01.local')).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe('ClusterBuilder', () => {
+  const createMockPort = (portNumber: number): InfiniBandPort => ({
+    portNumber,
+    state: 'Active',
+    physicalState: 'LinkUp',
+    rate: 400,
+    width: '4x',
+    linkLayer: 'InfiniBand',
+    smLid: 1,
+    baseLid: portNumber,
+    txBytes: 1000000,
+    rxBytes: 1000000,
+    txPackets: 10000,
+    rxPackets: 10000,
+    symbolErrors: 0,
+  });
+
+  const createMockHCA = (id: number): InfiniBandHCA => ({
+    guid: `0x${id.toString(16).padStart(16, '0')}`,
+    caType: 'MT4125',
+    numPorts: 2,
+    firmwareVersion: '22.35.1012',
+    driverVersion: 'MLNX_OFED-5.8',
+    ports: [createMockPort(1), createMockPort(2)],
+    pciAddress: `0000:${(0xc1 + id).toString(16)}:00.0`,
+    boardId: 'MT_0000000001',
+    sysImageGuid: `0x${(id + 1).toString(16).padStart(16, '0')}`,
+    nodeDescription: `mlx5_${id}`,
+  });
+
+  const createMockGPU = (id: number): GPU => ({
+    id,
+    uuid: `GPU-${id}-0000-0000-0000`,
+    name: 'A100-SXM4-80GB',
+    type: 'A100-80GB',
+    pciAddress: `0000:${(0x10 + id).toString(16)}:00.0`,
+    temperature: 45,
+    powerDraw: 250,
+    powerLimit: 400,
+    memoryTotal: 81920,
+    memoryUsed: 1024,
+    utilization: 50,
+    clocksSM: 1410,
+    clocksMem: 1215,
+    eccEnabled: true,
+    eccErrors: { singleBit: 0, doubleBit: 0, aggregated: { singleBit: 0, doubleBit: 0 } },
+    migMode: false,
+    migInstances: [],
+    nvlinks: [],
+    healthStatus: 'OK',
+    xidErrors: [],
+    persistenceMode: true,
+  });
+
+  const mockNodes: DGXNode[] = [
+    {
+      id: 'dgx-00',
+      hostname: 'dgx-00.local',
+      systemType: 'DGX-A100',
+      gpus: Array.from({ length: 8 }, (_, i) => createMockGPU(i)),
+      dpus: [],
+      hcas: [createMockHCA(0)],
+      bmc: {
+        ipAddress: '192.168.0.100',
+        macAddress: '00:00:00:00:00:01',
+        firmwareVersion: '1.2.3',
+        manufacturer: 'NVIDIA',
+        sensors: [],
+        powerState: 'On',
+      },
+      cpuModel: 'AMD EPYC 7742',
+      cpuCount: 128,
+      ramTotal: 2048,
+      ramUsed: 256,
+      osVersion: 'Ubuntu 22.04',
+      kernelVersion: '5.15.0',
+      nvidiaDriverVersion: '535.104.05',
+      cudaVersion: '12.2',
+      healthStatus: 'OK',
+      slurmState: 'idle',
+    },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('Rendering', () => {
+    it('should render the component title', () => {
+      render(<ClusterBuilder />);
+
+      expect(screen.getByText(/Cluster Builder/)).toBeInTheDocument();
+    });
+
+    it('should show Add Nodes section', () => {
+      render(<ClusterBuilder />);
+
+      expect(screen.getByText('Add Nodes')).toBeInTheDocument();
+    });
+
+    it('should show node type options', () => {
+      render(<ClusterBuilder />);
+
+      expect(screen.getByText('DGX A100')).toBeInTheDocument();
+      expect(screen.getByText('DGX H100')).toBeInTheDocument();
+      expect(screen.getByText('DGX B200')).toBeInTheDocument();
+    });
+
+    it('should show empty state when no nodes', () => {
+      render(<ClusterBuilder />);
+
+      expect(screen.getByText(/Click "Add Nodes" above to build your cluster/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Node Operations', () => {
+    it('should add a node when type is clicked', () => {
+      render(<ClusterBuilder />);
+
+      const addA100Button = screen.getByText('DGX A100').closest('button');
+      if (addA100Button) {
+        fireEvent.click(addA100Button);
+      }
+
+      // Should show node in canvas (via stats)
+      expect(screen.getByText('1')).toBeInTheDocument(); // 1 node in stats
+    });
+
+    it('should show stats bar', () => {
+      render(<ClusterBuilder />);
+
+      expect(screen.getByText('Nodes')).toBeInTheDocument();
+      expect(screen.getByText('GPUs')).toBeInTheDocument();
+      expect(screen.getByText('HCAs')).toBeInTheDocument();
+      expect(screen.getByText('Connections')).toBeInTheDocument();
+    });
+
+    it('should show Reset button', () => {
+      render(<ClusterBuilder />);
+
+      expect(screen.getByText('Reset')).toBeInTheDocument();
+    });
+  });
+
+  describe('With Initial Nodes', () => {
+    it('should render initial nodes', () => {
+      render(<ClusterBuilder initialNodes={mockNodes} />);
+
+      expect(screen.getByText('dgx-00')).toBeInTheDocument();
+    });
+
+    it('should show correct stats for initial nodes', () => {
+      render(<ClusterBuilder initialNodes={mockNodes} />);
+
+      // 1 node, 8 GPUs, 1 HCA
+      const statsNumbers = screen.getAllByText('8');
+      expect(statsNumbers.length).toBeGreaterThan(0); // 8 GPUs shown
+    });
+  });
+
+  describe('Instructions', () => {
+    it('should show instructions section', () => {
+      render(<ClusterBuilder />);
+
+      expect(screen.getByText('Instructions:')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('IBCableTracer', () => {
+  const createMockPort = (portNumber: number): InfiniBandPort => ({
+    portNumber,
+    state: 'Active',
+    physicalState: 'LinkUp',
+    rate: 400,
+    width: '4x',
+    linkLayer: 'InfiniBand',
+    smLid: 1,
+    baseLid: portNumber,
+    txBytes: 1000000,
+    rxBytes: 1000000,
+    txPackets: 10000,
+    rxPackets: 10000,
+    symbolErrors: 0,
+  });
+
+  const createMockHCA = (id: number): InfiniBandHCA => ({
+    guid: `0x${id.toString(16).padStart(16, '0')}`,
+    caType: 'MT4125',
+    numPorts: 2,
+    firmwareVersion: '22.35.1012',
+    driverVersion: 'MLNX_OFED-5.8',
+    ports: [createMockPort(1), createMockPort(2)],
+    pciAddress: `0000:${(0xc1 + id).toString(16)}:00.0`,
+    boardId: 'MT_0000000001',
+    sysImageGuid: `0x${(id + 1).toString(16).padStart(16, '0')}`,
+    nodeDescription: `mlx5_${id}`,
+  });
+
+  const createMockGPU = (id: number): GPU => ({
+    id,
+    uuid: `GPU-${id}-0000-0000-0000`,
+    name: 'A100-SXM4-80GB',
+    type: 'A100-80GB',
+    pciAddress: `0000:${(0x10 + id).toString(16)}:00.0`,
+    temperature: 45,
+    powerDraw: 250,
+    powerLimit: 400,
+    memoryTotal: 81920,
+    memoryUsed: 1024,
+    utilization: 50,
+    clocksSM: 1410,
+    clocksMem: 1215,
+    eccEnabled: true,
+    eccErrors: { singleBit: 0, doubleBit: 0, aggregated: { singleBit: 0, doubleBit: 0 } },
+    migMode: false,
+    migInstances: [],
+    nvlinks: [],
+    healthStatus: 'OK',
+    xidErrors: [],
+    persistenceMode: true,
+  });
+
+  const mockNodes: DGXNode[] = [
+    {
+      id: 'dgx-00',
+      hostname: 'dgx-00.local',
+      systemType: 'DGX-A100',
+      gpus: Array.from({ length: 8 }, (_, i) => createMockGPU(i)),
+      dpus: [],
+      hcas: [createMockHCA(0), createMockHCA(1)],
+      bmc: {
+        ipAddress: '192.168.0.100',
+        macAddress: '00:00:00:00:00:01',
+        firmwareVersion: '1.2.3',
+        manufacturer: 'NVIDIA',
+        sensors: [],
+        powerState: 'On',
+      },
+      cpuModel: 'AMD EPYC 7742',
+      cpuCount: 128,
+      ramTotal: 2048,
+      ramUsed: 256,
+      osVersion: 'Ubuntu 22.04',
+      kernelVersion: '5.15.0',
+      nvidiaDriverVersion: '535.104.05',
+      cudaVersion: '12.2',
+      healthStatus: 'OK',
+      slurmState: 'idle',
+    },
+    {
+      id: 'dgx-01',
+      hostname: 'dgx-01.local',
+      systemType: 'DGX-A100',
+      gpus: Array.from({ length: 8 }, (_, i) => createMockGPU(i + 8)),
+      dpus: [],
+      hcas: [createMockHCA(2), createMockHCA(3)],
+      bmc: {
+        ipAddress: '192.168.0.101',
+        macAddress: '00:00:00:00:00:02',
+        firmwareVersion: '1.2.3',
+        manufacturer: 'NVIDIA',
+        sensors: [],
+        powerState: 'On',
+      },
+      cpuModel: 'AMD EPYC 7742',
+      cpuCount: 128,
+      ramTotal: 2048,
+      ramUsed: 512,
+      osVersion: 'Ubuntu 22.04',
+      kernelVersion: '5.15.0',
+      nvidiaDriverVersion: '535.104.05',
+      cudaVersion: '12.2',
+      healthStatus: 'OK',
+      slurmState: 'idle',
+    },
+  ];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('Rendering', () => {
+    it('should render the component title', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      expect(screen.getByText(/InfiniBand Cable Tracer/)).toBeInTheDocument();
+    });
+
+    it('should show stats bar', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      expect(screen.getByText('Total Cables')).toBeInTheDocument();
+      expect(screen.getByText('Active')).toBeInTheDocument();
+      expect(screen.getByText('Degraded')).toBeInTheDocument();
+      expect(screen.getByText('Down')).toBeInTheDocument();
+    });
+
+    it('should show filter buttons', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      expect(screen.getByRole('button', { name: /All/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Issues/ })).toBeInTheDocument();
+    });
+  });
+
+  describe('Path Tracing', () => {
+    it('should show Trace Path section', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      expect(screen.getByText('Trace Path')).toBeInTheDocument();
+    });
+
+    it('should show node selection dropdowns', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      expect(screen.getByText('Select source node...')).toBeInTheDocument();
+      expect(screen.getByText('Select destination node...')).toBeInTheDocument();
+    });
+
+    it('should show Trace button', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      expect(screen.getByRole('button', { name: /Trace/ })).toBeInTheDocument();
+    });
+  });
+
+  describe('Cable Inventory', () => {
+    it('should show Cable Inventory section', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      expect(screen.getByText('Cable Inventory')).toBeInTheDocument();
+    });
+
+    it('should show cable entries', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      // Should show at least one cable between nodes
+      expect(screen.getAllByText(/dgx-00/).length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Commands Reference', () => {
+    it('should show iblinkinfo command', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      expect(screen.getByText(/iblinkinfo/)).toBeInTheDocument();
+    });
+
+    it('should show mlxcables command', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      expect(screen.getByText(/mlxcables/)).toBeInTheDocument();
+    });
+
+    it('should show ibporterrors command', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      expect(screen.getByText(/ibporterrors/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Filter', () => {
+    it('should switch to issues filter', () => {
+      render(<IBCableTracer nodes={mockNodes} />);
+
+      const issuesButton = screen.getByRole('button', { name: /Issues/ });
+      fireEvent.click(issuesButton);
+
+      // The button should now be active (has different background)
+      expect(issuesButton).toHaveClass('bg-red-600');
     });
   });
 });

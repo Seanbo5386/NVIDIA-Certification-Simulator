@@ -3,7 +3,7 @@
 ```
 Current Progress: ████████████████████████████ 100%
 Exam Coverage:    █████████████████████████░░░ 95%
-Test Coverage:    ████████████████████████████ 100% (930 tests passing)
+Test Coverage:    ████████████████████████████ 100% (977 tests passing)
 Questions:        ████████████████████████████ 152 questions (target: 150+) ✓
 Lab Scenarios:    ████████████████████████████ 42 scenarios (target: 30+) ✓
 Commands:         ████████████████████████████ 90+ commands ✓
@@ -219,11 +219,11 @@ Adaptive Learn:   ████████████████████�
 - [x] Split terminal view (terminalSplitManager.ts, SplitPane.tsx)
 - [x] Terminal themes (10 themes: NVIDIA, Dark, Light, Solarized, Monokai, Dracula, Nord, Gruvbox, One Dark)
 
-#### 3.4 Interactive Diagrams (PARTIAL)
+#### 3.4 Interactive Diagrams ✓ COMPLETE
 - [x] MIG partitioning visual configurator (MIGConfigurator.tsx)
-- [ ] Drag-and-drop cluster builder
+- [x] Drag-and-drop cluster builder (ClusterBuilder.tsx)
 - [x] Visual Slurm job placement (SlurmJobVisualizer.tsx)
-- [ ] InfiniBand cable tracing tool
+- [x] InfiniBand cable tracing tool (IBCableTracer.tsx)
 
 ---
 
