@@ -3,12 +3,13 @@
 ```
 Current Progress: ████████████████████████████ 100%
 Exam Coverage:    █████████████████████████░░░ 95%
-Test Coverage:    ████████████████████████████ 100% (825 tests passing)
+Test Coverage:    ████████████████████████████ 100% (896 tests passing)
 Questions:        ████████████████████████████ 152 questions (target: 150+) ✓
 Lab Scenarios:    ████████████████████████████ 42 scenarios (target: 30+) ✓
 Commands:         ████████████████████████████ 90+ commands ✓
 Study Modes:      ████████████████████████████ 5 modes + flashcards ✓
 Terminal:         ████████████████████████████ Tabs + Themes + Syntax highlighting ✓
+Topology Viz:     ████████████████████████████ NVSwitch + InfiniBand + Fault injection ✓
 Practical Exams:  ████████████████████████████ 3 exams + UI complete ✓
 Cert Resources:   ████████████████████████████ Study guides + Quick ref ✓
 Adaptive Learn:   ████████████████████████████ Spaced repetition + Pass prediction ✓
@@ -194,13 +195,13 @@ Adaptive Learn:   ████████████████████�
 
 **Goal**: Make complex datacenter concepts intuitive through visual learning.
 
-#### 3.1 Topology Visualization (D3.js)
-- [ ] Interactive DGX node diagram with NVLink connections
-- [ ] NVSwitch fabric topology view
-- [ ] InfiniBand fat-tree visualization
-- [ ] Click-to-inspect: Select a GPU/switch to see details
-- [ ] Animated data flow during NCCL operations
-- [ ] Visual fault injection (click GPU to inject error)
+#### 3.1 Topology Visualization (D3.js) ✓ COMPLETE
+- [x] Interactive DGX node diagram with NVLink connections (TopologyGraph.tsx)
+- [x] NVSwitch fabric topology view (NVSwitchTopology.tsx)
+- [x] InfiniBand fat-tree visualization (InfiniBandTopology.tsx)
+- [x] Click-to-inspect: Select a GPU/switch to see details
+- [x] Animated data flow during NCCL operations
+- [x] Visual fault injection (click GPU to inject error) (TopologyViewer.tsx with XID injection)
 
 #### 3.2 Metrics Visualization (Recharts)
 - [ ] Real-time GPU utilization sparklines
