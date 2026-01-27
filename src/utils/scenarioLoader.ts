@@ -55,8 +55,9 @@ export async function loadScenarioFromFile(scenarioId: string): Promise<Scenario
       'domain4-ecc-investigation': '/src/data/scenarios/domain4/ecc-error-investigation.json',
       'domain4-gpu-reset': '/src/data/scenarios/domain4/gpu-reset-recovery.json',
       'domain4-hpl-optimization': '/src/data/scenarios/domain4/hpl-benchmark-optimization.json',
+      'domain4-nccl-tuning': '/src/data/scenarios/domain4/nccl-bandwidth-tuning.json',
 
-      // Domain 5: Troubleshooting (10 scenarios)
+      // Domain 5: Troubleshooting (12 scenarios)
       'domain5-xid-errors': '/src/data/scenarios/domain5/xid-error-analysis.json',
       'domain5-thermal': '/src/data/scenarios/domain5/thermal-troubleshooting.json',
       'domain5-xid-triage': '/src/data/scenarios/domain5/xid-error-triage-comprehensive.json',
@@ -67,6 +68,8 @@ export async function loadScenarioFromFile(scenarioId: string): Promise<Scenario
       'domain5-driver-mismatch': '/src/data/scenarios/domain5/driver-mismatch-resolution.json',
       'domain5-sel-analysis': '/src/data/scenarios/domain5/sel-log-analysis.json',
       'domain5-critical-xid': '/src/data/scenarios/domain5/critical-xid-response.json',
+      'domain5-xid-nvlink': '/src/data/scenarios/domain5/xid-nvlink-troubleshooting.json',
+      'domain5-xid-hardware': '/src/data/scenarios/domain5/xid-hardware-failures.json',
     };
 
     const filePath = scenarioFiles[scenarioId];

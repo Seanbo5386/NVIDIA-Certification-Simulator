@@ -2443,6 +2443,262 @@
       "explanation": "dmesg XID messages may include PID. Correlate timestamp with 'ps' output or logging systems. Some XID types include process information directly.",
       "points": 1,
       "difficulty": "intermediate"
+    },
+    {
+      "id": "q153",
+      "domain": "domain5",
+      "questionText": "What does XID error code 54 indicate?",
+      "type": "multiple-choice",
+      "choices": [
+        "GPU memory ECC error",
+        "Hardware watchdog timeout - GPU failed internal health check",
+        "NVLink communication failure",
+        "Display engine error"
+      ],
+      "correctAnswer": 1,
+      "explanation": "XID 54 indicates the GPU's internal hardware watchdog detected a timeout. This is more severe than XID 43 (external driver timeout) and typically requires a system reboot.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q154",
+      "domain": "domain5",
+      "questionText": "Which XID error code indicates NVLink training failure?",
+      "type": "multiple-choice",
+      "choices": [
+        "XID 72",
+        "XID 74",
+        "XID 76",
+        "XID 79"
+      ],
+      "correctAnswer": 2,
+      "explanation": "XID 76 indicates NVLink failed to complete link training. This is a physical connection problem requiring GPU reseat or hardware replacement.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q155",
+      "domain": "domain5",
+      "questionText": "What is the correct response to XID 27 (GPU memory interface error)?",
+      "type": "multiple-choice",
+      "choices": [
+        "Reset the GPU with nvidia-smi --gpu-reset",
+        "Clear ECC counters and continue",
+        "Run memory diagnostics and plan for GPU replacement",
+        "Update the NVIDIA driver"
+      ],
+      "correctAnswer": 2,
+      "explanation": "XID 27 indicates memory interface failure (not ECC error). This is a hardware failure where communication between GPU core and VRAM failed. GPU replacement is typically required.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q156",
+      "domain": "domain5",
+      "questionText": "XID 72 indicates what type of NVLink problem?",
+      "type": "multiple-choice",
+      "choices": [
+        "Physical cable disconnection",
+        "Flow control credits exhausted or protocol error",
+        "ECC error on NVLink data path",
+        "Link training failure"
+      ],
+      "correctAnswer": 1,
+      "explanation": "XID 72 indicates NVLink flow control issues - congestion or protocol errors. It often precedes more severe NVLink errors and may indicate early link degradation.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q157",
+      "domain": "domain4",
+      "questionText": "What NCCL environment variable forces communication over PCIe instead of NVLink?",
+      "type": "multiple-choice",
+      "choices": [
+        "NCCL_NVLINK_DISABLE=1",
+        "NCCL_P2P_DISABLE=1",
+        "NCCL_PCIE_ONLY=1",
+        "NCCL_IB_DISABLE=1"
+      ],
+      "correctAnswer": 1,
+      "explanation": "NCCL_P2P_DISABLE=1 disables peer-to-peer communication including NVLink, forcing traffic through PCIe. Useful for diagnosing NVLink performance issues.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q158",
+      "domain": "domain4",
+      "questionText": "What is the expected all-reduce bandwidth for 8 A100 GPUs over NVLink?",
+      "type": "multiple-choice",
+      "choices": [
+        "50-80 GB/s",
+        "100-150 GB/s",
+        "200-250 GB/s",
+        "400-500 GB/s"
+      ],
+      "correctAnswer": 2,
+      "explanation": "8 A100 GPUs with NVSwitch achieve approximately 200-250 GB/s all-reduce bandwidth. H100 systems achieve 400-450 GB/s with their faster NVLink 4.0.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q159",
+      "domain": "domain4",
+      "questionText": "In HPL benchmarking, what does the parameter 'N' represent?",
+      "type": "multiple-choice",
+      "choices": [
+        "Number of GPUs",
+        "Problem size (matrix dimension)",
+        "Number of iterations",
+        "Block size"
+      ],
+      "correctAnswer": 1,
+      "explanation": "N is the problem size - the dimension of the dense matrix being solved. Larger N typically gives better GFLOPS but requires more memory. Optimal N uses ~90% of available GPU memory.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q160",
+      "domain": "domain4",
+      "questionText": "What does NCCL_DEBUG=INFO show in the output?",
+      "type": "multiple-choice",
+      "choices": [
+        "Only error messages",
+        "Transport selection, ring/tree topology, and connection details",
+        "GPU memory usage",
+        "Network packet traces"
+      ],
+      "correctAnswer": 1,
+      "explanation": "NCCL_DEBUG=INFO shows informational messages including transport selection (NVLink, PCIe, IB), collective algorithm choice, and connection topology.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q161",
+      "domain": "domain3",
+      "questionText": "In BCM High Availability, what happens to the Virtual IP when failover occurs?",
+      "type": "multiple-choice",
+      "choices": [
+        "VIP is deleted and must be manually reassigned",
+        "VIP automatically migrates to the new active node",
+        "Both nodes share the VIP",
+        "VIP remains on the failed node"
+      ],
+      "correctAnswer": 1,
+      "explanation": "In BCM HA, the Virtual IP (VIP) automatically migrates to the new active node during failover, allowing clients to maintain connectivity through the same IP address.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q162",
+      "domain": "domain3",
+      "questionText": "Which command deploys the NVIDIA GPU Operator on Kubernetes?",
+      "type": "multiple-choice",
+      "choices": [
+        "kubectl apply -f gpu-operator.yaml",
+        "helm install gpu-operator nvidia/gpu-operator -n gpu-operator",
+        "docker run nvidia/gpu-operator",
+        "kubeadm init --gpu-operator"
+      ],
+      "correctAnswer": 1,
+      "explanation": "The GPU Operator is deployed using Helm: 'helm install gpu-operator nvidia/gpu-operator -n gpu-operator'. The chart is from the nvidia Helm repository.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q163",
+      "domain": "domain3",
+      "questionText": "Why set '--set driver.enabled=false' when installing GPU Operator on DGX?",
+      "type": "multiple-choice",
+      "choices": [
+        "DGX doesn't support containerized drivers",
+        "DGX has pre-installed NVIDIA drivers that should be used",
+        "It improves GPU performance",
+        "It's required for MIG mode"
+      ],
+      "correctAnswer": 1,
+      "explanation": "DGX systems come with pre-installed, validated NVIDIA drivers. Setting driver.enabled=false tells the GPU Operator to use the host drivers instead of deploying containerized ones.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q164",
+      "domain": "domain4",
+      "questionText": "What is the formula to calculate optimal HPL problem size (N)?",
+      "type": "multiple-choice",
+      "choices": [
+        "N = total_memory / 8",
+        "N = sqrt(0.9 * total_gpu_memory / 8)",
+        "N = number_of_gpus * 1024",
+        "N = memory_in_GB * 100"
+      ],
+      "correctAnswer": 1,
+      "explanation": "N = sqrt(0.9 * total_gpu_memory / 8) where memory is in bytes and 8 accounts for double-precision (8 bytes per element). This uses ~90% of GPU memory.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q165",
+      "domain": "domain5",
+      "questionText": "After an XID 79 error, what is the correct immediate action?",
+      "type": "multiple-choice",
+      "choices": [
+        "Run nvidia-smi --gpu-reset",
+        "Clear ECC counters",
+        "Reboot the node - GPU reset won't work as GPU is unreachable",
+        "Update NVIDIA drivers"
+      ],
+      "correctAnswer": 2,
+      "explanation": "XID 79 means the GPU has 'fallen off the bus' - it's completely unreachable. GPU reset is impossible because the device cannot be communicated with. A full node reboot is required.",
+      "points": 1,
+      "difficulty": "advanced"
+    },
+    {
+      "id": "q166",
+      "domain": "domain1",
+      "questionText": "What does 'dmidecode -t system' display?",
+      "type": "multiple-choice",
+      "choices": [
+        "System memory information",
+        "System manufacturer, product name, serial number, and UUID",
+        "System temperature sensors",
+        "System network configuration"
+      ],
+      "correctAnswer": 1,
+      "explanation": "'dmidecode -t system' shows SMBIOS system information including manufacturer (NVIDIA for DGX), product name (DGX A100/H100), serial number, and UUID.",
+      "points": 1,
+      "difficulty": "beginner"
+    },
+    {
+      "id": "q167",
+      "domain": "domain4",
+      "questionText": "Which NCCL collective operation is most commonly used in distributed deep learning training?",
+      "type": "multiple-choice",
+      "choices": [
+        "Broadcast",
+        "All-gather",
+        "All-reduce",
+        "Reduce-scatter"
+      ],
+      "correctAnswer": 2,
+      "explanation": "All-reduce is most common in DL training as it sums gradients across all GPUs and distributes the result back. This is the core operation for synchronous distributed training.",
+      "points": 1,
+      "difficulty": "intermediate"
+    },
+    {
+      "id": "q168",
+      "domain": "domain5",
+      "questionText": "What distinguishes XID 78 from other NVLink errors?",
+      "type": "multiple-choice",
+      "choices": [
+        "It indicates flow control problems",
+        "It indicates uncorrectable ECC error on NVLink data path",
+        "It indicates link training failure",
+        "It indicates timeout during communication"
+      ],
+      "correctAnswer": 1,
+      "explanation": "XID 78 specifically indicates an uncorrectable ECC error on the NVLink data path - data corruption occurred during GPU-to-GPU communication. This requires hardware replacement.",
+      "points": 1,
+      "difficulty": "advanced"
     }
   ]
 }
