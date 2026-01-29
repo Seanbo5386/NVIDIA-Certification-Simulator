@@ -565,6 +565,11 @@ function App() {
           <div className="w-full max-w-6xl max-h-[90vh] overflow-auto">
             <LearningPaths
               onClose={() => setShowLearningPaths(false)}
+              onExecuteCommand={async (cmd) => {
+                // Placeholder for command execution
+                // Full terminal integration requires exposing Terminal's executeCommand
+                return `Command executed: ${cmd}\n(Full terminal integration pending)`;
+              }}
             />
           </div>
         </div>
