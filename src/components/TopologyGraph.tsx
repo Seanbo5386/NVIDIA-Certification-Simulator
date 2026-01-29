@@ -56,15 +56,16 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
   const layout = useMemo(() => getLayoutForSystem(node.systemType), [node.systemType]);
 
   // Calculate animation links from GPU NVLink connections using accurate layout
-  const animationLinks: AnimationLink[] = useMemo(() => {
+  const animationLinks = useMemo((): AnimationLink[] => {
     const width = 800;
     const height = 500;
     const gpuPositions = calculateGPUPositions(layout, width, height);
 
-    return layout.nvLinkConnections.map((conn) => {
+    const links: AnimationLink[] = [];
+    for (const conn of layout.nvLinkConnections) {
       const sourcePos = gpuPositions.find((p) => p.gpuIndex === conn.from);
       const targetPos = gpuPositions.find((p) => p.gpuIndex === conn.to);
-      if (!sourcePos || !targetPos) return null;
+      if (!sourcePos || !targetPos) continue;
 
       const sourceGpu = node.gpus[conn.from];
       const targetGpu = node.gpus[conn.to];
@@ -73,7 +74,7 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
         : 50;
       const isActive = sourceGpu?.nvlinks.some((l) => l.status === 'Active') ?? true;
 
-      return {
+      links.push({
         id: `nvlink-${conn.from}-${conn.to}`,
         sourceX: sourcePos.x,
         sourceY: sourcePos.y,
@@ -82,8 +83,9 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
         active: isActive,
         utilization: avgUtil,
         bidirectional: true,
-      };
-    }).filter((link): link is AnimationLink => link !== null);
+      });
+    }
+    return links;
   }, [node, layout]);
 
   const { particles } = useNetworkAnimation({
