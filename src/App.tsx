@@ -240,9 +240,9 @@ function App() {
       </nav>
 
       {/* Main Content */}
-      <main className={`flex-1 overflow-hidden transition-all duration-300 ${showLabWorkspace ? 'ml-[600px]' : ''}`}>
+      <main className={`flex-1 h-0 flex flex-col overflow-hidden transition-all duration-300 ${showLabWorkspace ? 'ml-[600px]' : ''}`}>
         {currentView === 'simulator' && (
-          <SimulatorView className="h-full" />
+          <SimulatorView className="flex-1 h-full" />
         )}
 
         {currentView === 'labs' && (
