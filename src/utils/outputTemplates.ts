@@ -37,7 +37,7 @@ export function generateTimestamp(options: TimestampOptions = {}): string {
         case 'unix':
             return Math.floor(timestamp.getTime() / 1000).toString();
 
-        case 'nvidia-smi':
+        case 'nvidia-smi': {
             // Format: "Mon Jan 15 10:30:45 2024"
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -45,6 +45,7 @@ export function generateTimestamp(options: TimestampOptions = {}): string {
             return `${days[timestamp.getDay()]} ${months[timestamp.getMonth()]} ` +
                 `${timestamp.getDate().toString().padStart(2, ' ')} ` +
                 `${timestamp.toTimeString().split(' ')[0]} ${timestamp.getFullYear()}`;
+        }
 
         case 'ipmi':
             // Format: "01/18/2026 | 10:30:45"

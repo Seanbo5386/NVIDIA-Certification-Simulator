@@ -83,11 +83,12 @@ const generatePerformanceData = (nodes: DGXNode[], metricType: string) => {
       let expected = baseline.expected;
 
       switch (metricType) {
-        case 'bandwidth':
+        case 'bandwidth': {
           // NVLink bandwidth based on active links
           const activeLinks = gpu.nvlinks.filter(l => l.status === 'Active').length;
           actual = (activeLinks / gpu.nvlinks.length) * baseline.expected * (0.9 + Math.random() * 0.15);
           break;
+        }
         case 'compute':
           // Use actual utilization
           actual = gpu.utilization;

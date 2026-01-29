@@ -382,20 +382,22 @@ export function createStudySession(
       questions = allQuestions.filter(q => q.domain === options.domain);
       break;
 
-    case 'timed-practice':
+    case 'timed-practice': {
       // Use exam engine for weighted selection
       const timedConfig = createExamConfig('full-practice');
       timedConfig.questionCount = config.questionCount || 20;
       questions = selectQuestionsForMode(allQuestions, timedConfig);
       break;
+    }
 
-    case 'review-mode':
+    case 'review-mode': {
       if (!options?.incorrectQuestionIds || options.incorrectQuestionIds.length === 0) {
         throw new Error('No incorrect questions to review');
       }
       const reviewSet = new Set(options.incorrectQuestionIds);
       questions = allQuestions.filter(q => reviewSet.has(q.id));
       break;
+    }
 
     case 'flashcard-mode':
       // Flashcards are handled separately, but we can include some questions

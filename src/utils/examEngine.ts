@@ -135,7 +135,7 @@ export function selectQuestionsForMode(
       selectedQuestions = allQuestions.filter(q => q.domain === config.domain);
       break;
 
-    case 'weak-area-focus':
+    case 'weak-area-focus': {
       // Questions from weak domains
       if (!config.weakDomains || config.weakDomains.length === 0) {
         // Default to domain4 and domain5 if no weak areas specified
@@ -146,8 +146,9 @@ export function selectQuestionsForMode(
       );
       selectedQuestions = shuffleArray(weakQuestions).slice(0, config.questionCount);
       break;
+    }
 
-    case 'review-mode':
+    case 'review-mode': {
       // Questions that were answered incorrectly
       if (!config.reviewQuestionIds || config.reviewQuestionIds.length === 0) {
         return [];
@@ -155,6 +156,7 @@ export function selectQuestionsForMode(
       const reviewSet = new Set(config.reviewQuestionIds);
       selectedQuestions = allQuestions.filter(q => reviewSet.has(q.id));
       break;
+    }
 
     default:
       selectedQuestions = selectExamQuestions(allQuestions, 35);
