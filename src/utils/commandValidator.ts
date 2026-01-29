@@ -204,7 +204,7 @@ function validateOutputMatch(
  */
 function validateStateCheck(
   stateCheck: string,
-  stateParams?: Record<string, any>
+  stateParams?: Record<string, string | number | boolean | undefined>
 ): boolean {
   const store = useSimulationStore.getState();
   const { cluster } = store;

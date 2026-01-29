@@ -258,7 +258,7 @@ export class CommandRegistry {
     totalAliases: number;
     commandsByCategory: Record<CommandCategory, number>;
   } {
-    const commandsByCategory: Record<CommandCategory, number> = {} as any;
+    const commandsByCategory = {} as Record<CommandCategory, number>;
 
     for (const [category, commands] of this.categories.entries()) {
       commandsByCategory[category] = commands.size;
