@@ -6,12 +6,13 @@
  * Includes live data flow animations when simulation is running.
  */
 
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import * as d3 from 'd3';
 import type { ClusterConfig } from '@/types/hardware';
 import { Network } from 'lucide-react';
 import { useNetworkAnimation, AnimationLink } from '@/hooks/useNetworkAnimation';
 import { useSimulationStore } from '@/store/simulationStore';
+import { NetworkNodeDetail, NetworkNodeType } from './NetworkNodeDetail';
 
 interface InfiniBandMapProps {
   cluster: ClusterConfig;
@@ -37,6 +38,7 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({ cluster }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const particleGroupRef = useRef<SVGGElement | null>(null);
   const isRunning = useSimulationStore((state) => state.isRunning);
+  const [selectedNode, setSelectedNode] = useState<NetworkNodeType | null>(null);
 
   // Calculate animation links from fabric topology
   const animationLinks: AnimationLink[] = useMemo(() => {
@@ -294,14 +296,43 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({ cluster }) => {
     // Add tooltips
     nodeGroups.append('title').text((d) => `${d.label}\nType: ${d.type}\nStatus: ${d.status}`);
 
-    // Add hover effects
+    // Add hover effects and click handlers
     nodeGroups
       .on('mouseover', function () {
         d3.select(this).select('rect,circle,polygon').attr('opacity', 1);
       })
       .on('mouseout', function () {
         d3.select(this).select('rect,circle,polygon').attr('opacity', 0.9);
+      })
+      .on('click', function (event, d) {
+        event.stopPropagation();
+        if (d.type === 'spine' || d.type === 'leaf') {
+          setSelectedNode({
+            type: 'switch',
+            data: {
+              id: d.id,
+              switchType: d.type,
+              status: d.status === 'active' ? 'active' : 'down',
+            },
+          });
+        } else if (d.type === 'host') {
+          const clusterNode = cluster.nodes.find((n) => n.id === d.id);
+          if (clusterNode) {
+            setSelectedNode({
+              type: 'host',
+              data: {
+                id: clusterNode.id,
+                hostname: clusterNode.hostname,
+                hcas: clusterNode.hcas,
+                gpuCount: clusterNode.gpus.length,
+              },
+            });
+          }
+        }
       });
+
+    // Click on background to deselect
+    svg.on('click', () => setSelectedNode(null));
 
     // Add tier labels
     svg
@@ -367,7 +398,7 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({ cluster }) => {
   ).length;
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 relative">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Network className="w-5 h-5 text-nvidia-green" />
@@ -378,7 +409,21 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({ cluster }) => {
         </div>
       </div>
 
-      <svg ref={svgRef} className="w-full bg-gray-900 rounded-lg" />
+      <div className="relative">
+        <svg ref={svgRef} className="w-full bg-gray-900 rounded-lg" />
+
+        {/* Network Node Detail Panel */}
+        {selectedNode && (
+          <NetworkNodeDetail
+            node={selectedNode}
+            onClose={() => setSelectedNode(null)}
+            onInjectFault={(faultType) => {
+              console.log('Inject fault:', faultType, 'on', selectedNode);
+              // TODO: Wire to simulation store for fault injection
+            }}
+          />
+        )}
+      </div>
 
       {/* Animation status indicator */}
       <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
@@ -413,9 +458,9 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({ cluster }) => {
       </div>
 
       <div className="mt-3 text-xs text-gray-400">
+        <p>• Click on any node to see detailed information</p>
         <p>• Fat-tree topology: 2 spine switches, {Math.min(cluster.nodes.length, 4)} leaf switches</p>
         <p>• Full mesh between spine and leaf tiers for maximum bandwidth</p>
-        <p>• Each host connected to nearest leaf switch via HDR 200 Gb/s links</p>
       </div>
     </div>
   );
