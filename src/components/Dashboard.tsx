@@ -203,19 +203,29 @@ type DashboardView = 'overview' | 'metrics' | 'topology' | 'network';
 export const Dashboard: React.FC = () => {
   const cluster = useSimulationStore(state => state.cluster);
   const selectedNode = useSimulationStore(state => state.selectedNode);
+  const isRunning = useSimulationStore(state => state.isRunning);
   const [activeView, setActiveView] = useState<DashboardView>('overview');
   const [selectedGPU, setSelectedGPU] = useState<string>('GPU0');
 
   const currentNode = cluster.nodes.find(n => n.id === selectedNode) || cluster.nodes[0];
 
-  // Start automatic metrics collection
+  // Start automatic metrics collection only when simulation is running
   useEffect(() => {
-    MetricsHistory.startCollection(() => currentNode, 1000);
+    if (isRunning) {
+      // Get node from store directly to avoid stale closure
+      MetricsHistory.startCollection(() => {
+        const state = useSimulationStore.getState();
+        const nodeId = state.selectedNode;
+        return state.cluster.nodes.find(n => n.id === nodeId) || state.cluster.nodes[0];
+      }, 1000);
+    } else {
+      MetricsHistory.stopCollection();
+    }
 
     return () => {
       MetricsHistory.stopCollection();
     };
-  }, [currentNode]);
+  }, [isRunning]); // Only depend on isRunning, not currentNode
 
   if (!currentNode) {
     return (
