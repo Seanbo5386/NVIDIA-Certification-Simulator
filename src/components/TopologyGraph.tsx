@@ -6,12 +6,13 @@
  * Includes live data flow animations when simulation is running.
  */
 
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import * as d3 from 'd3';
 import type { DGXNode } from '@/types/hardware';
 import { Network } from 'lucide-react';
 import { useNetworkAnimation, AnimationLink } from '@/hooks/useNetworkAnimation';
 import { useSimulationStore } from '@/store/simulationStore';
+import { NetworkNodeDetail, NetworkNodeType } from './NetworkNodeDetail';
 
 interface TopologyGraphProps {
   node: DGXNode;
@@ -38,6 +39,7 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({ node }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const particleGroupRef = useRef<SVGGElement | null>(null);
   const isRunning = useSimulationStore((state) => state.isRunning);
+  const [selectedNode, setSelectedNode] = useState<NetworkNodeType | null>(null);
 
   // Calculate animation links from GPU NVLink connections
   const animationLinks: AnimationLink[] = useMemo(() => {
@@ -209,14 +211,24 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({ node }) => {
         `${d.name}\nHealth: ${d.health}\nUtilization: ${Math.round(d.utilization)}%\nTemperature: ${Math.round(d.temperature)}°C`
     );
 
-    // Add hover effects
+    // Add hover effects and click handlers
     nodeGroups
       .on('mouseover', function () {
         d3.select(this).select('circle').attr('r', 40).attr('opacity', 1);
       })
       .on('mouseout', function () {
         d3.select(this).select('circle').attr('r', 35).attr('opacity', 0.9);
+      })
+      .on('click', function (event, d) {
+        event.stopPropagation();
+        const gpu = node.gpus.find((g) => g.id === d.id);
+        if (gpu) {
+          setSelectedNode({ type: 'gpu', data: gpu });
+        }
       });
+
+    // Click on background to deselect
+    svg.on('click', () => setSelectedNode(null));
 
     // Add particle container group for animations
     particleGroupRef.current = svg.append('g').attr('class', 'particles').node();
@@ -249,13 +261,27 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({ node }) => {
   }, [particles]);
 
   return (
-    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+    <div className="bg-gray-800 rounded-lg p-6 border border-gray-700 relative">
       <div className="flex items-center gap-2 mb-4">
         <Network className="w-5 h-5 text-nvidia-green" />
         <h3 className="text-lg font-semibold text-gray-200">NVLink Topology - {node.id}</h3>
       </div>
 
-      <svg ref={svgRef} className="w-full bg-gray-900 rounded-lg" />
+      <div className="relative">
+        <svg ref={svgRef} className="w-full bg-gray-900 rounded-lg" />
+
+        {/* Network Node Detail Panel */}
+        {selectedNode && (
+          <NetworkNodeDetail
+            node={selectedNode}
+            onClose={() => setSelectedNode(null)}
+            onInjectFault={(faultType) => {
+              console.log('Inject fault:', faultType, 'on', selectedNode);
+              // TODO: Wire to simulation store for fault injection
+            }}
+          />
+        )}
+      </div>
 
       {/* Animation status indicator */}
       <div className="mt-2 flex items-center gap-2 text-xs text-gray-400">
@@ -287,7 +313,7 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({ node }) => {
 
       <div className="mt-3 text-xs text-gray-400">
         <p>• Green ring around GPU = Utilization level</p>
-        <p>• Hover over nodes/links for details</p>
+        <p>• Click on a GPU node to see detailed information</p>
         <p>• Active NVLinks shown as solid green lines</p>
       </div>
     </div>
