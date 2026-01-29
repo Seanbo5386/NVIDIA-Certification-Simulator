@@ -7,6 +7,7 @@ import { WelcomeScreen } from './components/WelcomeScreen';
 import { Documentation } from './components/Documentation';
 import { StudyDashboard } from './components/StudyDashboard';
 import { LearningPaths } from './components/LearningPaths';
+import { getTotalPathStats } from './utils/learningPathEngine';
 import { useSimulationStore } from './store/simulationStore';
 import { MetricsSimulator } from './utils/metricsSimulator';
 import { initializeScenario } from './utils/scenarioLoader';
@@ -35,6 +36,7 @@ function App() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [showStudyDashboard, setShowStudyDashboard] = useState(false);
   const [showLearningPaths, setShowLearningPaths] = useState(false);
+  const [learningProgress, setLearningProgress] = useState({ completed: 0, total: 0 });
 
   const {
     cluster,
@@ -68,6 +70,14 @@ function App() {
       metricsSimulator.stop();
     };
   }, [isRunning]);
+
+  // Load learning progress on mount and when modal closes
+  useEffect(() => {
+    const savedLessons = localStorage.getItem('ncp-aii-completed-lessons');
+    const completed = savedLessons ? JSON.parse(savedLessons).length : 0;
+    const stats = getTotalPathStats();
+    setLearningProgress({ completed, total: stats.totalLessons });
+  }, [showLearningPaths]); // Refresh when modal closes
 
   const handleExport = () => {
     const data = exportCluster();
@@ -443,6 +453,23 @@ function App() {
                     <h3 className="text-lg font-bold mb-3">
                       Learning Paths
                     </h3>
+
+                    {/* Progress indicator */}
+                    <div className="mb-4">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-400">Progress</span>
+                        <span className="text-purple-400">
+                          {learningProgress.completed}/{learningProgress.total} lessons
+                        </span>
+                      </div>
+                      <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-purple-600 transition-all duration-300"
+                          style={{ width: `${learningProgress.total > 0 ? (learningProgress.completed / learningProgress.total) * 100 : 0}%` }}
+                        />
+                      </div>
+                    </div>
+
                     <ul className="space-y-2 text-sm text-gray-300">
                       <li className="flex items-start gap-2">
                         <span className="text-purple-400">▸</span>
@@ -456,16 +483,12 @@ function App() {
                         <span className="text-purple-400">▸</span>
                         Hands-on command practice
                       </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-purple-400">▸</span>
-                        Track progress across lessons
-                      </li>
                     </ul>
                     <button
                       onClick={() => setShowLearningPaths(true)}
                       className="mt-4 w-full bg-purple-600 text-white py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
                     >
-                      Start Learning
+                      {learningProgress.completed > 0 ? 'Continue Learning' : 'Start Learning'}
                     </button>
                   </div>
 

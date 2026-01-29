@@ -113,6 +113,18 @@ export const LearningPaths: React.FC<LearningPathsProps> = ({
     }
   }, [selectedModule, completedLessons]);
 
+  // Reset all progress
+  const resetProgress = useCallback(() => {
+    if (window.confirm('Are you sure you want to reset all progress? This cannot be undone.')) {
+      setCompletedLessons(new Set());
+      setCompletedModules(new Set());
+      setLessonProgress(new Map());
+      localStorage.removeItem('ncp-aii-completed-lessons');
+      localStorage.removeItem('ncp-aii-completed-modules');
+      localStorage.removeItem('ncp-aii-lesson-progress');
+    }
+  }, []);
+
   // Handle command submission in tutorial
   const handleCommandSubmit = async () => {
     if (!selectedLesson || !commandInput.trim()) return;
@@ -384,6 +396,101 @@ export const LearningPaths: React.FC<LearningPathsProps> = ({
             </div>
           )}
 
+          {/* Observe type - auto-execute and show output */}
+          {step.type === 'observe' && (
+            <div style={styles.commandSection}>
+              <div style={styles.observeLabel}>👁️ Observe the following command output:</div>
+              <div style={styles.commandDisplay}>
+                <code style={styles.commandCode}>{step.expectedCommand}</code>
+              </div>
+              {commandOutput ? (
+                <div style={styles.outputBox}>
+                  <pre style={styles.outputText}>{commandOutput}</pre>
+                </div>
+              ) : (
+                <button
+                  onClick={async () => {
+                    if (onExecuteCommand && step.expectedCommand) {
+                      try {
+                        const output = await onExecuteCommand(step.expectedCommand);
+                        setCommandOutput(output);
+                        trackCommand(step.expectedCommand.split(' ')[0], true);
+                      } catch (error) {
+                        setCommandOutput(`Error: ${error}`);
+                      }
+                    }
+                  }}
+                  style={styles.executeButton}
+                >
+                  Run Command
+                </button>
+              )}
+              {commandOutput && (
+                <button onClick={advanceStep} style={styles.continueButton}>
+                  Continue →
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Practice type - free-form practice */}
+          {step.type === 'practice' && (
+            <div style={styles.commandSection}>
+              <div style={styles.practiceLabel}>🔧 Practice on your own:</div>
+              <div style={styles.commandInputWrapper}>
+                <span style={styles.prompt}>$</span>
+                <input
+                  type="text"
+                  value={commandInput}
+                  onChange={(e) => setCommandInput(e.target.value)}
+                  onKeyDown={async (e) => {
+                    if (e.key === 'Enter' && commandInput.trim()) {
+                      if (onExecuteCommand) {
+                        try {
+                          const output = await onExecuteCommand(commandInput);
+                          setCommandOutput(output);
+                          trackCommand(commandInput.split(' ')[0], true);
+                        } catch (error) {
+                          setCommandOutput(`Error: ${error}`);
+                        }
+                      }
+                    }
+                  }}
+                  placeholder="Try the commands yourself..."
+                  style={styles.commandInput}
+                  autoFocus
+                />
+                <button
+                  onClick={async () => {
+                    if (commandInput.trim() && onExecuteCommand) {
+                      try {
+                        const output = await onExecuteCommand(commandInput);
+                        setCommandOutput(output);
+                        trackCommand(commandInput.split(' ')[0], true);
+                      } catch (error) {
+                        setCommandOutput(`Error: ${error}`);
+                      }
+                    }
+                  }}
+                  style={styles.executeButton}
+                >
+                  Execute
+                </button>
+              </div>
+
+              {/* Command output */}
+              {commandOutput && (
+                <div style={styles.outputBox}>
+                  <pre style={styles.outputText}>{commandOutput}</pre>
+                </div>
+              )}
+
+              <button onClick={advanceStep} style={{ ...styles.continueButton, marginTop: '20px' }}>
+                Continue →
+              </button>
+            </div>
+          )}
+
           {/* Concept type - just show continue button */}
           {step.type === 'concept' && (
             <button onClick={advanceStep} style={styles.continueButton}>
@@ -484,6 +591,15 @@ export const LearningPaths: React.FC<LearningPathsProps> = ({
                 <div style={styles.statLabel}>Est. Time</div>
               </div>
             </div>
+
+            {/* Reset progress button - only show if there's progress to reset */}
+            {completedLessons.size > 0 && (
+              <div style={styles.resetProgressRow}>
+                <button onClick={resetProgress} style={styles.resetButton}>
+                  Reset Progress
+                </button>
+              </div>
+            )}
 
             {/* Recommended next lesson */}
             {recommendedNext && (
@@ -798,6 +914,21 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '12px',
     color: '#888',
     marginTop: '5px',
+  },
+  resetProgressRow: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    marginBottom: '15px',
+  },
+  resetButton: {
+    padding: '8px 16px',
+    backgroundColor: 'transparent',
+    border: '1px solid #666',
+    borderRadius: '4px',
+    color: '#888',
+    cursor: 'pointer',
+    fontSize: '12px',
+    transition: 'all 0.2s',
   },
   recommendedCard: {
     backgroundColor: '#1a3d1a',
@@ -1308,6 +1439,29 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 'bold',
     cursor: 'pointer',
     fontSize: '14px',
+  },
+  observeLabel: {
+    color: '#76b900',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    marginBottom: '15px',
+  },
+  commandDisplay: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: '6px',
+    padding: '15px',
+    marginBottom: '15px',
+  },
+  commandCode: {
+    color: '#76b900',
+    fontFamily: 'monospace',
+    fontSize: '14px',
+  },
+  practiceLabel: {
+    color: '#f97316',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    marginBottom: '15px',
   },
 };
 
