@@ -47,6 +47,8 @@ const bandwidthLabel = (bandwidth: number): string => {
 interface InfiniBandMapProps {
   cluster: ClusterConfig;
   fabricConfig?: FabricTierConfig;
+  highlightedNodes?: string[];
+  highlightedSwitches?: string[];
 }
 
 interface FabricNode {
@@ -68,6 +70,8 @@ interface FabricLink {
 export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({
   cluster,
   fabricConfig = DEFAULT_FABRIC_CONFIG,
+  highlightedNodes = [],
+  highlightedSwitches = [],
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const particleGroupRef = useRef<SVGGElement | null>(null);
@@ -279,6 +283,47 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({
     nodeGroups.each(function (d) {
       const group = d3.select(this);
 
+      // Check if this node should be highlighted
+      const isHighlightedSwitch = (d.type === 'spine' || d.type === 'leaf') && highlightedSwitches.includes(d.id);
+      const isHighlightedNode = d.type === 'host' && highlightedNodes.includes(d.id);
+      const isHighlighted = isHighlightedSwitch || isHighlightedNode;
+
+      // Add highlight ring first (behind the shape)
+      if (isHighlighted) {
+        if (d.type === 'spine') {
+          group
+            .append('rect')
+            .attr('x', -58)
+            .attr('y', -33)
+            .attr('width', 116)
+            .attr('height', 66)
+            .attr('fill', 'none')
+            .attr('stroke', '#facc15')
+            .attr('stroke-width', 3)
+            .attr('stroke-dasharray', '6,4')
+            .attr('rx', 8)
+            .attr('class', 'highlight-ring');
+        } else if (d.type === 'leaf') {
+          group
+            .append('circle')
+            .attr('r', 42)
+            .attr('fill', 'none')
+            .attr('stroke', '#facc15')
+            .attr('stroke-width', 3)
+            .attr('stroke-dasharray', '6,4')
+            .attr('class', 'highlight-ring');
+        } else {
+          group
+            .append('circle')
+            .attr('r', 35)
+            .attr('fill', 'none')
+            .attr('stroke', '#facc15')
+            .attr('stroke-width', 3)
+            .attr('stroke-dasharray', '6,4')
+            .attr('class', 'highlight-ring');
+        }
+      }
+
       if (d.type === 'spine') {
         // Rectangle for spine switches
         group
@@ -404,7 +449,7 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({
 
     // Add particle container group for animations
     particleGroupRef.current = svg.append('g').attr('class', 'particles').node();
-  }, [cluster, fabricConfig]);
+  }, [cluster, fabricConfig, highlightedNodes, highlightedSwitches]);
 
   // Particle animation render effect
   useEffect(() => {

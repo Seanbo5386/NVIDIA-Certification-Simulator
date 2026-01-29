@@ -90,3 +90,32 @@
 .gpu-bar-container {
   @apply w-full h-4 bg-gray-700 rounded-full overflow-hidden;
 }
+
+/* Network visualization highlight animations */
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
+  transform-origin: center;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.highlight-pulse {
+  animation: pulse-highlight 1.5s ease-in-out infinite;
+}
+
+@keyframes dash-flow {
+  from { stroke-dashoffset: 20; }
+  to { stroke-dashoffset: 0; }
+}
+
+.highlight-ring {
+  animation: dash-flow 1s linear infinite;
+}

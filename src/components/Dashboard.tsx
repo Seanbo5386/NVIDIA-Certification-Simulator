@@ -364,7 +364,11 @@ export const Dashboard: React.FC = () => {
       {activeView === 'topology' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
-            <TopologyGraph node={currentNode} />
+            <TopologyGraph
+              node={currentNode}
+              highlightedGpus={activeScenario?.highlightedGpus}
+              highlightedLinks={activeScenario?.highlightedLinks}
+            />
           </div>
           <div className="lg:col-span-1">
             <VisualContextPanel
@@ -380,7 +384,11 @@ export const Dashboard: React.FC = () => {
       {activeView === 'network' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-3">
-            <InfiniBandMap cluster={cluster} />
+            <InfiniBandMap
+              cluster={cluster}
+              highlightedNodes={activeScenario?.highlightedNodes}
+              highlightedSwitches={activeScenario?.highlightedSwitches}
+            />
           </div>
           <div className="lg:col-span-1">
             <VisualContextPanel

@@ -21,6 +21,8 @@ import {
 
 interface TopologyGraphProps {
   node: DGXNode;
+  highlightedGpus?: number[];
+  highlightedLinks?: string[];
 }
 
 interface GraphNode {
@@ -40,7 +42,11 @@ interface GraphLink {
   bandwidth: string;
 }
 
-export const TopologyGraph: React.FC<TopologyGraphProps> = ({ node }) => {
+export const TopologyGraph: React.FC<TopologyGraphProps> = ({
+  node,
+  highlightedGpus = [],
+  highlightedLinks = [],
+}) => {
   const svgRef = useRef<SVGSVGElement>(null);
   const particleGroupRef = useRef<SVGGElement | null>(null);
   const isRunning = useSimulationStore((state) => state.isRunning);
@@ -148,10 +154,34 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({ node }) => {
       .attr('y1', (d) => d.source.y)
       .attr('x2', (d) => d.target.x)
       .attr('y2', (d) => d.target.y)
-      .attr('stroke', (d) => (d.status === 'Active' ? '#10B981' : '#EF4444'))
-      .attr('stroke-width', (d) => (d.status === 'Active' ? 3 : 1))
+      .attr('stroke', (d) => {
+        // Check if this link is highlighted (format: "from-to" or "nvlink-from-to")
+        const linkId1 = `${d.source.id}-${d.target.id}`;
+        const linkId2 = `${d.target.id}-${d.source.id}`;
+        const isHighlighted = highlightedLinks.includes(linkId1) || highlightedLinks.includes(linkId2);
+        if (isHighlighted) return '#facc15'; // Yellow for highlighted
+        return d.status === 'Active' ? '#10B981' : '#EF4444';
+      })
+      .attr('stroke-width', (d) => {
+        const linkId1 = `${d.source.id}-${d.target.id}`;
+        const linkId2 = `${d.target.id}-${d.source.id}`;
+        const isHighlighted = highlightedLinks.includes(linkId1) || highlightedLinks.includes(linkId2);
+        if (isHighlighted) return 5;
+        return d.status === 'Active' ? 3 : 1;
+      })
       .attr('stroke-dasharray', (d) => (d.status === 'Active' ? '0' : '5,5'))
-      .attr('opacity', 0.6)
+      .attr('opacity', (d) => {
+        const linkId1 = `${d.source.id}-${d.target.id}`;
+        const linkId2 = `${d.target.id}-${d.source.id}`;
+        const isHighlighted = highlightedLinks.includes(linkId1) || highlightedLinks.includes(linkId2);
+        return isHighlighted ? 0.9 : 0.6;
+      })
+      .attr('class', (d) => {
+        const linkId1 = `${d.source.id}-${d.target.id}`;
+        const linkId2 = `${d.target.id}-${d.source.id}`;
+        const isHighlighted = highlightedLinks.includes(linkId1) || highlightedLinks.includes(linkId2);
+        return isHighlighted ? 'highlight-pulse' : '';
+      })
       .append('title')
       .text((d) => `${d.source.name} ↔ ${d.target.name}\nStatus: ${d.status}\nBandwidth: ${d.bandwidth}`);
 
@@ -218,6 +248,21 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({ node }) => {
       .attr('stroke-width', 3)
       .attr('opacity', 0.9);
 
+    // Highlight ring for scenario-targeted GPUs
+    nodeGroups.each(function (d) {
+      const isHighlighted = highlightedGpus.includes(d.id);
+      if (isHighlighted) {
+        d3.select(this)
+          .insert('circle', ':first-child')
+          .attr('r', 48)
+          .attr('fill', 'none')
+          .attr('stroke', '#facc15')
+          .attr('stroke-width', 3)
+          .attr('stroke-dasharray', '6,4')
+          .attr('class', 'highlight-ring');
+      }
+    });
+
     // Utilization ring
     nodeGroups.each(function (d) {
       const angle = (d.utilization / 100) * 360;
@@ -280,7 +325,7 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({ node }) => {
 
     // Add particle container group for animations
     particleGroupRef.current = svg.append('g').attr('class', 'particles').node();
-  }, [node, layout]);
+  }, [node, layout, highlightedGpus, highlightedLinks]);
 
   // Particle animation render effect
   useEffect(() => {
