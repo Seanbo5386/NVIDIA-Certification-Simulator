@@ -210,6 +210,7 @@ export class DcgmiSimulator extends BaseSimulator {
     // Helper to pad content to exact column width (handles ANSI color codes)
     const padCol = (content: string, width: number): string => {
       // Strip ANSI color codes to measure actual visual length
+      // eslint-disable-next-line no-control-regex
       const stripped = content.replace(/\x1b\[[0-9;]*m/g, '');
       const actualLength = stripped.length;
 

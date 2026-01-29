@@ -187,6 +187,7 @@ describe('syntaxHighlighter', () => {
     it('should handle multiple key-value pairs', () => {
       const input = 'Name: GPU\nStatus: Active\nTemp: 45C';
       const result = highlightKeyValue(input);
+      // eslint-disable-next-line no-control-regex
       expect(result.match(/\x1b\[36m/g)?.length).toBe(3); // 3 cyan highlights
     });
 

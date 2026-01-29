@@ -167,6 +167,7 @@ export class BcmSimulator extends BaseSimulator {
 
     // Helper to pad content accounting for ANSI codes
     const padColAnsi = (content: string, width: number): string => {
+      // eslint-disable-next-line no-control-regex
       const stripped = content.replace(/\x1b\[[0-9;]*m/g, '');
       const actualLength = stripped.length;
       if (actualLength > width) return content.substring(0, width);
@@ -250,6 +251,7 @@ export class BcmSimulator extends BaseSimulator {
 
     // Helper to pad content accounting for ANSI codes
     const padColAnsi = (content: string, width: number): string => {
+      // eslint-disable-next-line no-control-regex
       const stripped = content.replace(/\x1b\[[0-9;]*m/g, '');
       const actualLength = stripped.length;
       if (actualLength > width) return content.substring(0, width);
