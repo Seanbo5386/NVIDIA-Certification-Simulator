@@ -1,7 +1,7 @@
 import { BaseSimulator } from './BaseSimulator';
 import type { CommandResult, CommandContext } from '@/types/commands';
 import type { ParsedCommand } from '@/utils/commandParser';
-import type { ClusterKitAssessment } from '@/types/clusterKit';
+import type { ClusterKitAssessment, ClusterKitCheckResult } from '@/types/clusterKit';
 import { useSimulationStore } from '@/store/simulationStore';
 
 export class ClusterKitSimulator extends BaseSimulator {
@@ -92,19 +92,7 @@ export class ClusterKitSimulator extends BaseSimulator {
       const node = this.getTargetNode(parsed, context);
       const verbose = parsed.flags.get('verbose') || parsed.flags.get('v');
 
-      const assessment: ClusterKitAssessment = {
-        nodeId: node.id,
-        hostname: node.hostname || `${node.id}.cluster.local`,
-        timestamp: new Date(),
-        overallHealth: 'pass',
-        checks: {
-          gpu: { status: 'pass', message: 'GPU check placeholder' },
-          network: { status: 'pass', message: 'Network check placeholder' },
-          storage: { status: 'pass', message: 'Storage check placeholder' },
-          firmware: { status: 'pass', message: 'Firmware check placeholder' },
-          drivers: { status: 'pass', message: 'Driver check placeholder' }
-        }
-      };
+      const assessment = this.runAssessment(node);
 
       return {
         output: this.formatAssessmentOutput(assessment, !!verbose),
@@ -118,8 +106,153 @@ export class ClusterKitSimulator extends BaseSimulator {
     }
   }
 
+  private runAssessment(node: any): ClusterKitAssessment {
+    const checks = {
+      gpu: this.assessGPUs(node),
+      network: this.assessNetwork(node),
+      storage: this.assessStorage(node),
+      firmware: this.assessFirmware(node),
+      drivers: this.assessDrivers(node),
+    };
+
+    const overallHealth = this.calculateOverallHealth(checks);
+
+    return {
+      nodeId: node.id,
+      hostname: node.hostname || `${node.id}.cluster.local`,
+      timestamp: new Date(),
+      overallHealth,
+      checks,
+    };
+  }
+
+  private assessGPUs(node: any): ClusterKitCheckResult {
+    const gpus = node.gpus || [];
+    const healthyGPUs = gpus.filter((gpu: any) =>
+      gpu.healthStatus === 'OK' &&
+      (!gpu.xidErrors || gpu.xidErrors.length === 0) &&
+      gpu.temperature < 85
+    );
+
+    const details: string[] = [];
+
+    if (healthyGPUs.length < gpus.length) {
+      const failedGPUs = gpus.filter((gpu: any) =>
+        gpu.healthStatus !== 'OK' ||
+        (gpu.xidErrors && gpu.xidErrors.length > 0) ||
+        gpu.temperature >= 85
+      );
+
+      failedGPUs.forEach((gpu: any) => {
+        if (gpu.xidErrors && gpu.xidErrors.length > 0) {
+          details.push(`GPU ${gpu.id}: XID ${gpu.xidErrors[0].code} detected`);
+        }
+        if (gpu.temperature >= 85) {
+          details.push(`GPU ${gpu.id}: High temperature (${Math.round(gpu.temperature)}°C)`);
+        }
+        if (gpu.healthStatus !== 'OK') {
+          details.push(`GPU ${gpu.id}: Health status ${gpu.healthStatus}`);
+        }
+      });
+
+      return {
+        status: 'fail',
+        message: `${failedGPUs.length}/${gpus.length} GPUs have issues`,
+        details,
+      };
+    }
+
+    return {
+      status: 'pass',
+      message: `All ${gpus.length} GPUs operational`,
+      details: gpus.map((gpu: any) => `GPU ${gpu.id}: ${gpu.name} OK`),
+    };
+  }
+
+  private assessNetwork(node: any): ClusterKitCheckResult {
+    const hcas = node.hcas || [];
+    const activeHCAs = hcas.filter((hca: any) => {
+      // Check if HCA has at least one active port
+      return hca.ports && hca.ports.some((port: any) => port.state === 'Active');
+    });
+
+    if (activeHCAs.length < hcas.length) {
+      return {
+        status: 'warning',
+        message: `${activeHCAs.length}/${hcas.length} HCAs active`,
+        details: hcas.map((hca: any) => {
+          const activePort = hca.ports?.find((p: any) => p.state === 'Active');
+          const state = activePort ? 'Active' : (hca.ports?.[0]?.state || 'Unknown');
+          return `${hca.devicePath}: ${state}`;
+        }),
+      };
+    }
+
+    return {
+      status: 'pass',
+      message: `All ${hcas.length} InfiniBand HCAs active`,
+      details: hcas.map((hca: any) => `${hca.devicePath}: ${hca.caType} - Active`),
+    };
+  }
+
+  private assessStorage(_node: any): ClusterKitCheckResult {
+    // Simple storage check - mounted and accessible
+    return {
+      status: 'pass',
+      message: 'Storage mounts accessible',
+      details: ['/data: 5.2TB/10TB used', '/scratch: 1.8TB/5TB used'],
+    };
+  }
+
+  private assessFirmware(node: any): ClusterKitCheckResult {
+    // Check firmware versions against expected values
+    const expectedBMCVersion = '4.2.1';
+    const currentBMCVersion = node.bmc?.firmwareVersion || '4.2.1';
+
+    if (currentBMCVersion !== expectedBMCVersion) {
+      return {
+        status: 'warning',
+        message: 'Firmware version mismatch detected',
+        details: [`BMC: ${currentBMCVersion} (expected ${expectedBMCVersion})`],
+      };
+    }
+
+    return {
+      status: 'pass',
+      message: 'Firmware versions current',
+      details: [`BMC: ${currentBMCVersion}`, 'GPU VBIOS: 96.00.5F.00.01'],
+    };
+  }
+
+  private assessDrivers(node: any): ClusterKitCheckResult {
+    const driverVersion = node.nvidiaDriverVersion || '535.129.03';
+    const cudaVersion = node.cudaVersion || '12.2';
+
+    return {
+      status: 'pass',
+      message: 'Drivers loaded and compatible',
+      details: [
+        `NVIDIA Driver: ${driverVersion}`,
+        `CUDA: ${cudaVersion}`,
+        'Fabric Manager: Active',
+      ],
+    };
+  }
+
+  private calculateOverallHealth(checks: any): 'pass' | 'warning' | 'fail' {
+    const statuses = Object.values(checks).map((check: any) => check.status);
+
+    if (statuses.includes('fail')) {
+      return 'fail';
+    }
+    if (statuses.includes('warning')) {
+      return 'warning';
+    }
+    return 'pass';
+  }
+
   private handleCheck(parsed: ParsedCommand, _context: CommandContext): CommandResult {
-    const category = parsed.positionalArgs[0];
+    const category = parsed.subcommands[1] || parsed.positionalArgs[0];
 
     if (!category) {
       return this.createError(
