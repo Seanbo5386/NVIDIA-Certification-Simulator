@@ -1602,6 +1602,60 @@ export const COMMAND_METADATA: Record<string, CommandMetadata> = {
       'Ignoring specific category failures in the overall report',
     ],
   },
+
+  'nemo': {
+    name: 'nemo',
+    category: 'diagnostics',
+    shortDescription: 'NVIDIA NeMo Framework - AI model training validation',
+    longDescription: 'NVIDIA NeMo Framework is a toolkit for building and training large language models, multimodal models, and speech AI. The burn-in test validates training stability under sustained load, verifying GPU memory management, distributed training coordination, and loss convergence over extended iterations.',
+    syntax: 'nemo <subcommand> [OPTIONS]',
+    difficulty: 'intermediate',
+    domains: ['domain4'],
+
+    commonFlags: [
+      { flag: '--model <name>', description: 'Specify the model name to train', example: 'nemo train --model gpt3-175b' },
+      { flag: '--gpus <N>', description: 'Number of GPUs to use for training', example: 'nemo train --model llama2-70b --gpus 8' },
+      { flag: '--iterations <N>', description: 'Number of training or burn-in iterations', example: 'nemo burn-in --iterations 2000' },
+    ],
+
+    examples: [
+      {
+        command: 'nemo train --model gpt3-175b',
+        description: 'Train GPT-3 175B model using default settings',
+      },
+      {
+        command: 'nemo train --model llama2-70b --gpus 8',
+        description: 'Train LLaMA 2 70B model with 8 GPUs',
+      },
+      {
+        command: 'nemo train --model bert-large --iterations 5000',
+        description: 'Train BERT-Large model for 5000 iterations',
+      },
+      {
+        command: 'nemo burn-in',
+        description: 'Run default burn-in test (1000 iterations) to validate training stability',
+      },
+      {
+        command: 'nemo burn-in --iterations 500',
+        description: 'Run burn-in test with 500 iterations',
+      },
+      {
+        command: 'nemo burn-in --model llama2-13b --iterations 2000',
+        description: 'Run extended burn-in test with LLaMA 2 13B model for 2000 iterations',
+      },
+    ],
+
+    whenToUse: 'Use NeMo for validating AI training infrastructure, running burn-in tests to ensure training stability, verifying GPU memory management under sustained load, testing distributed training coordination across multiple GPUs, and ensuring loss convergence patterns are normal.',
+
+    relatedCommands: ['hpl', 'nccl-test', 'dcgmi diag', 'nvidia-smi'],
+
+    commonMistakes: [
+      'Not monitoring GPU memory during burn-in - memory leaks take time to appear',
+      'Running burn-in tests too short - stability issues may not surface in quick tests',
+      'Ignoring loss convergence patterns - erratic loss indicates training instability',
+      'Not checking GPU utilization - low utilization suggests configuration issues',
+    ],
+  },
 };
 
 /**

@@ -22,6 +22,7 @@ import { NvlinkAuditSimulator } from '@/simulators/nvlinkAuditSimulator';
 import { FabricManagerSimulator } from '@/simulators/fabricManagerSimulator';
 import { NvidiaBugReportSimulator } from '@/simulators/nvidiaBugReportSimulator';
 import { ClusterKitSimulator } from '@/simulators/clusterKitSimulator';
+import { NeMoSimulator } from '@/simulators/nemoSimulator';
 import { useSimulationStore } from '@/store/simulationStore';
 import { scenarioContextManager } from '@/store/scenarioContext';
 import { ScenarioValidator } from '@/utils/scenarioValidator';
@@ -75,6 +76,7 @@ export const Terminal: React.FC<TerminalProps> = ({ className = '' }) => {
   const fabricManagerSimulator = useRef(new FabricManagerSimulator());
   const nvidiaBugReportSimulator = useRef(new NvidiaBugReportSimulator());
   const clusterKitSimulator = useRef(new ClusterKitSimulator());
+  const nemoSimulator = useRef(new NeMoSimulator());
 
   const currentContext = useRef<CommandContext>({
     currentNode: selectedNode || cluster.nodes[0]?.id || 'dgx-00',
@@ -708,6 +710,12 @@ export const Terminal: React.FC<TerminalProps> = ({ className = '' }) => {
           case 'clusterkit': {
             const parsed = parseCommand(cmdLine);
             result = clusterKitSimulator.current.execute(parsed, currentContext.current);
+            break;
+          }
+
+          case 'nemo': {
+            const parsed = parseCommand(cmdLine);
+            result = nemoSimulator.current.execute(parsed, currentContext.current);
             break;
           }
 
