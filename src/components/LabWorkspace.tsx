@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSimulationStore } from '@/store/simulationStore';
-import { X, ChevronRight, Check, HelpCircle, Clock, Lightbulb, CheckCircle, Circle, Eye } from 'lucide-react';
+import { X, ChevronRight, Check, HelpCircle, Clock, Lightbulb, CheckCircle, Circle, Eye, BookOpen } from 'lucide-react';
 import { HintManager } from '@/utils/hintManager';
 import { commandTracker } from '@/utils/commandValidator';
 import { getVisualizationContext } from '@/utils/scenarioVisualizationMap';
@@ -557,6 +557,18 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
         </p>
       </div>
     </div>
+
+    {/* Floating Toggle Button - Only on small screens when panel is hidden */}
+    {isSmallScreen && !labPanelVisible && (
+      <button
+        onClick={() => setLabPanelVisible(true)}
+        className="fixed left-4 bottom-4 z-50 bg-green-500 hover:bg-green-600 text-black p-4 rounded-full shadow-lg transition-all duration-200 hover:scale-110 flex items-center gap-2"
+        title="Show Lab Instructions"
+      >
+        <BookOpen className="w-5 h-5" />
+        <span className="font-semibold">Lab Guide</span>
+      </button>
+    )}
     </>
   );
 }
