@@ -221,6 +221,129 @@ describe('BenchmarkSimulator', () => {
       expect(result.output).toContain('Configuration:');
       expect(result.output).toContain('RESULTS');
     });
+
+    it('should run burn-in test with --burn-in flag', () => {
+      const parsed = parse('hpl --burn-in');
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('HPL Burn-in Test');
+      expect(result.output).toContain('Iterations: 100');
+      expect(result.output).toContain('Problem Size (N): 90000');
+      expect(result.output).toContain('Running High-Performance Linpack burn-in');
+      expect(result.output).toContain('Each iteration takes approximately 2-3 minutes');
+      expect(result.output).toContain('Burn-in Results:');
+      expect(result.output).toContain('Status: PASSED');
+      expect(result.output).toContain('Average Performance:');
+      expect(result.output).toContain('Min Performance:');
+      expect(result.output).toContain('Max Performance:');
+      expect(result.output).toContain('Std Deviation:');
+      expect(result.output).toContain('Failures: 0');
+    });
+
+    it('should run burn-in test with --burnin flag (alias)', () => {
+      const parsed = parse('hpl --burnin');
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('HPL Burn-in Test');
+    });
+
+    it('should run burn-in test with custom iterations', () => {
+      const parsed = parse('hpl --burn-in --iterations 50');
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('Iterations: 50');
+      expect(result.output).toContain('HPL Burn-in Test');
+    });
+
+    it('should run burn-in test with custom problem size using --N flag', () => {
+      const parsed = parse('hpl --burn-in --N 100000');
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('Problem Size (N): 100000');
+    });
+
+    it('should run burn-in test with custom problem size using --problem-size flag', () => {
+      const parsed = parse('hpl --burn-in --problem-size 80000');
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('Problem Size (N): 80000');
+    });
+
+    it('should show only first 5 iterations for large burn-in tests', () => {
+      const parsed = parse('hpl --burn-in --iterations 100');
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('Iteration 5/100');
+      expect(result.output).toContain('... (95 more iterations)');
+    });
+
+    it('should show all iterations for small burn-in tests', () => {
+      const parsed = parse('hpl --burn-in --iterations 3');
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('Iteration 1/3');
+      expect(result.output).toContain('Iteration 3/3');
+      expect(result.output).not.toContain('more iterations');
+    });
+
+    it('should report performance within expected range (450-500 TFLOPS)', () => {
+      const parsed = parse('hpl --burn-in --iterations 10');
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+
+      // Extract TFLOPS values from output
+      const tflopsMatches = result.output.matchAll(/Iteration \d+\/\d+: (\d+\.\d+) TFLOPS/g);
+      const tflopsValues = Array.from(tflopsMatches).map(match => parseFloat(match[1]));
+
+      // Verify all TFLOPS are in range
+      tflopsValues.forEach(tf => {
+        expect(tf).toBeGreaterThanOrEqual(450);
+        expect(tf).toBeLessThanOrEqual(500);
+      });
+    });
+
+    it('should calculate correct statistics', () => {
+      const parsed = parse('hpl --burn-in --iterations 10');
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+
+      // Extract statistics
+      const avgMatch = result.output.match(/Average Performance: (\d+\.\d+) TFLOPS/);
+      const minMatch = result.output.match(/Min Performance: (\d+\.\d+) TFLOPS/);
+      const maxMatch = result.output.match(/Max Performance: (\d+\.\d+) TFLOPS/);
+      const stdDevMatch = result.output.match(/Std Deviation: (\d+\.\d+) TFLOPS/);
+
+      expect(avgMatch).toBeTruthy();
+      expect(minMatch).toBeTruthy();
+      expect(maxMatch).toBeTruthy();
+      expect(stdDevMatch).toBeTruthy();
+
+      if (avgMatch && minMatch && maxMatch && stdDevMatch) {
+        const avg = parseFloat(avgMatch[1]);
+        const min = parseFloat(minMatch[1]);
+        const max = parseFloat(maxMatch[1]);
+        const stdDev = parseFloat(stdDevMatch[1]);
+
+        // Min should be less than or equal to average
+        expect(min).toBeLessThanOrEqual(avg);
+        // Max should be greater than or equal to average
+        expect(max).toBeGreaterThanOrEqual(avg);
+        // All should be in expected range
+        expect(min).toBeGreaterThanOrEqual(450);
+        expect(max).toBeLessThanOrEqual(500);
+        // Std deviation should be positive
+        expect(stdDev).toBeGreaterThan(0);
+      }
+    });
   });
 
   describe('GPU Burn Tests', () => {

@@ -20,16 +20,22 @@ export class BenchmarkSimulator extends BaseSimulator {
     this.registerCommand('hpl', this.handleHPL.bind(this), {
       name: 'hpl',
       description: 'High-Performance Linpack benchmark for measuring FLOPS',
-      usage: 'hpl [--nodes N] [--gpus-per-node N]',
+      usage: 'hpl [--burn-in] [--iterations N] [--nodes N] [--gpus-per-node N]',
       flags: [
         { long: 'nodes', description: 'Number of nodes to use (default: 1)', takesValue: true },
         { long: 'gpus-per-node', description: 'GPUs per node (default: 8)', takesValue: true },
         { long: 'problem-size', description: 'Problem size N (default: auto)', takesValue: true },
+        { long: 'N', description: 'Problem size N (alias for --problem-size)', takesValue: true },
+        { long: 'burn-in', description: 'Run extended burn-in test', takesValue: false },
+        { long: 'burnin', description: 'Run extended burn-in test (alias)', takesValue: false },
+        { long: 'iterations', description: 'Number of burn-in iterations (default: 100)', takesValue: true },
       ],
       examples: [
         'hpl',
         'hpl --nodes 4 --gpus-per-node 8',
         'hpl --problem-size 100000',
+        'hpl --burn-in --iterations 100',
+        'hpl --burn-in --N 90000 --iterations 50',
       ],
     });
 
@@ -97,6 +103,13 @@ export class BenchmarkSimulator extends BaseSimulator {
   }
 
   private handleHPL(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    const burnIn = this.hasAnyFlag(parsed, ['burn-in', 'burnin']);
+
+    if (burnIn) {
+      return this.handleHPLBurnIn(parsed, context);
+    }
+
+    // Regular HPL test
     const nodesStr = parsed.flags.get('nodes');
     const gpusPerNodeStr = parsed.flags.get('gpus-per-node');
     const problemSizeStr = parsed.flags.get('problem-size');
@@ -173,6 +186,62 @@ Status: ${efficiency > 0.80 ? '\x1b[32mPASSED\x1b[0m' : '\x1b[33mWARNING - Low e
 ${efficiency < 0.80 ? '\n\x1b[33mNote: Efficiency below 80% may indicate:\n  - Suboptimal configuration\n  - Hardware issues\n  - Thermal throttling\n  - Network bottlenecks\x1b[0m\n' : ''}
 ================================================================================
 `;
+
+    return this.createSuccess(output);
+  }
+
+  private handleHPLBurnIn(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    const iterationsStr = parsed.flags.get('iterations');
+    const iterations = parseInt(typeof iterationsStr === 'string' ? iterationsStr : '100', 10);
+    const problemSizeStr = parsed.flags.get('N') || parsed.flags.get('problem-size');
+    const problemSize = typeof problemSizeStr === 'string' ? problemSizeStr : '90000';
+
+    const node = this.getNode(context);
+    if (!node) {
+      return this.createError('No node selected');
+    }
+
+    let output = `HPL Burn-in Test\n`;
+    output += `================\n`;
+    output += `Problem Size (N): ${problemSize}\n`;
+    output += `Iterations: ${iterations}\n`;
+    output += `Start time: ${new Date().toLocaleString()}\n\n`;
+
+    output += `Running High-Performance Linpack burn-in...\n`;
+    output += `Each iteration takes approximately 2-3 minutes\n\n`;
+
+    // Simulate burn-in iterations
+    const tflopsValues: number[] = [];
+    for (let i = 1; i <= Math.min(5, iterations); i++) {
+      const gflops = 450 + Math.random() * 50; // 450-500 TFLOPS
+      tflopsValues.push(gflops);
+      output += `Iteration ${i}/${iterations}: ${gflops.toFixed(2)} TFLOPS\n`;
+    }
+
+    if (iterations > 5) {
+      output += `... (${iterations - 5} more iterations)\n`;
+      // Generate additional TFLOPS values for statistics
+      for (let i = 6; i <= iterations; i++) {
+        tflopsValues.push(450 + Math.random() * 50);
+      }
+    }
+
+    // Calculate statistics
+    const avgTFLOPS = tflopsValues.reduce((sum, tf) => sum + tf, 0) / tflopsValues.length;
+    const minTFLOPS = Math.min(...tflopsValues);
+    const maxTFLOPS = Math.max(...tflopsValues);
+
+    // Calculate standard deviation
+    const variance = tflopsValues.reduce((sum, tf) => sum + Math.pow(tf - avgTFLOPS, 2), 0) / tflopsValues.length;
+    const stdDev = Math.sqrt(variance);
+
+    output += `\nBurn-in Results:\n`;
+    output += `  Status: PASSED\n`;
+    output += `  Average Performance: ${avgTFLOPS.toFixed(1)} TFLOPS\n`;
+    output += `  Min Performance: ${minTFLOPS.toFixed(1)} TFLOPS\n`;
+    output += `  Max Performance: ${maxTFLOPS.toFixed(1)} TFLOPS\n`;
+    output += `  Std Deviation: ${stdDev.toFixed(1)} TFLOPS\n`;
+    output += `  Failures: 0\n`;
 
     return this.createSuccess(output);
   }
