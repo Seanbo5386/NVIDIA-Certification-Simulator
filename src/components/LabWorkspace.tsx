@@ -41,6 +41,12 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
   const [showHints, setShowHints] = useState<Record<string, number>>({});
   const isSmallScreen = useMediaQuery('(max-width: 1279px)');
 
+  // Initialize panel visibility based on screen size
+  useEffect(() => {
+    // Only auto-hide on component mount, not on resize
+    setLabPanelVisible(!isSmallScreen);
+  }, []); // Empty deps - run once on mount
+
   if (!activeScenario) {
     return null;
   }
