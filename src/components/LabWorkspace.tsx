@@ -115,8 +115,9 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
       {/* Backdrop for small screens */}
       {isSmallScreen && labPanelVisible && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/70 z-30 transition-opacity duration-300 cursor-pointer"
           onClick={() => setLabPanelVisible(false)}
+          title="Click to close lab guide"
         />
       )}
 
