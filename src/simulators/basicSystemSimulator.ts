@@ -111,6 +111,17 @@ export class BasicSystemSimulator extends BaseSimulator {
           usage: 'hostname',
           examples: ['hostname'],
         },
+        {
+          name: 'fw-check',
+          description: 'Check firmware versions on components',
+          usage: 'fw-check [bmc|gpu|switch|bluefield|transceiver|all]',
+          examples: [
+            'fw-check all',
+            'fw-check bmc',
+            'fw-check gpu',
+            'fw-check transceiver',
+          ],
+        },
       ],
     };
   }
@@ -169,6 +180,9 @@ export class BasicSystemSimulator extends BaseSimulator {
         return this.handleUname(parsed, context);
       case 'hostname':
         return this.handleHostname(parsed, context);
+      case 'fw-check':
+      case 'firmware':
+        return this.handleFirmwareCheck(parsed, context);
       default:
         return this.createError(`Unknown system command: ${parsed.baseCommand}`);
     }
@@ -544,7 +558,7 @@ Available types:
         if (gpu.temperature > 83) {
           const timestamp = 200 + gpu.id * 5;
           xidMessages.push(
-            `${formatTimestamp(timestamp)} NVRM: GPU at 0000:${(0x10 + gpu.id).toString(16).padStart(2, '0')}:00.0: GPU has reached thermal slowdown temperature (${gpu.temperature}C)`
+            `${formatTimestamp(timestamp)} NVRM: GPU at 0000:${(0x10 + gpu.id).toString(16).padStart(2, '0')}:00.0: GPU has reached thermal slowdown temperature (${Math.round(gpu.temperature)}C)`
           );
         }
 
@@ -1298,5 +1312,58 @@ Options:
   private handleHostname(_parsed: ParsedCommand, context: CommandContext): CommandResult {
     const hostname = context.currentNode || 'dgx-00';
     return this.createSuccess(hostname);
+  }
+
+  /**
+   * Handle firmware version check command
+   * Display firmware versions for various system components
+   */
+  private handleFirmwareCheck(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    const cluster = useSimulationStore.getState().cluster;
+    const node = cluster.nodes.find(n => n.id === context.currentNode) || cluster.nodes[0];
+
+    const component = parsed.positionalArgs[0] || 'all';
+
+    let output = `Firmware Version Report - ${node.hostname}\n`;
+    output += `${'='.repeat(50)}\n\n`;
+
+    if (component === 'all' || component === 'bmc') {
+      output += `BMC Firmware:\n`;
+      output += `  Version: 4.2.1-2024.11\n`;
+      output += `  Build Date: 2024-11-15\n`;
+      output += `  Status: Current\n\n`;
+    }
+
+    if (component === 'all' || component === 'gpu') {
+      output += `GPU VBIOS (per GPU):\n`;
+      node.gpus.forEach((_gpu: any, idx: number) => {
+        output += `  GPU ${idx}: 96.00.5F.00.01\n`;
+      });
+      output += `  Status: Current\n\n`;
+    }
+
+    if (component === 'all' || component === 'switch') {
+      output += `Network Switches:\n`;
+      output += `  Leaf Switch 1: MLNX-OS 3.10.3300\n`;
+      output += `  Leaf Switch 2: MLNX-OS 3.10.3300\n`;
+      output += `  Status: Current\n\n`;
+    }
+
+    if (component === 'all' || component === 'bluefield') {
+      output += `BlueField DPU:\n`;
+      output += `  DOCA Version: 2.7.0\n`;
+      output += `  BFB Version: 4.7.0-123\n`;
+      output += `  Status: Current\n\n`;
+    }
+
+    if (component === 'all' || component === 'transceiver') {
+      output += `Optical Transceivers:\n`;
+      node.hcas.forEach((_hca: any, idx: number) => {
+        output += `  Port ${idx + 1}: QSFP-DD 400G - FW 2.10.2000\n`;
+      });
+      output += `  Status: Current\n`;
+    }
+
+    return this.createSuccess(output);
   }
 }
