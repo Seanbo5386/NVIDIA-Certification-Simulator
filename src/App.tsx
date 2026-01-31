@@ -268,7 +268,7 @@ function App() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {/* Domain 1: Systems and Server Bring-Up */}
-                  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  <div data-testid="domain-1-card" className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                     <div className="text-sm text-nvidia-green font-semibold mb-2">
                       Domain 1 • 31%
                     </div>
@@ -302,7 +302,7 @@ function App() {
                   </div>
 
                   {/* Domain 2: Physical Layer Management */}
-                  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  <div data-testid="domain-2-card" className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                     <div className="text-sm text-nvidia-green font-semibold mb-2">
                       Domain 2 • 5%
                     </div>
@@ -332,7 +332,7 @@ function App() {
                   </div>
 
                   {/* Domain 3: Control Plane Installation */}
-                  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  <div data-testid="domain-3-card" className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                     <div className="text-sm text-nvidia-green font-semibold mb-2">
                       Domain 3 • 19%
                     </div>
@@ -366,7 +366,7 @@ function App() {
                   </div>
 
                   {/* Domain 4: Cluster Test and Verification */}
-                  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  <div data-testid="domain-4-card" className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                     <div className="text-sm text-nvidia-green font-semibold mb-2">
                       Domain 4 • 33%
                     </div>
@@ -400,7 +400,7 @@ function App() {
                   </div>
 
                   {/* Domain 5: Troubleshooting */}
-                  <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+                  <div data-testid="domain-5-card" className="bg-gray-800 rounded-lg p-6 border border-gray-700">
                     <div className="text-sm text-nvidia-green font-semibold mb-2">
                       Domain 5 • 12%
                     </div>
@@ -434,7 +434,7 @@ function App() {
                   </div>
 
                   {/* Practice Exam */}
-                  <div className="bg-gradient-to-br from-nvidia-green to-nvidia-darkgreen rounded-lg p-6 border border-nvidia-green">
+                  <div data-testid="practice-exam-card" className="bg-gradient-to-br from-nvidia-green to-nvidia-darkgreen rounded-lg p-6 border border-nvidia-green">
                     <div className="text-sm text-black font-semibold mb-2">
                       Full Exam Simulation
                     </div>

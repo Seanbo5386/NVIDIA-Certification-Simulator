@@ -23,8 +23,8 @@ test.describe('Domain 4 Lab Scenarios', () => {
       await helper.navigateToLabs();
 
       // Should show Domain 4 section
-      await expect(page.locator('text=Domain 4')).toBeVisible();
-      await expect(page.locator('text=Cluster Test')).toBeVisible();
+      await expect(page.locator('[data-testid="domain-4-card"]')).toBeVisible();
+      await expect(page.locator('text=Cluster Test & Verification')).toBeVisible();
     });
 
     test('should start Domain 4 lab when button clicked', async ({ page }) => {
@@ -33,7 +33,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
       await helper.navigateToLabs();
 
       // Find and click the Domain 4 "Start Labs" button
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       // Wait for lab workspace to appear
@@ -48,7 +48,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
       await helper.navigateToLabs();
 
       // Start Domain 4 lab
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -63,7 +63,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -77,7 +77,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -91,7 +91,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -107,7 +107,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -124,7 +124,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -142,7 +142,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -159,14 +159,14 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
 
       // Hints section should exist
       const labWorkspace = page.locator('[data-testid="lab-workspace"]');
-      await expect(labWorkspace.locator('text=HINTS').or(labWorkspace.locator('text=Hint'))).toBeVisible();
+      await expect(labWorkspace.getByRole('heading', { name: /HINTS/i })).toBeVisible();
     });
 
     test('should allow getting hints via terminal command', async ({ page }) => {
@@ -174,7 +174,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -195,7 +195,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -212,7 +212,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -226,7 +226,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -245,7 +245,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -265,7 +265,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
 
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
 
       // Lab workspace should still be functional
@@ -280,7 +280,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
       await helper.navigateToLabs();
 
       // Find Domain 1 card
-      const domain1Card = page.locator('text=Domain 1').locator('..').locator('..');
+      const domain1Card = page.locator('[data-testid="domain-1-card"]');
       await domain1Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -292,7 +292,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
       await helper.navigateToLabs();
 
       // Find Domain 5 card
-      const domain5Card = page.locator('text=Domain 5').locator('..').locator('..');
+      const domain5Card = page.locator('[data-testid="domain-5-card"]');
       await domain5Card.locator('button:has-text("Start Labs")').click();
 
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
@@ -306,7 +306,7 @@ test.describe('Domain 4 Lab Scenarios', () => {
       await helper.navigateToLabs();
 
       // Practice exam card should be visible
-      await expect(page.locator('text=Practice Exam').or(page.locator('text=NCP-AII Practice'))).toBeVisible();
+      await expect(page.locator('[data-testid="practice-exam-card"]')).toBeVisible();
     });
 
     test('should be able to start practice exam', async ({ page }) => {

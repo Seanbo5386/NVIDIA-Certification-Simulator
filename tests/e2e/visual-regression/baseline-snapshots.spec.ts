@@ -27,7 +27,7 @@ test.describe('Visual Regression Baselines', () => {
     test('clusterkit output', async ({ page }) => {
       const helper = await createHelper(page);
       await helper.navigateToSimulator();
-      await helper.typeCommand('clusterkit');
+      await helper.typeCommand('clusterkit assess');
       await helper.waitForCommandOutput();
       await page.waitForTimeout(500);
       await expect(page).toHaveScreenshot('clusterkit-1920.png', {
@@ -64,7 +64,7 @@ test.describe('Visual Regression Baselines', () => {
       await helper.navigateToSimulator();
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
       await page.waitForTimeout(500);
@@ -101,7 +101,7 @@ test.describe('Visual Regression Baselines', () => {
     test('clusterkit output', async ({ page }) => {
       const helper = await createHelper(page);
       await helper.navigateToSimulator();
-      await helper.typeCommand('clusterkit');
+      await helper.typeCommand('clusterkit assess');
       await helper.waitForCommandOutput();
       await page.waitForTimeout(500);
       await expect(page).toHaveScreenshot('clusterkit-1366.png', {
@@ -126,7 +126,7 @@ test.describe('Visual Regression Baselines', () => {
       await helper.navigateToSimulator();
       await helper.navigateToLabs();
 
-      const domain4Card = page.locator('text=Domain 4').locator('..').locator('..');
+      const domain4Card = page.locator('[data-testid="domain-4-card"]');
       await domain4Card.locator('button:has-text("Start Labs")').click();
       await expect(page.locator('[data-testid="lab-workspace"]')).toBeVisible({ timeout: 10000 });
       await page.waitForTimeout(500);
@@ -163,7 +163,7 @@ test.describe('Visual Regression Baselines', () => {
     test('clusterkit output', async ({ page }) => {
       const helper = await createHelper(page);
       await helper.navigateToSimulator();
-      await helper.typeCommand('clusterkit');
+      await helper.typeCommand('clusterkit assess');
       await helper.waitForCommandOutput();
       await page.waitForTimeout(500);
       await expect(page).toHaveScreenshot('clusterkit-2560.png', {
@@ -188,7 +188,7 @@ test.describe('Visual Regression Baselines', () => {
     test('terminal with verbose output', async ({ page }) => {
       const helper = await createHelper(page);
       await helper.navigateToSimulator();
-      await helper.typeCommand('clusterkit --verbose');
+      await helper.typeCommand('clusterkit assess --verbose');
       await helper.waitForCommandOutput();
       await page.waitForTimeout(500);
 
