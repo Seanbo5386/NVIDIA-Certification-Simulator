@@ -40,3 +40,9 @@ test-results.txt
 # Misc
 .vscode
 .history
+
+# Playwright MCP cache
+.playwright-mcp/
+
+# Windows artifacts
+nul
