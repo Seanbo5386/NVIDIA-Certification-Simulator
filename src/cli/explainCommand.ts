@@ -1,7 +1,7 @@
 import type { CommandDefinitionRegistry } from "./CommandDefinitionRegistry";
 import type { CommandDefinition } from "./types";
 
-interface ExplainOptions {
+export interface ExplainOptions {
   includeErrors?: boolean;
   includeExamples?: boolean;
   includePermissions?: boolean;

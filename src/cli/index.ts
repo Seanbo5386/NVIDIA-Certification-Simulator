@@ -7,12 +7,10 @@ export type {
   StateDomain,
   CommandOption,
   Subcommand,
-  SubcommandOption,
   ExitCode,
   UsagePattern,
   ErrorMessage,
   StateInteraction,
-  OutputFormat,
   CommandDefinition,
 } from "./types";
 
