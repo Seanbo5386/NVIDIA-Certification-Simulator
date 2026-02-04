@@ -26,8 +26,8 @@ The NVIDIA AI Infrastructure Certification Simulator provides realistic, hands-o
 - **Health Monitoring**: DCGM diagnostics, NVSM health checks
 - **InfiniBand Fabric**: Cable validation, error counters, fabric diagnostics
 - **Troubleshooting**: XID errors, performance issues, hardware faults
-- **BlueField DPUs**: Mode switching, OVS configuration (planned)
-- **Cluster Management**: Slurm, BCM, container tools (planned)
+- **BlueField DPUs**: Mode switching, configuration
+- **Cluster Management**: Slurm, BCM, Docker, NGC, Enroot containers
 
 ## ✨ Features
 
@@ -36,7 +36,8 @@ The NVIDIA AI Infrastructure Certification Simulator provides realistic, hands-o
 - Full xterm.js-powered terminal with ANSI color support
 - Command history (↑/↓ arrows)
 - Accurate output formatting matching real NVIDIA tools
-- Tab completion (coming soon)
+- Tab completion for commands and arguments
+- Pipe support (`|`) for command chaining with `grep`, `head`, `tail`
 
 ### 📊 Real-Time Dashboard
 
@@ -45,6 +46,8 @@ The NVIDIA AI Infrastructure Certification Simulator provides realistic, hands-o
 - Per-node GPU status cards
 - XID error tracking
 - InfiniBand fabric status
+- **Interactive NVLink topology visualization** (D3.js)
+- **InfiniBand fabric map** with switch and host details
 
 ### 🔧 Comprehensive Tool Simulation
 
@@ -88,6 +91,9 @@ The NVIDIA AI Infrastructure Certification Simulator provides realistic, hands-o
 - Command documentation with examples
 - Quick start tutorials
 - Exam domain coverage guides
+- **Learning commands**: `explain <command>` for detailed help, `hint` for lab guidance
+- Adaptive learning system that tracks progress and suggests focus areas
+- Domain-specific study modes with progress analytics
 
 ### 💾 State Management
 
@@ -225,41 +231,64 @@ Use the Dashboard to select which DGX node you're working on. The terminal autom
 
 ## 🧪 Interactive Labs
 
-The simulator includes guided labs covering all 5 NCP-AII exam domains:
+The simulator includes **64 guided lab scenarios** covering all 5 NCP-AII exam domains:
 
 ### Domain 1: Systems and Server Bring-Up (31%)
 
-- DGX SuperPOD Initial Deployment
-- Firmware Upgrade Workflow
-- Cable Validation
-- Power and Cooling Validation
+- BMC Configuration and IPMI Setup
+- Server POST Verification
+- Driver Installation and Troubleshooting
+- Firmware Verification and Updates
+- GPU Feature Discovery
+- Hardware Inventory Validation
+- Network Bonding Configuration
+- UEFI/BIOS Validation
+- Fabric Manager Setup
 
 ### Domain 2: Physical Layer Management (5%)
 
+- NVLink Topology Analysis
+- MIG Configuration and Advanced Reconfiguration
+- NVLink Error Recovery
+- GPU Power Optimization
 - BlueField DPU Configuration
-- MIG Partitioning
-- Advanced MIG Scenarios
 
 ### Domain 3: Control Plane Installation (19%)
 
 - BCM High Availability Setup
-- Slurm with GPU GRES
-- Container Toolkit Setup
-- Pyxis/Enroot with Slurm
+- Slurm Configuration and GRES Setup
+- Container Runtime Configuration
+- NGC Container Pipelines
+- Pyxis/Enroot Advanced Workflows
+- Lustre Client Validation
+- NFS Performance Tuning
+- DCGM Policy Setup
+- Kubernetes GPU Operator
 
 ### Domain 4: Cluster Test and Verification (33%)
 
-- Single-Node Stress Test
-- HPL Benchmark
-- NCCL Tests (Single & Multi-Node)
-- Storage Validation
+- DCGMI Diagnostics
+- NCCL Testing and Multi-Node Optimization
+- HPL Benchmark Workflows
+- Cluster Health Monitoring
+- GPU Bandwidth Validation
+- InfiniBand Stress Testing
+- AI Training Validation
+- ECC Error Investigation
+- Burn-in Testing
+- ClusterKit Assessment
 
 ### Domain 5: Troubleshooting and Optimization (12%)
 
-- Diagnose Low HPL Performance
-- GPU Faults in NVSM
-- InfiniBand Link Errors
-- Container GPU Visibility Issues
+- XID Error Analysis and Triage
+- Thermal Troubleshooting
+- PCIe Bandwidth Diagnosis
+- InfiniBand Fabric Partitioning
+- Container GPU Visibility Debug
+- Memory Leak Detection
+- Driver Mismatch Resolution
+- SEL Log Analysis
+- Cable Diagnostics
 
 ## 🏗️ Architecture
 
@@ -271,28 +300,41 @@ The simulator includes guided labs covering all 5 NCP-AII exam domains:
 - **Styling**: TailwindCSS with custom NVIDIA theme
 - **Icons**: Lucide React
 - **Build Tool**: Vite
-- **Visualization**: Recharts (for metrics), D3.js (planned for topology)
+- **Visualization**: Recharts (for metrics), D3.js (for topology and network maps)
 
 ### Project Structure
 
 ```
 src/
-├── components/           # React components
+├── components/           # React components (37 components)
 │   ├── Terminal.tsx     # xterm.js terminal emulator
 │   ├── Dashboard.tsx    # Real-time metrics dashboard
+│   ├── TopologyGraph.tsx # D3.js NVLink visualization
+│   ├── InfiniBandMap.tsx # D3.js InfiniBand fabric map
+│   ├── LearningPaths.tsx # Domain-based learning interface
+│   ├── ProgressAnalytics.tsx # Study progress tracking
 │   └── ...
-├── simulators/          # Command simulators
+├── simulators/          # Command simulators (20+ simulators)
 │   ├── nvidiaSmiSimulator.ts
 │   ├── dcgmiSimulator.ts
 │   ├── ipmitoolSimulator.ts
-│   └── infinibandSimulator.ts
+│   ├── infinibandSimulator.ts
+│   ├── slurmSimulator.ts
+│   ├── mellanoxSimulator.ts
+│   ├── bcmSimulator.ts
+│   └── ...
+├── data/                # Static data
+│   ├── scenarios/       # 64 lab scenario definitions
+│   └── examQuestions.json # 168 practice exam questions
 ├── store/               # Zustand state management
 │   └── simulationStore.ts
 ├── types/               # TypeScript type definitions
-│   ├── hardware.ts
-│   └── commands.ts
-├── utils/               # Utilities and factories
-│   └── clusterFactory.ts
+├── utils/               # Utilities (50+ modules)
+│   ├── clusterFactory.ts
+│   ├── adaptiveLearning.ts
+│   ├── tabCompletion.ts
+│   ├── commandMetadata.ts
+│   └── learningPaths/   # Learning path engine
 └── App.tsx             # Main application component
 ```
 
@@ -323,33 +365,30 @@ Common GPU XID errors you'll encounter:
 
 ## 🛣️ Roadmap
 
-### Recently Completed
+### Completed
 
 - [x] NVSM simulator with hierarchical navigation
 - [x] Mellanox tools (mlxconfig, mlxlink, mlxcables, mlxtrace)
 - [x] Slurm commands (sinfo, squeue, scontrol, sbatch, scancel)
 - [x] Docker/NGC/Singularity/Enroot commands
 - [x] BCM (Base Command Manager) simulator
-- [x] Interactive lab scenarios with step-by-step guidance (15 labs)
-- [x] Practice exam with timed questions (53 questions)
+- [x] Interactive lab scenarios with step-by-step guidance (64 labs across all domains)
+- [x] Practice exam with timed questions (168 questions)
 - [x] Fault injection system for troubleshooting practice
 - [x] Multi-node NCCL test simulation
 - [x] HPL benchmark simulation
+- [x] D3.js topology visualization (NVLink and InfiniBand fabric maps)
+- [x] Tab completion for commands
+- [x] Enhanced feedback system with "did you mean?" suggestions
+- [x] Domain-specific study modes
+- [x] Adaptive learning system
+- [x] Progress analytics dashboard
+- [x] Learning tools (`explain`, `hint` commands)
 
 ### In Progress
 
-- [ ] Expand practice exam to 150+ questions
-- [ ] Additional lab scenarios (target: 30+)
-- [ ] Enhanced feedback system with "did you mean?" suggestions
-- [ ] Domain-specific study modes
-
-### Coming Soon
-
-- [ ] D3.js topology visualization
-- [ ] Tab completion for commands
 - [ ] Command history search (Ctrl+R)
-- [ ] Adaptive learning system
-- [ ] Progress analytics dashboard
+- [ ] Expanded command documentation with official NVIDIA references
 
 ### Future Enhancements
 
@@ -364,7 +403,7 @@ Common GPU XID errors you'll encounter:
 
 ### Unit Tests
 
-Run unit tests with Vitest:
+The project has **1500+ unit tests** covering simulators, utilities, and components. Run with Vitest:
 
 ```bash
 npm run test           # Watch mode
