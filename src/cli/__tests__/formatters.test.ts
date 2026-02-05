@@ -27,3 +27,73 @@ describe("formatCommandHelp", () => {
     expect(output).toContain("test-cmd [OPTIONS]");
   });
 });
+
+describe("formatCommandHelp with options", () => {
+  it("should format global_options", () => {
+    const def = {
+      command: "test-cmd",
+      category: "general" as const,
+      description: "A test command",
+      synopsis: "test-cmd [OPTIONS]",
+      global_options: [
+        {
+          short: "h",
+          long: "help",
+          description: "Show help message",
+        },
+        {
+          short: "v",
+          long: "verbose",
+          description: "Enable verbose output",
+        },
+      ],
+    };
+
+    const output = formatCommandHelp(def);
+
+    expect(output).toContain("Options:");
+    expect(output).toContain("-h, --help");
+    expect(output).toContain("Show help message");
+    expect(output).toContain("-v, --verbose");
+  });
+
+  it("should truncate long descriptions at 60 chars", () => {
+    const def = {
+      command: "test-cmd",
+      category: "general" as const,
+      description: "Test",
+      synopsis: "test-cmd",
+      global_options: [
+        {
+          long: "option",
+          description:
+            "This is a very long description that should be truncated because it exceeds the maximum allowed width for option descriptions",
+        },
+      ],
+    };
+
+    const output = formatCommandHelp(def);
+
+    expect(output).toContain("...");
+    expect(output).not.toContain("exceeds the maximum");
+  });
+
+  it("should show count when options exceed limit", () => {
+    const options = Array.from({ length: 15 }, (_, i) => ({
+      long: `option${i}`,
+      description: `Option ${i}`,
+    }));
+
+    const def = {
+      command: "test-cmd",
+      category: "general" as const,
+      description: "Test",
+      synopsis: "test-cmd",
+      global_options: options,
+    };
+
+    const output = formatCommandHelp(def);
+
+    expect(output).toContain("... and 5 more options");
+  });
+});

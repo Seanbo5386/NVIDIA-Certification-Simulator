@@ -42,5 +42,29 @@ export function formatCommandHelp(def: CommandDefinition): string {
   output += `${ANSI.BOLD}Usage:${ANSI.RESET}\n`;
   output += `  ${def.synopsis}\n\n`;
 
+  // Options
+  if (def.global_options && def.global_options.length > 0) {
+    output += `${ANSI.BOLD}Options:${ANSI.RESET}\n`;
+    const maxOptions = 10;
+
+    for (const opt of def.global_options.slice(0, maxOptions)) {
+      const shortStr = opt.short ? `-${opt.short.replace(/^-+/, "")}` : "";
+      const longStr = opt.long ? `--${opt.long.replace(/^-+/, "")}` : "";
+      const combined = [shortStr, longStr].filter(Boolean).join(", ");
+
+      let desc = opt.description;
+      if (desc.length > 60) {
+        desc = desc.substring(0, 57) + "...";
+      }
+
+      output += `  ${ANSI.CYAN}${combined.padEnd(25)}${ANSI.RESET} ${desc}\n`;
+    }
+
+    if (def.global_options.length > maxOptions) {
+      output += `  ... and ${def.global_options.length - maxOptions} more options\n`;
+    }
+    output += "\n";
+  }
+
   return output;
 }
