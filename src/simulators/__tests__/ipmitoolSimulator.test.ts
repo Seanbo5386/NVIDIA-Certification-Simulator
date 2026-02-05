@@ -154,4 +154,16 @@ describe("IpmitoolSimulator", () => {
       expect(result.exitCode).toBe(0);
     });
   });
+
+  describe("Help from JSON definitions", () => {
+    it("ipmitool help should return registry-based help", async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const parsed = parse("ipmitool help");
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain("ipmitool");
+    });
+  });
 });

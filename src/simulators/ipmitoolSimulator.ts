@@ -294,9 +294,17 @@ export class IpmitoolSimulator extends BaseSimulator {
       return this.handleVersion();
     }
 
-    if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      const subcommand = parsed.subcommands[0];
-      return this.handleHelp(subcommand);
+    if (
+      this.hasAnyFlag(parsed, ["help", "h"]) ||
+      parsed.subcommands[0] === "help"
+    ) {
+      const subcommand =
+        parsed.subcommands[0] === "help"
+          ? parsed.subcommands[1]
+          : parsed.subcommands[0];
+      return (
+        this.getHelpFromRegistry("ipmitool") || this.handleHelp(subcommand)
+      );
     }
 
     // Only validate root-level flags when no subcommand is specified
