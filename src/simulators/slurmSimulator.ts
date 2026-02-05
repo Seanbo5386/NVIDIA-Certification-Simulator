@@ -214,7 +214,9 @@ export class SlurmSimulator extends BaseSimulator {
   executeSinfo(parsed: ParsedCommand, _context: CommandContext): CommandResult {
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
-      return this.createSuccess(this.generateSinfoHelp());
+      const registryHelp = this.getHelpFromRegistry("sinfo");
+      if (registryHelp) return registryHelp;
+      return this.createSuccess(this.generateSinfoHelp()); // Fallback
     }
 
     // Handle --version / -V
@@ -439,7 +441,9 @@ export class SlurmSimulator extends BaseSimulator {
   ): CommandResult {
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
-      return this.createSuccess(this.generateSqueueHelp());
+      const registryHelp = this.getHelpFromRegistry("squeue");
+      if (registryHelp) return registryHelp;
+      return this.createSuccess(this.generateSqueueHelp()); // Fallback
     }
 
     // Handle --version / -V
@@ -766,7 +770,9 @@ export class SlurmSimulator extends BaseSimulator {
   ): CommandResult {
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
-      return this.createSuccess(this.generateScontrolHelp());
+      const registryHelp = this.getHelpFromRegistry("scontrol");
+      if (registryHelp) return registryHelp;
+      return this.createSuccess(this.generateScontrolHelp()); // Fallback
     }
 
     // Handle --version / -V
@@ -1022,6 +1028,9 @@ export class SlurmSimulator extends BaseSimulator {
   ): CommandResult {
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
+      const registryHelp = this.getHelpFromRegistry("sbatch");
+      if (registryHelp) return registryHelp;
+      // Fallback to hardcoded help
       let output = `Usage: sbatch [OPTIONS] script [args...]\n`;
       output += `  -N, --nodes=N              number of nodes to use\n`;
       output += `  -n, --ntasks=N             number of tasks to run\n`;
@@ -1228,6 +1237,9 @@ export class SlurmSimulator extends BaseSimulator {
   executeSrun(parsed: ParsedCommand, context: CommandContext): CommandResult {
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
+      const registryHelp = this.getHelpFromRegistry("srun");
+      if (registryHelp) return registryHelp;
+      // Fallback to hardcoded help
       let output = `Usage: srun [OPTIONS] command [args...]\n`;
       output += `  -N, --nodes=N              number of nodes\n`;
       output += `  -n, --ntasks=N             number of tasks\n`;
@@ -1291,6 +1303,9 @@ export class SlurmSimulator extends BaseSimulator {
   ): CommandResult {
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
+      const registryHelp = this.getHelpFromRegistry("scancel");
+      if (registryHelp) return registryHelp;
+      // Fallback to hardcoded help
       let output = `Usage: scancel [OPTIONS] [job_id[_array_id][.step_id]]\n`;
       output += `  -u, --user=user            cancel jobs of a specific user\n`;
       output += `  -A, --account=account      cancel jobs of a specific account\n`;
@@ -1341,6 +1356,9 @@ export class SlurmSimulator extends BaseSimulator {
   executeSacct(parsed: ParsedCommand, _context: CommandContext): CommandResult {
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
+      const registryHelp = this.getHelpFromRegistry("sacct");
+      if (registryHelp) return registryHelp;
+      // Fallback to hardcoded help
       let output = `Usage: sacct [OPTIONS]\n`;
       output += `  -a, --allusers             display all users\n`;
       output += `  -j, --jobs=job_id(s)       comma separated list of jobs\n`;
