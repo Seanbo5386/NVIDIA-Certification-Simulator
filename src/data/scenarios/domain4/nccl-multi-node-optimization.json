@@ -23,11 +23,7 @@
         "Verify fabric connectivity",
         "Test node-to-node bandwidth"
       ],
-      "expectedCommands": [
-        "ibstat",
-        "ibhosts",
-        "ib_write_bw -d mlx5_0"
-      ],
+      "expectedCommands": ["ibstat", "ibhosts", "ib_write_bw -d mlx5_0"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -70,7 +66,11 @@
         {
           "type": "command-executed",
           "description": "Must configure NCCL network",
-          "expectedCommands": ["export NCCL_IB_DISABLE=0", "export NCCL_NET_GDR_LEVEL", "env | grep NCCL"],
+          "expectedCommands": [
+            "export NCCL_IB_DISABLE=0",
+            "export NCCL_NET_GDR_LEVEL",
+            "env | grep NCCL"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -144,7 +144,10 @@
         {
           "type": "command-executed",
           "description": "Must configure debug output",
-          "expectedCommands": ["export NCCL_DEBUG=INFO", "env | grep NCCL_DEBUG"],
+          "expectedCommands": [
+            "export NCCL_DEBUG=INFO",
+            "env | grep NCCL_DEBUG"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -180,7 +183,10 @@
         {
           "type": "command-executed",
           "description": "Must run multi-node NCCL tests",
-          "expectedCommands": ["mpirun -np 16 -npernode 8", "srun -N 2 --ntasks-per-node=8"],
+          "expectedCommands": [
+            "mpirun -np 16 -npernode 8",
+            "srun -N 2 --ntasks-per-node=8"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -254,7 +260,10 @@
         {
           "type": "command-executed",
           "description": "Must configure network buffers",
-          "expectedCommands": ["export NCCL_BUFFSIZE", "export NCCL_SOCKET_NTHREADS"],
+          "expectedCommands": [
+            "export NCCL_BUFFSIZE",
+            "export NCCL_SOCKET_NTHREADS"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -291,7 +300,11 @@
         {
           "type": "command-executed",
           "description": "Must troubleshoot multi-node issues",
-          "expectedCommands": ["NCCL_DEBUG=TRACE", "ibstat", "nvidia-smi topo -m"],
+          "expectedCommands": [
+            "NCCL_DEBUG=TRACE",
+            "ibstat",
+            "nvidia-smi topo -m"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -323,5 +336,16 @@
   ],
   "estimatedTime": 57,
   "prerequisites": ["domain4-nccl-test"],
-  "tags": ["nccl", "multi-node", "distributed", "infiniband", "optimization", "advanced"]
+  "tags": [
+    "nccl",
+    "multi-node",
+    "distributed",
+    "infiniband",
+    "optimization",
+    "advanced"
+  ],
+  "tier": 3,
+  "commandFamilies": ["gpu-monitoring", "infiniband-tools"],
+  "explanationGateId": "gate-domain4-nccl-multinode",
+  "toolHints": false
 }

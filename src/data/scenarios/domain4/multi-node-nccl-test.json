@@ -44,7 +44,10 @@
       ],
       "estimatedDuration": 3,
       "documentationLinks": [
-        { "title": "InfiniBand Fabric Utilities", "url": "https://docs.nvidia.com/networking/display/MLNXOFEDv531001/InfiniBand+Fabric+Utilities" }
+        {
+          "title": "InfiniBand Fabric Utilities",
+          "url": "https://docs.nvidia.com/networking/display/MLNXOFEDv531001/InfiniBand+Fabric+Utilities"
+        }
       ]
     },
     {
@@ -185,7 +188,10 @@
       "title": "Run Additional Collectives",
       "description": "Test other collective operations: all_gather, reduce_scatter, broadcast. Different workloads use different collectives.",
       "objectives": ["Verify other collective operations"],
-      "expectedCommands": ["nccl-test -t all_gather", "nccl-test -t reduce_scatter"],
+      "expectedCommands": [
+        "nccl-test -t all_gather",
+        "nccl-test -t reduce_scatter"
+      ],
       "validationRules": [
         {
           "type": "command-executed",
@@ -194,7 +200,9 @@
           "requireAllCommands": true
         }
       ],
-      "hints": ["Different collectives have different bandwidth characteristics"],
+      "hints": [
+        "Different collectives have different bandwidth characteristics"
+      ],
       "enhancedHints": [
         {
           "id": "step6-hint1",
@@ -216,5 +224,18 @@
   ],
   "estimatedTime": 25,
   "prerequisites": ["domain4-nccl-test"],
-  "tags": ["nccl", "multi-node", "bandwidth", "all-reduce", "collective", "infiniband", "distributed", "domain4"]
+  "tags": [
+    "nccl",
+    "multi-node",
+    "bandwidth",
+    "all-reduce",
+    "collective",
+    "infiniband",
+    "distributed",
+    "domain4"
+  ],
+  "tier": 3,
+  "commandFamilies": ["gpu-monitoring", "infiniband-tools", "diagnostics"],
+  "explanationGateId": "gate-domain4-multinode-nccl",
+  "toolHints": false
 }

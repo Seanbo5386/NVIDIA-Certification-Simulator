@@ -284,9 +284,7 @@
     "Achieved performance improvement over baseline"
   ],
   "estimatedTime": 55,
-  "prerequisites": [
-    "domain4-hpl-benchmark-workflow"
-  ],
+  "prerequisites": ["domain4-hpl-benchmark-workflow"],
   "tags": [
     "hpl",
     "linpack",
@@ -296,5 +294,9 @@
     "advanced",
     "domain4",
     "exam-critical"
-  ]
+  ],
+  "tier": 3,
+  "commandFamilies": ["gpu-monitoring", "container-tools"],
+  "explanationGateId": "gate-domain4-hpl-optimization",
+  "toolHints": false
 }

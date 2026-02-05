@@ -67,7 +67,10 @@
         {
           "type": "command-executed",
           "description": "Must prepare container environment",
-          "expectedCommands": ["docker pull nvcr.io/nvidia/pytorch", "docker run --rm --gpus all"],
+          "expectedCommands": [
+            "docker pull nvcr.io/nvidia/pytorch",
+            "docker run --rm --gpus all"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -95,10 +98,7 @@
         "Measure throughput",
         "Check for errors"
       ],
-      "expectedCommands": [
-        "nvidia-smi dmon -s puc -d 1",
-        "nvidia-smi"
-      ],
+      "expectedCommands": ["nvidia-smi dmon -s puc -d 1", "nvidia-smi"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -131,10 +131,7 @@
         "Scale across 8 GPUs",
         "Measure scaling efficiency"
       ],
-      "expectedCommands": [
-        "nvidia-smi",
-        "nvidia-smi topo -m"
-      ],
+      "expectedCommands": ["nvidia-smi", "nvidia-smi topo -m"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -167,10 +164,7 @@
         "Test cross-node communication",
         "Measure multi-node scaling"
       ],
-      "expectedCommands": [
-        "ibstat",
-        "nvidia-smi"
-      ],
+      "expectedCommands": ["ibstat", "nvidia-smi"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -203,10 +197,7 @@
         "Check loss progression",
         "Validate model accuracy"
       ],
-      "expectedCommands": [
-        "nvidia-smi",
-        "nvidia-smi dmon -s puc"
-      ],
+      "expectedCommands": ["nvidia-smi", "nvidia-smi dmon -s puc"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -239,10 +230,7 @@
         "Resume from checkpoint",
         "Verify continuity"
       ],
-      "expectedCommands": [
-        "df -h",
-        "ls -la /checkpoints"
-      ],
+      "expectedCommands": ["df -h", "ls -la /checkpoints"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -315,5 +303,9 @@
   ],
   "estimatedTime": 70,
   "prerequisites": ["domain3-container-runtime", "domain4-nccl-test"],
-  "tags": ["ai-training", "validation", "distributed", "pytorch", "advanced"]
+  "tags": ["ai-training", "validation", "distributed", "pytorch", "advanced"],
+  "tier": 3,
+  "commandFamilies": ["gpu-monitoring", "container-tools", "infiniband-tools"],
+  "explanationGateId": "gate-domain4-ai-validation",
+  "toolHints": false
 }

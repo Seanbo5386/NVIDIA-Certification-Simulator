@@ -68,7 +68,11 @@
         {
           "type": "command-executed",
           "description": "Must capture system configuration",
-          "expectedCommands": ["nvidia-smi -q", "cat /proc/driver/nvidia/version", "uname -a"],
+          "expectedCommands": [
+            "nvidia-smi -q",
+            "cat /proc/driver/nvidia/version",
+            "uname -a"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -104,7 +108,10 @@
         {
           "type": "command-executed",
           "description": "Must baseline memory bandwidth",
-          "expectedCommands": ["nvidia-smi --query-gpu=memory.total", "nvidia-smi -q -d MEMORY"],
+          "expectedCommands": [
+            "nvidia-smi --query-gpu=memory.total",
+            "nvidia-smi -q -d MEMORY"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -141,7 +148,10 @@
         {
           "type": "command-executed",
           "description": "Must baseline NVLink bandwidth",
-          "expectedCommands": ["nvidia-smi topo -m", "nvidia-smi nvlink --status"],
+          "expectedCommands": [
+            "nvidia-smi topo -m",
+            "nvidia-smi nvlink --status"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -169,10 +179,7 @@
         "Record bandwidth vs message size",
         "Document latency"
       ],
-      "expectedCommands": [
-        "nvidia-smi",
-        "nvidia-smi topo -m"
-      ],
+      "expectedCommands": ["nvidia-smi", "nvidia-smi topo -m"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -205,10 +212,7 @@
         "Test random IOPS",
         "Document filesystem performance"
       ],
-      "expectedCommands": [
-        "df -h",
-        "mount | grep -E 'lustre|gpfs|nfs'"
-      ],
+      "expectedCommands": ["df -h", "mount | grep -E 'lustre|gpfs|nfs'"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -286,7 +290,11 @@
         {
           "type": "command-executed",
           "description": "Must set up monitoring",
-          "expectedCommands": ["dcgmi discovery -l", "dcgmi stats --enable", "dcgmi health --check"],
+          "expectedCommands": [
+            "dcgmi discovery -l",
+            "dcgmi stats --enable",
+            "dcgmi health --check"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -318,5 +326,14 @@
   ],
   "estimatedTime": 57,
   "prerequisites": ["domain1-driver-install"],
-  "tags": ["baseline", "performance", "monitoring", "validation", "intermediate"]
+  "tags": [
+    "baseline",
+    "performance",
+    "monitoring",
+    "validation",
+    "intermediate"
+  ],
+  "tier": 2,
+  "commandFamilies": ["gpu-monitoring", "diagnostics"],
+  "explanationGateId": "gate-domain4-perf-baseline"
 }

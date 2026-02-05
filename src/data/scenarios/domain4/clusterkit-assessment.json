@@ -23,9 +23,7 @@
         "Review overall health status",
         "Identify all check categories"
       ],
-      "expectedCommands": [
-        "clusterkit"
-      ],
+      "expectedCommands": ["clusterkit"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -56,10 +54,7 @@
         "Review detailed check results",
         "Understand component-specific details"
       ],
-      "expectedCommands": [
-        "clusterkit --verbose",
-        "clusterkit -v"
-      ],
+      "expectedCommands": ["clusterkit --verbose", "clusterkit -v"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -100,7 +95,10 @@
         {
           "type": "command-executed",
           "description": "Must assess multiple nodes",
-          "expectedCommands": ["clusterkit --node dgx-01", "clusterkit --node dgx-02"]
+          "expectedCommands": [
+            "clusterkit --node dgx-01",
+            "clusterkit --node dgx-02"
+          ]
         }
       ],
       "hints": [
@@ -123,11 +121,7 @@
         "Correlate failures with specific components",
         "Use cross-validation with other tools"
       ],
-      "expectedCommands": [
-        "clusterkit",
-        "nvidia-smi",
-        "ibstat"
-      ],
+      "expectedCommands": ["clusterkit", "nvidia-smi", "ibstat"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -189,5 +183,16 @@
         }
       ]
     }
-  ]
+  ],
+  "tags": [
+    "clusterkit",
+    "health-check",
+    "validation",
+    "diagnostic",
+    "intermediate",
+    "domain4"
+  ],
+  "tier": 2,
+  "commandFamilies": ["gpu-monitoring", "infiniband-tools", "diagnostics"],
+  "explanationGateId": "gate-domain4-clusterkit"
 }

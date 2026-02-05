@@ -23,11 +23,7 @@
         "Record baseline error counts",
         "Verify fabric connectivity"
       ],
-      "expectedCommands": [
-        "ibstat",
-        "ibdiagnet",
-        "ibporterrors"
-      ],
+      "expectedCommands": ["ibstat", "ibdiagnet", "ibporterrors"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -60,10 +56,7 @@
         "Select test patterns",
         "Configure monitoring"
       ],
-      "expectedCommands": [
-        "ibstat",
-        "cat /etc/hosts | grep dgx"
-      ],
+      "expectedCommands": ["ibstat", "cat /etc/hosts | grep dgx"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -104,7 +97,10 @@
         {
           "type": "command-executed",
           "description": "Must run sustained bandwidth test",
-          "expectedCommands": ["ib_write_bw -d mlx5_0 -D", "ib_send_bw -d mlx5_0 -D"],
+          "expectedCommands": [
+            "ib_write_bw -d mlx5_0 -D",
+            "ib_send_bw -d mlx5_0 -D"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -132,10 +128,7 @@
         "Monitor port status",
         "Track performance metrics"
       ],
-      "expectedCommands": [
-        "watch -n 5 ibporterrors",
-        "perfquery -x"
-      ],
+      "expectedCommands": ["watch -n 5 ibporterrors", "perfquery -x"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -168,10 +161,7 @@
         "Measure bisection bandwidth",
         "Check for congestion"
       ],
-      "expectedCommands": [
-        "ibstat",
-        "iblinkinfo | grep -i active"
-      ],
+      "expectedCommands": ["ibstat", "iblinkinfo | grep -i active"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -204,10 +194,7 @@
         "Run GPU-aware bandwidth test",
         "Monitor GPU and NIC"
       ],
-      "expectedCommands": [
-        "nvidia-smi topo -m",
-        "ibstat"
-      ],
+      "expectedCommands": ["nvidia-smi topo -m", "ibstat"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -240,11 +227,7 @@
         "Compare to pre-stress baseline",
         "Verify all ports still active"
       ],
-      "expectedCommands": [
-        "ibstat",
-        "ibdiagnet",
-        "ibporterrors"
-      ],
+      "expectedCommands": ["ibstat", "ibdiagnet", "ibporterrors"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -317,5 +300,9 @@
   ],
   "estimatedTime": 63,
   "prerequisites": ["domain4-cluster-health"],
-  "tags": ["infiniband", "stress-test", "fabric", "validation", "advanced"]
+  "tags": ["infiniband", "stress-test", "fabric", "validation", "advanced"],
+  "tier": 3,
+  "commandFamilies": ["infiniband-tools", "gpu-monitoring"],
+  "explanationGateId": "gate-domain4-ib-stress",
+  "toolHints": false
 }

@@ -111,10 +111,7 @@
         "Understand error location significance",
         "Compare L1/L2 cache vs texture memory vs device memory errors"
       ],
-      "expectedCommands": [
-        "nvidia-smi -q -d ECC",
-        "nvidia-smi -i 3 -q -d ECC"
-      ],
+      "expectedCommands": ["nvidia-smi -q -d ECC", "nvidia-smi -i 3 -q -d ECC"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -225,10 +222,7 @@
         "Interpret diagnostic memory test results",
         "Identify memory subsystem issues"
       ],
-      "expectedCommands": [
-        "dcgmi diag -r 2",
-        "dcgmi diag -r 3"
-      ],
+      "expectedCommands": ["dcgmi diag -r 2", "dcgmi diag -r 3"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -300,9 +294,7 @@
     "Determined appropriate action based on findings"
   ],
   "estimatedTime": 50,
-  "prerequisites": [
-    "domain4-dcgmi-diag"
-  ],
+  "prerequisites": ["domain4-dcgmi-diag"],
   "tags": [
     "ecc",
     "memory-errors",
@@ -312,5 +304,9 @@
     "rma",
     "advanced",
     "exam-critical"
-  ]
+  ],
+  "tier": 3,
+  "commandFamilies": ["gpu-monitoring", "diagnostics"],
+  "explanationGateId": "gate-domain4-ecc-investigation",
+  "toolHints": false
 }

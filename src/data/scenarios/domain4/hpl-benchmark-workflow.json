@@ -69,7 +69,11 @@
         {
           "type": "command-executed",
           "description": "Must verify system readiness",
-          "expectedCommands": ["nvidia-smi", "nvidia-smi topo -m", "nvidia-smi nvlink --status"],
+          "expectedCommands": [
+            "nvidia-smi",
+            "nvidia-smi topo -m",
+            "nvidia-smi nvlink --status"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -105,7 +109,10 @@
         {
           "type": "command-executed",
           "description": "Must configure HPL parameters",
-          "expectedCommands": ["cat HPL.dat", "nvidia-smi --query-gpu=memory.total"],
+          "expectedCommands": [
+            "cat HPL.dat",
+            "nvidia-smi --query-gpu=memory.total"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -142,7 +149,10 @@
         {
           "type": "command-executed",
           "description": "Must set environment variables",
-          "expectedCommands": ["export CUDA_VISIBLE_DEVICES", "env | grep CUDA"],
+          "expectedCommands": [
+            "export CUDA_VISIBLE_DEVICES",
+            "env | grep CUDA"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -288,7 +298,10 @@
         {
           "type": "command-executed",
           "description": "Must troubleshoot low performance",
-          "expectedCommands": ["nvidia-smi -q -d PERFORMANCE", "nvidia-smi nvlink -e"],
+          "expectedCommands": [
+            "nvidia-smi -q -d PERFORMANCE",
+            "nvidia-smi nvlink -e"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -320,5 +333,16 @@
   ],
   "estimatedTime": 55,
   "prerequisites": ["domain1-driver-install", "domain2-nvlink-topo"],
-  "tags": ["hpl", "linpack", "benchmark", "performance", "validation", "advanced"]
+  "tags": [
+    "hpl",
+    "linpack",
+    "benchmark",
+    "performance",
+    "validation",
+    "advanced"
+  ],
+  "tier": 3,
+  "commandFamilies": ["gpu-monitoring"],
+  "explanationGateId": "gate-domain4-hpl-workflow",
+  "toolHints": false
 }

@@ -120,7 +120,10 @@
         {
           "type": "command-executed",
           "description": "Must check and terminate processes",
-          "expectedCommands": ["nvidia-smi pmon", "nvidia-smi --query-compute-apps"]
+          "expectedCommands": [
+            "nvidia-smi pmon",
+            "nvidia-smi --query-compute-apps"
+          ]
         }
       ],
       "hints": [
@@ -149,10 +152,7 @@
         "Verify reset completion",
         "Check GPU status after reset"
       ],
-      "expectedCommands": [
-        "nvidia-smi --gpu-reset -i 5",
-        "nvidia-smi -i 5 -q"
-      ],
+      "expectedCommands": ["nvidia-smi --gpu-reset -i 5", "nvidia-smi -i 5 -q"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -271,7 +271,11 @@
         {
           "type": "command-executed",
           "description": "Must understand reset limitations",
-          "expectedCommands": ["dmesg | grep", "ipmitool sel", "nvsm show health"]
+          "expectedCommands": [
+            "dmesg | grep",
+            "ipmitool sel",
+            "nvsm show health"
+          ]
         }
       ],
       "hints": [
@@ -300,9 +304,7 @@
     "Understood scenarios where reset won't work"
   ],
   "estimatedTime": 37,
-  "prerequisites": [
-    "domain1-driver-install"
-  ],
+  "prerequisites": ["domain1-driver-install"],
   "tags": [
     "gpu-reset",
     "recovery",
@@ -311,5 +313,8 @@
     "troubleshooting",
     "intermediate",
     "exam-critical"
-  ]
+  ],
+  "tier": 2,
+  "commandFamilies": ["gpu-monitoring", "bmc-hardware", "diagnostics"],
+  "explanationGateId": "gate-domain4-gpu-reset"
 }

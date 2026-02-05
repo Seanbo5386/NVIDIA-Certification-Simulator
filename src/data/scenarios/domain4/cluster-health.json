@@ -24,10 +24,7 @@
         "Record firmware and BIOS versions",
         "Verify consistency across nodes"
       ],
-      "expectedCommands": [
-        "bcm-node list",
-        "sinfo -Nel"
-      ],
+      "expectedCommands": ["bcm-node list", "sinfo -Nel"],
       "validationRules": [
         {
           "type": "command-executed",
@@ -76,10 +73,7 @@
         {
           "type": "command-executed",
           "description": "Must validate all GPUs",
-          "expectedCommands": [
-            "nvidia-smi",
-            "nvidia-smi --query-gpu"
-          ],
+          "expectedCommands": ["nvidia-smi", "nvidia-smi --query-gpu"],
           "requireAllCommands": true
         }
       ],
@@ -109,17 +103,12 @@
         "Identify any failed diagnostics",
         "Document any issues found"
       ],
-      "expectedCommands": [
-        "dcgmi diag -r 2"
-      ],
+      "expectedCommands": ["dcgmi diag -r 2"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must run cluster-wide diagnostics",
-          "expectedCommands": [
-            "dcgmi diag -r 2",
-            "dcgmi diag --mode 2"
-          ],
+          "expectedCommands": ["dcgmi diag -r 2", "dcgmi diag --mode 2"],
           "requireAllCommands": true
         }
       ],
@@ -150,19 +139,12 @@
         "Test management network connectivity",
         "Validate NVLink topology on all nodes"
       ],
-      "expectedCommands": [
-        "ibstat",
-        "nvidia-smi topo -m"
-      ],
+      "expectedCommands": ["ibstat", "nvidia-smi topo -m"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must verify network infrastructure",
-          "expectedCommands": [
-            "ibstat",
-            "nvidia-smi topo -m",
-            "ping"
-          ],
+          "expectedCommands": ["ibstat", "nvidia-smi topo -m", "ping"],
           "requireAllCommands": true
         }
       ],
@@ -193,19 +175,12 @@
         "Test read/write permissions",
         "Validate storage performance"
       ],
-      "expectedCommands": [
-        "df -h",
-        "mount | grep nfs"
-      ],
+      "expectedCommands": ["df -h", "mount | grep nfs"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must validate shared storage",
-          "expectedCommands": [
-            "df -h",
-            "mount | grep nfs",
-            "ls /cm_shared"
-          ],
+          "expectedCommands": ["df -h", "mount | grep nfs", "ls /cm_shared"],
           "requireAllCommands": true
         }
       ],
@@ -237,20 +212,12 @@
         "Test job submission and execution",
         "Verify accounting database"
       ],
-      "expectedCommands": [
-        "sinfo",
-        "scontrol show partition",
-        "squeue"
-      ],
+      "expectedCommands": ["sinfo", "scontrol show partition", "squeue"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must validate Slurm configuration",
-          "expectedCommands": [
-            "sinfo",
-            "scontrol show partition",
-            "squeue"
-          ],
+          "expectedCommands": ["sinfo", "scontrol show partition", "squeue"],
           "requireAllCommands": true
         }
       ],
@@ -281,18 +248,12 @@
         "Measure cluster-wide bandwidth",
         "Identify any communication bottlenecks"
       ],
-      "expectedCommands": [
-        "squeue",
-        "sinfo"
-      ],
+      "expectedCommands": ["squeue", "sinfo"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must verify cluster is ready for test",
-          "expectedCommands": [
-            "squeue",
-            "sinfo"
-          ],
+          "expectedCommands": ["squeue", "sinfo"],
           "requireAllCommands": true
         }
       ],
@@ -324,18 +285,12 @@
         "Create action items for issues",
         "Sign off on cluster readiness"
       ],
-      "expectedCommands": [
-        "bcm validate pod",
-        "sinfo"
-      ],
+      "expectedCommands": ["bcm validate pod", "sinfo"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must generate validation summary",
-          "expectedCommands": [
-            "bcm validate pod",
-            "sinfo"
-          ],
+          "expectedCommands": ["bcm validate pod", "sinfo"],
           "requireAllCommands": true
         }
       ],
@@ -380,5 +335,14 @@
     "acceptance-testing",
     "production-readiness",
     "advanced"
-  ]
+  ],
+  "tier": 3,
+  "commandFamilies": [
+    "gpu-monitoring",
+    "infiniband-tools",
+    "cluster-tools",
+    "diagnostics"
+  ],
+  "explanationGateId": "gate-domain4-cluster-health",
+  "toolHints": false
 }

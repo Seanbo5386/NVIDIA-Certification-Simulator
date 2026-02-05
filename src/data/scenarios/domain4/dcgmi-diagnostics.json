@@ -23,18 +23,12 @@
         "Verify nv-hostengine is running",
         "Test basic dcgmi connectivity"
       ],
-      "expectedCommands": [
-        "dcgmi --version",
-        "dcgmi discovery -l"
-      ],
+      "expectedCommands": ["dcgmi --version", "dcgmi discovery -l"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must check DCGM installation",
-          "expectedCommands": [
-            "dcgmi --version",
-            "dcgmi -v"
-          ],
+          "expectedCommands": ["dcgmi --version", "dcgmi -v"],
           "requireAllCommands": true
         }
       ],
@@ -63,18 +57,12 @@
         "View basic GPU properties",
         "Verify GPU count matches physical installation"
       ],
-      "expectedCommands": [
-        "dcgmi discovery -l",
-        "dcgmi discovery -c"
-      ],
+      "expectedCommands": ["dcgmi discovery -l", "dcgmi discovery -c"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must list GPUs with DCGM",
-          "expectedCommands": [
-            "dcgmi discovery -l",
-            "dcgmi discovery"
-          ],
+          "expectedCommands": ["dcgmi discovery -l", "dcgmi discovery"],
           "requireAllCommands": true
         }
       ],
@@ -103,18 +91,12 @@
         "Interpret diagnostic results",
         "Identify any failed tests"
       ],
-      "expectedCommands": [
-        "dcgmi diag -r 1",
-        "dcgmi diag --run 1"
-      ],
+      "expectedCommands": ["dcgmi diag -r 1", "dcgmi diag --run 1"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must run Level 1 diagnostics",
-          "expectedCommands": [
-            "dcgmi diag -r 1",
-            "dcgmi diag --run 1"
-          ],
+          "expectedCommands": ["dcgmi diag -r 1", "dcgmi diag --run 1"],
           "requireAllCommands": true
         }
       ],
@@ -145,18 +127,12 @@
         "Monitor test progress",
         "Review detailed test results"
       ],
-      "expectedCommands": [
-        "dcgmi diag -r 2",
-        "dcgmi diag --run 2"
-      ],
+      "expectedCommands": ["dcgmi diag -r 2", "dcgmi diag --run 2"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must run Level 2 diagnostics with stress tests",
-          "expectedCommands": [
-            "dcgmi diag -r 2",
-            "dcgmi diag --run 2"
-          ],
+          "expectedCommands": ["dcgmi diag -r 2", "dcgmi diag --run 2"],
           "requireAllCommands": true
         }
       ],
@@ -187,18 +163,12 @@
         "Understand time requirements",
         "Know Level 3 use cases"
       ],
-      "expectedCommands": [
-        "dcgmi diag --help",
-        "dcgmi diag -r 3"
-      ],
+      "expectedCommands": ["dcgmi diag --help", "dcgmi diag -r 3"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must understand Level 3 diagnostics",
-          "expectedCommands": [
-            "dcgmi diag --help",
-            "dcgmi diag -r 3"
-          ],
+          "expectedCommands": ["dcgmi diag --help", "dcgmi diag -r 3"],
           "requireAllCommands": true
         }
       ],
@@ -228,17 +198,12 @@
         "Use dcgmi dmon command",
         "Interpret metric values"
       ],
-      "expectedCommands": [
-        "dcgmi dmon",
-        "dcgmi dmon -e"
-      ],
+      "expectedCommands": ["dcgmi dmon", "dcgmi dmon -e"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must monitor GPU metrics",
-          "expectedCommands": [
-            "dcgmi dmon"
-          ],
+          "expectedCommands": ["dcgmi dmon"],
           "requireAllCommands": true
         }
       ],
@@ -268,18 +233,12 @@
         "Review any XID errors",
         "Understand error significance"
       ],
-      "expectedCommands": [
-        "dcgmi stats -v",
-        "dcgmi health -c"
-      ],
+      "expectedCommands": ["dcgmi stats -v", "dcgmi health -c"],
       "validationRules": [
         {
           "type": "command-executed",
           "description": "Must check GPU statistics and health",
-          "expectedCommands": [
-            "dcgmi stats",
-            "dcgmi health"
-          ],
+          "expectedCommands": ["dcgmi stats", "dcgmi health"],
           "requireAllCommands": true
         }
       ],
@@ -311,14 +270,15 @@
     "Checked telemetry and ECC error counts"
   ],
   "estimatedTime": 45,
-  "prerequisites": [
-    "domain1-driver-install"
-  ],
+  "prerequisites": ["domain1-driver-install"],
   "tags": [
     "dcgm",
     "diagnostics",
     "health-monitoring",
     "validation",
     "intermediate"
-  ]
+  ],
+  "tier": 2,
+  "commandFamilies": ["diagnostics"],
+  "explanationGateId": "gate-domain4-dcgmi-diag"
 }

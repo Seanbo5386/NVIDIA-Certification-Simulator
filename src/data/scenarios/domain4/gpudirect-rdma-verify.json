@@ -50,7 +50,10 @@
       ],
       "estimatedDuration": 3,
       "documentationLinks": [
-        { "title": "GPUDirect RDMA Documentation", "url": "https://docs.nvidia.com/cuda/gpudirect-rdma/index.html" }
+        {
+          "title": "GPUDirect RDMA Documentation",
+          "url": "https://docs.nvidia.com/cuda/gpudirect-rdma/index.html"
+        }
       ]
     },
     {
@@ -89,7 +92,10 @@
       "title": "Check Mellanox OFED Version",
       "description": "GPUDirect RDMA requires compatible versions of NVIDIA driver, CUDA, and Mellanox OFED. Version mismatches can cause GPUDirect to fail silently.",
       "objectives": ["Verify OFED compatibility"],
-      "expectedCommands": ["ofed_info -s", "nvidia-smi --query-gpu=driver_version --format=csv"],
+      "expectedCommands": [
+        "ofed_info -s",
+        "nvidia-smi --query-gpu=driver_version --format=csv"
+      ],
       "validationRules": [
         {
           "type": "command-executed",
@@ -115,7 +121,10 @@
       ],
       "estimatedDuration": 3,
       "documentationLinks": [
-        { "title": "MLNX_OFED Release Notes", "url": "https://docs.nvidia.com/networking/display/MLNXOFEDv531001/Release+Notes" }
+        {
+          "title": "MLNX_OFED Release Notes",
+          "url": "https://docs.nvidia.com/networking/display/MLNXOFEDv531001/Release+Notes"
+        }
       ]
     },
     {
@@ -192,7 +201,10 @@
       ],
       "estimatedDuration": 5,
       "documentationLinks": [
-        { "title": "NCCL Environment Variables", "url": "https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/env.html" }
+        {
+          "title": "NCCL Environment Variables",
+          "url": "https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/env.html"
+        }
       ]
     },
     {
@@ -237,5 +249,17 @@
   ],
   "estimatedTime": 30,
   "prerequisites": [],
-  "tags": ["gpudirect", "rdma", "peer-memory", "infiniband", "performance", "nccl", "domain4"]
+  "tags": [
+    "gpudirect",
+    "rdma",
+    "peer-memory",
+    "infiniband",
+    "performance",
+    "nccl",
+    "domain4"
+  ],
+  "tier": 3,
+  "commandFamilies": ["gpu-monitoring", "infiniband-tools"],
+  "explanationGateId": "gate-domain4-gpudirect-rdma",
+  "toolHints": false
 }

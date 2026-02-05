@@ -153,7 +153,11 @@
         {
           "type": "command-executed",
           "description": "Must review all burn-in test types",
-          "expectedCommands": ["nccl-test --burn-in", "hpl --burn-in", "nemo burn-in"],
+          "expectedCommands": [
+            "nccl-test --burn-in",
+            "hpl --burn-in",
+            "nemo burn-in"
+          ],
           "requireAllCommands": true
         }
       ],
@@ -212,5 +216,19 @@
         }
       ]
     }
-  ]
+  ],
+  "tags": [
+    "burn-in",
+    "nccl",
+    "hpl",
+    "nemo",
+    "performance",
+    "stability",
+    "advanced",
+    "domain4"
+  ],
+  "tier": 3,
+  "commandFamilies": ["gpu-monitoring", "infiniband-tools", "diagnostics"],
+  "explanationGateId": "gate-domain4-burn-in",
+  "toolHints": false
 }

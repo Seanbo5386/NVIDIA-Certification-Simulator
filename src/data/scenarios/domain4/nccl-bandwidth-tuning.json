@@ -282,9 +282,7 @@
     "Documented optimal configuration"
   ],
   "estimatedTime": 55,
-  "prerequisites": [
-    "domain4-nccl-test"
-  ],
+  "prerequisites": ["domain4-nccl-test"],
   "tags": [
     "nccl",
     "bandwidth",
@@ -295,5 +293,9 @@
     "advanced",
     "domain4",
     "exam-critical"
-  ]
+  ],
+  "tier": 3,
+  "commandFamilies": ["gpu-monitoring", "infiniband-tools"],
+  "explanationGateId": "gate-domain4-nccl-tuning",
+  "toolHints": false
 }
