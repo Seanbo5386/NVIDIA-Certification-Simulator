@@ -13,6 +13,10 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  useTierNotificationStore,
+  FAMILY_METADATA,
+} from "./tierNotificationStore";
 
 // ============================================================================
 // TYPES
@@ -263,12 +267,17 @@ export const useLearningProgressStore = create<LearningProgressState>()(
       /**
        * Updates progress for a specific tier within a command family
        * Automatically checks and unlocks higher tiers when threshold is met
+       * Triggers a celebratory notification when a new tier is unlocked
        */
       updateTierProgress: (
         familyId: string,
         tier: number,
         _scenarioId: string,
       ): void => {
+        // Get current tier before update to detect new unlocks
+        const currentState = get();
+        const previousTier = currentState.unlockedTiers[familyId] || 1;
+
         set((state) => {
           const progress =
             state.tierProgress[familyId] || createDefaultTierProgress();
@@ -312,6 +321,23 @@ export const useLearningProgressStore = create<LearningProgressState>()(
             },
           };
         });
+
+        // Trigger notification if a new tier was unlocked
+        const updatedState = get();
+        const newTier = updatedState.unlockedTiers[familyId] || 1;
+        if (newTier > previousTier) {
+          const familyMeta = FAMILY_METADATA[familyId];
+          if (familyMeta) {
+            useTierNotificationStore
+              .getState()
+              .addNotification(
+                familyId,
+                familyMeta.name,
+                familyMeta.icon,
+                newTier,
+              );
+          }
+        }
       },
 
       /**
