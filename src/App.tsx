@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { SimulatorView } from "./components/SimulatorView";
 import { FaultInjection } from "./components/FaultInjection";
 import { LabWorkspace } from "./components/LabWorkspace";
@@ -7,8 +7,11 @@ import { WelcomeScreen } from "./components/WelcomeScreen";
 import { Documentation } from "./components/Documentation";
 import { StudyDashboard } from "./components/StudyDashboard";
 import { LearningPaths } from "./components/LearningPaths";
+import { SpacedReviewDrill } from "./components/SpacedReviewDrill";
+import { TierUnlockNotificationContainer } from "./components/TierUnlockNotification";
 import { getTotalPathStats } from "./utils/learningPathEngine";
 import { useSimulationStore } from "./store/simulationStore";
+import { useLearningProgressStore } from "./store/learningProgressStore";
 import { useMetricsSimulation } from "./hooks/useMetricsSimulation";
 import { initializeScenario } from "./utils/scenarioLoader";
 import { safeParseClusterJSON } from "./utils/clusterSchema";
@@ -34,10 +37,15 @@ function App() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [showStudyDashboard, setShowStudyDashboard] = useState(false);
   const [showLearningPaths, setShowLearningPaths] = useState(false);
+  const [showSpacedReviewDrill, setShowSpacedReviewDrill] = useState(false);
   const [learningProgress, setLearningProgress] = useState({
     completed: 0,
     total: 0,
   });
+
+  // Get due reviews count from learning progress store
+  const dueReviews = useLearningProgressStore((state) => state.getDueReviews());
+  const dueReviewCount = dueReviews.length;
 
   const {
     cluster,
@@ -120,6 +128,18 @@ function App() {
     setCurrentView("simulator"); // Switch to simulator view
     setShowExamWorkspace(true); // Show exam workspace overlay
   };
+
+  // Handler for tier unlock notification "Try Now" button
+  const handleNavigateToTier = useCallback(
+    (familyId: string, _tier: number) => {
+      // Navigate to Labs view and open Learning Paths
+      setCurrentView("labs");
+      setShowLearningPaths(true);
+      // Could be enhanced to navigate to specific family/tier content
+      console.log(`Navigating to ${familyId} tier ${_tier}`);
+    },
+    [],
+  );
 
   return (
     <div className="h-screen bg-gray-900 text-gray-100 flex flex-col overflow-hidden">
@@ -226,7 +246,7 @@ function App() {
           <button
             data-testid="nav-labs"
             onClick={() => setCurrentView("labs")}
-            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors relative ${
               currentView === "labs"
                 ? "border-nvidia-green text-nvidia-green"
                 : "border-transparent text-gray-400 hover:text-gray-200"
@@ -234,6 +254,20 @@ function App() {
           >
             <Settings className="w-4 h-4" />
             <span className="font-medium">Labs & Scenarios</span>
+            {/* Review Notification Badge */}
+            {dueReviewCount > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSpacedReviewDrill(true);
+                }}
+                className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-full transition-colors shadow-md"
+                title={`${dueReviewCount} review${dueReviewCount > 1 ? "s" : ""} due`}
+                aria-label={`${dueReviewCount} reviews due. Click to start review drill.`}
+              >
+                {dueReviewCount > 9 ? "9+" : dueReviewCount}
+              </button>
+            )}
           </button>
           <button
             onClick={() => setCurrentView("docs")}
@@ -625,6 +659,21 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Spaced Review Drill Modal */}
+      {showSpacedReviewDrill && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center p-4">
+          <SpacedReviewDrill
+            onComplete={() => setShowSpacedReviewDrill(false)}
+            onSnooze={() => setShowSpacedReviewDrill(false)}
+          />
+        </div>
+      )}
+
+      {/* Tier Unlock Notifications */}
+      <TierUnlockNotificationContainer
+        onNavigateToTier={handleNavigateToTier}
+      />
     </div>
   );
 }
