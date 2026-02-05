@@ -44,3 +44,7 @@ export {
   formatExitCode,
   formatValidationError,
 } from "./formatters";
+
+// State Engine
+export { StateEngine } from "./StateEngine";
+export type { ExecutionContext, CanExecuteResult } from "./StateEngine";

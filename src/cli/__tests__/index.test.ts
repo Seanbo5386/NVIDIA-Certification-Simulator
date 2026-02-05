@@ -54,4 +54,10 @@ describe("CLI Module Exports", () => {
     expect(formatExitCode).toBeDefined();
     expect(formatValidationError).toBeDefined();
   });
+
+  it("should export StateEngine", async () => {
+    const { StateEngine } = await import("../index");
+
+    expect(StateEngine).toBeDefined();
+  });
 });
