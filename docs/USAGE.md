@@ -125,6 +125,31 @@ The `practice` command generates learning exercises with:
 - Expected command answers
 - Available categories: gpu_management, diagnostics, cluster_management, networking, containers, storage
 
+### Command Documentation from JSON Definitions
+
+All simulator commands now use comprehensive JSON definitions for help output.
+This provides:
+
+- **Consistent formatting** across all commands
+- **Rich examples** with output previews
+- **Exit code documentation** explaining return values
+- **Common error messages** with resolutions
+- **Related commands** suggestions
+
+Commands like `nvidia-smi --help`, `sinfo --help`, `dcgmi --help`, etc. now display
+structured documentation sourced from `src/data/output/` JSON files.
+
+#### How it Works
+
+When you run `command --help`, the simulator:
+
+1. Looks up the command in the JSON definition registry
+2. Formats the definition using ANSI colors for terminal display
+3. Shows usage patterns, options, examples, and error resolutions
+
+This ensures help output is always accurate and matches the actual command behavior
+defined in the JSON specification files.
+
 ### GPU Management with nvidia-smi
 
 #### Basic Status
