@@ -2,6 +2,7 @@
  * CommandFamilyCards Component - Display command family cards showing the tool landscape
  *
  * Users can view all command families, see tool details, and start quizzes.
+ * Now includes progress indicators showing quiz pass rate and spaced repetition streaks.
  */
 
 import React, { useState, useMemo } from "react";
@@ -11,6 +12,8 @@ import type {
   Tool,
   CommandFamiliesData,
 } from "../types/commandFamilies";
+import { useLearningProgressStore } from "@/store/learningProgressStore";
+import { ProgressRing, MasteryBadge } from "./ProgressRing";
 
 interface CommandFamilyCardsProps {
   /** Show specific family, or all if undefined */
@@ -195,9 +198,21 @@ export const CommandFamilyCards: React.FC<CommandFamilyCardsProps> = ({
     );
   };
 
+  // Get progress data from store
+  const { familyQuizScores, reviewSchedule } = useLearningProgressStore();
+
   // Render a family card
   const renderFamilyCard = (family: CommandFamily) => {
     const isExpanded = mode === "full" || expandedFamilies[family.id];
+
+    // Get quiz and review data for this family
+    const quizResult = familyQuizScores[family.id];
+    const reviewEntry = reviewSchedule[family.id];
+
+    // Calculate quiz pass rate (score out of 100)
+    const quizPassRate = quizResult?.score || 0;
+    const hasPassed = quizResult?.passed || false;
+    const consecutiveSuccesses = reviewEntry?.consecutiveSuccesses || 0;
 
     return (
       <div
@@ -219,6 +234,14 @@ export const CommandFamilyCards: React.FC<CommandFamilyCardsProps> = ({
               </h3>
             </div>
             <div className="flex items-center gap-2">
+              {/* Progress Ring showing quiz score */}
+              {mode === "full" && (
+                <ProgressRing
+                  progress={quizPassRate}
+                  size="sm"
+                  showLabel={true}
+                />
+              )}
               <span className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-400 font-medium">
                 {family.tools.length} tools
               </span>
@@ -241,6 +264,18 @@ export const CommandFamilyCards: React.FC<CommandFamilyCardsProps> = ({
               )}
             </div>
           </div>
+
+          {/* Mastery Badge for spaced repetition */}
+          {mode === "full" && (hasPassed || consecutiveSuccesses > 0) && (
+            <div className="flex items-center gap-2 mb-3">
+              {hasPassed && (
+                <span className="px-2 py-0.5 bg-green-900/50 text-green-400 border border-green-700 rounded text-xs font-medium">
+                  Quiz Passed
+                </span>
+              )}
+              <MasteryBadge consecutiveSuccesses={consecutiveSuccesses} />
+            </div>
+          )}
 
           {/* Description */}
           <p className="text-gray-400 text-sm leading-relaxed mb-4">

@@ -9,6 +9,7 @@ import { StudyDashboard } from "./components/StudyDashboard";
 import { LearningPaths } from "./components/LearningPaths";
 import { SpacedReviewDrill } from "./components/SpacedReviewDrill";
 import { TierUnlockNotificationContainer } from "./components/TierUnlockNotification";
+import { ExamGauntlet } from "./components/ExamGauntlet";
 import { getTotalPathStats } from "./utils/learningPathEngine";
 import { useSimulationStore } from "./store/simulationStore";
 import { useLearningProgressStore } from "./store/learningProgressStore";
@@ -26,6 +27,7 @@ import {
   Upload,
   TrendingUp,
   GraduationCap,
+  Trophy,
 } from "lucide-react";
 
 type View = "simulator" | "labs" | "docs";
@@ -38,6 +40,7 @@ function App() {
   const [showStudyDashboard, setShowStudyDashboard] = useState(false);
   const [showLearningPaths, setShowLearningPaths] = useState(false);
   const [showSpacedReviewDrill, setShowSpacedReviewDrill] = useState(false);
+  const [showExamGauntlet, setShowExamGauntlet] = useState(false);
   const [learningProgress, setLearningProgress] = useState({
     completed: 0,
     total: 0,
@@ -509,6 +512,43 @@ function App() {
                     </button>
                   </div>
 
+                  {/* Exam Gauntlet */}
+                  <div
+                    data-testid="exam-gauntlet-card"
+                    className="bg-gray-800 rounded-lg p-6 border border-orange-600"
+                  >
+                    <div className="text-sm text-orange-400 font-semibold mb-2 flex items-center gap-2">
+                      <Trophy className="w-4 h-4" />
+                      Timed Challenge
+                    </div>
+                    <h3 className="text-lg font-bold mb-3">Exam Gauntlet</h3>
+                    <p className="text-sm text-gray-300 mb-4">
+                      Tackle 10 weighted scenarios in a timed exam format.
+                      Simulates the real DCA certification experience with
+                      domain-based scoring.
+                    </p>
+                    <ul className="space-y-2 text-sm text-gray-300 mb-4">
+                      <li className="flex items-start gap-2">
+                        <span className="text-orange-400">▸</span>
+                        10 scenarios weighted by exam domains
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-orange-400">▸</span>
+                        Choose 30, 60, or 90 minute time limit
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-orange-400">▸</span>
+                        Detailed domain performance breakdown
+                      </li>
+                    </ul>
+                    <button
+                      onClick={() => setShowExamGauntlet(true)}
+                      className="w-full bg-orange-600 text-white py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors"
+                    >
+                      Start Gauntlet
+                    </button>
+                  </div>
+
                   {/* Learning Paths */}
                   <div className="bg-gray-800 rounded-lg p-6 border border-purple-600">
                     <div className="text-sm text-purple-400 font-semibold mb-2 flex items-center gap-2">
@@ -668,6 +708,11 @@ function App() {
             onSnooze={() => setShowSpacedReviewDrill(false)}
           />
         </div>
+      )}
+
+      {/* Exam Gauntlet Modal */}
+      {showExamGauntlet && (
+        <ExamGauntlet onExit={() => setShowExamGauntlet(false)} />
       )}
 
       {/* Tier Unlock Notifications */}

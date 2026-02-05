@@ -63,10 +63,11 @@ describe("CommandFamilyCards", () => {
     it("should display tool names in full mode", () => {
       render(<CommandFamilyCards familyId="gpu-monitoring" mode="full" />);
 
-      expect(screen.getByText("nvidia-smi")).toBeInTheDocument();
-      expect(screen.getByText("nvtop")).toBeInTheDocument();
-      expect(screen.getByText("dcgmi")).toBeInTheDocument();
-      expect(screen.getByText("nvsm")).toBeInTheDocument();
+      // Tool names may appear multiple times (in tool list and as related tools)
+      expect(screen.getAllByText("nvidia-smi").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("nvtop").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("dcgmi").length).toBeGreaterThan(0);
+      expect(screen.getAllByText("nvsm").length).toBeGreaterThan(0);
     });
 
     it("should display tool taglines", () => {
@@ -89,8 +90,9 @@ describe("CommandFamilyCards", () => {
     it("should expand tool details when clicked", () => {
       render(<CommandFamilyCards familyId="gpu-monitoring" mode="full" />);
 
-      // Click on nvidia-smi tool header
-      const toolHeader = screen.getByText("nvidia-smi").closest("button");
+      // Click on nvidia-smi tool header (first occurrence is the tool button)
+      const toolHeaders = screen.getAllByText("nvidia-smi");
+      const toolHeader = toolHeaders[0].closest("button");
       expect(toolHeader).toBeInTheDocument();
       fireEvent.click(toolHeader!);
 
@@ -103,7 +105,8 @@ describe("CommandFamilyCards", () => {
     it("should show example command when expanded", () => {
       render(<CommandFamilyCards familyId="gpu-monitoring" mode="full" />);
 
-      const toolHeader = screen.getByText("nvidia-smi").closest("button");
+      const toolHeaders = screen.getAllByText("nvidia-smi");
+      const toolHeader = toolHeaders[0].closest("button");
       fireEvent.click(toolHeader!);
 
       // Example command should be visible
@@ -115,10 +118,12 @@ describe("CommandFamilyCards", () => {
     it('should show "Best For" section when expanded', () => {
       render(<CommandFamilyCards familyId="gpu-monitoring" mode="full" />);
 
-      const toolHeader = screen.getByText("nvidia-smi").closest("button");
+      const toolHeaders = screen.getAllByText("nvidia-smi");
+      const toolHeader = toolHeaders[0].closest("button");
       fireEvent.click(toolHeader!);
 
-      expect(screen.getByText("Best For:")).toBeInTheDocument();
+      // In full mode, all tools are expanded, so "Best For:" appears multiple times
+      expect(screen.getAllByText("Best For:").length).toBeGreaterThan(0);
       expect(
         screen.getByText(/Spot checks, seeing what processes/),
       ).toBeInTheDocument();
@@ -127,10 +132,12 @@ describe("CommandFamilyCards", () => {
     it("should show related tools when expanded", () => {
       render(<CommandFamilyCards familyId="gpu-monitoring" mode="full" />);
 
-      const toolHeader = screen.getByText("nvidia-smi").closest("button");
+      const toolHeaders = screen.getAllByText("nvidia-smi");
+      const toolHeader = toolHeaders[0].closest("button");
       fireEvent.click(toolHeader!);
 
-      expect(screen.getByText("Related:")).toBeInTheDocument();
+      // "Related:" appears for each tool that has related tools
+      expect(screen.getAllByText("Related:").length).toBeGreaterThan(0);
       // nvtop and dcgmi are related to nvidia-smi
       // Using getAllByText since tool names appear in both headers and related sections
       expect(screen.getAllByText("nvtop").length).toBeGreaterThanOrEqual(1);
@@ -140,24 +147,38 @@ describe("CommandFamilyCards", () => {
     it("should collapse tool when clicked again", () => {
       render(<CommandFamilyCards familyId="gpu-monitoring" mode="full" />);
 
-      const toolHeader = screen.getByText("nvidia-smi").closest("button");
+      const toolHeaders = screen.getAllByText("nvidia-smi");
+      const toolHeader = toolHeaders[0].closest("button");
       fireEvent.click(toolHeader!);
 
-      // Verify it expanded
-      expect(screen.getByText("Best For:")).toBeInTheDocument();
+      // Verify it expanded - "Best For:" appears multiple times in full mode
+      expect(screen.getAllByText("Best For:").length).toBeGreaterThan(0);
 
       // Click again to collapse
       fireEvent.click(toolHeader!);
 
       // Content should be hidden (but still in DOM with opacity-0)
-      const expandedContent = screen.getByText("Best For:").closest("div");
-      expect(expandedContent?.parentElement).toHaveClass("opacity-0");
+      // Find the wrapper div with the transition classes for the nvidia-smi tool
+      const toolContainer = toolHeader!.closest(
+        ".border.border-gray-700.rounded-lg",
+      );
+      const expandedWrapper = toolContainer?.querySelector(
+        ".overflow-hidden.transition-all",
+      );
+      expect(expandedWrapper).toHaveClass("opacity-0");
     });
   });
 
   describe("Quiz Button", () => {
-    it("should show quiz button in full mode", () => {
-      render(<CommandFamilyCards familyId="gpu-monitoring" mode="full" />);
+    it("should show quiz button in full mode when onStartQuiz is provided", () => {
+      const onStartQuiz = vi.fn();
+      render(
+        <CommandFamilyCards
+          familyId="gpu-monitoring"
+          mode="full"
+          onStartQuiz={onStartQuiz}
+        />,
+      );
 
       expect(screen.getByText("Start GPU Monitoring Quiz")).toBeInTheDocument();
     });
@@ -188,8 +209,10 @@ describe("CommandFamilyCards", () => {
     it("should not render quiz button when onStartQuiz not provided", () => {
       render(<CommandFamilyCards familyId="gpu-monitoring" mode="full" />);
 
-      // Button should still be there, just not functional
-      expect(screen.getByText("Start GPU Monitoring Quiz")).toBeInTheDocument();
+      // Button should NOT be rendered when onStartQuiz is not provided
+      expect(
+        screen.queryByText("Start GPU Monitoring Quiz"),
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -242,10 +265,12 @@ describe("CommandFamilyCards", () => {
       );
 
       // Expand a tool first
-      const toolHeader = screen.getByText("nvidia-smi").closest("button");
+      const toolHeaders = screen.getAllByText("nvidia-smi");
+      const toolHeader = toolHeaders[0].closest("button");
       fireEvent.click(toolHeader!);
 
-      expect(screen.getByText("Try It")).toBeInTheDocument();
+      // In full mode with onShowToolExample, "Try It" appears for each tool
+      expect(screen.getAllByText("Try It").length).toBeGreaterThan(0);
     });
 
     it("should call onShowToolExample when Try It is clicked", () => {
@@ -259,10 +284,13 @@ describe("CommandFamilyCards", () => {
       );
 
       // Expand nvidia-smi
-      const toolHeader = screen.getByText("nvidia-smi").closest("button");
+      const toolHeaders = screen.getAllByText("nvidia-smi");
+      const toolHeader = toolHeaders[0].closest("button");
       fireEvent.click(toolHeader!);
 
-      fireEvent.click(screen.getByText("Try It"));
+      // Click the first "Try It" button (for nvidia-smi)
+      const tryItButtons = screen.getAllByText("Try It");
+      fireEvent.click(tryItButtons[0]);
 
       expect(onShowToolExample).toHaveBeenCalledWith(
         "gpu-monitoring",
@@ -274,7 +302,8 @@ describe("CommandFamilyCards", () => {
       render(<CommandFamilyCards familyId="gpu-monitoring" mode="full" />);
 
       // Expand a tool
-      const toolHeader = screen.getByText("nvidia-smi").closest("button");
+      const toolHeaders = screen.getAllByText("nvidia-smi");
+      const toolHeader = toolHeaders[0].closest("button");
       fireEvent.click(toolHeader!);
 
       expect(screen.queryByText("Try It")).not.toBeInTheDocument();

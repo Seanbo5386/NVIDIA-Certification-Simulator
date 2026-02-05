@@ -509,4 +509,109 @@ describe("ExamGauntlet", () => {
       expect(screen.getByText("1 / 5 completed")).toBeInTheDocument();
     });
   });
+
+  describe("ExamGauntlet Integration", () => {
+    it("should calculate correct score with scenario completion", () => {
+      render(<ExamGauntlet onExit={mockOnExit} />);
+
+      fireEvent.click(screen.getByText("Start Exam"));
+
+      // Complete 3 out of 5 scenarios
+      const markCompleteButtons = screen.getAllByText("Mark Complete");
+      fireEvent.click(markCompleteButtons[0]);
+      fireEvent.click(markCompleteButtons[1]);
+      fireEvent.click(markCompleteButtons[2]);
+
+      expect(screen.getByText("3 / 5 completed")).toBeInTheDocument();
+
+      // Finish the exam
+      fireEvent.click(screen.getByText("Finish Exam"));
+
+      // Score should be 60% (3/5)
+      expect(screen.getByText("60%")).toBeInTheDocument();
+    });
+
+    it("should record gauntlet attempt with correct domain breakdown", () => {
+      render(<ExamGauntlet onExit={mockOnExit} />);
+
+      fireEvent.click(screen.getByText("Start Exam"));
+
+      // Mark all scenarios complete
+      const markCompleteButtons = screen.getAllByText("Mark Complete");
+      markCompleteButtons.forEach((button) => fireEvent.click(button));
+
+      // Finish the exam
+      fireEvent.click(screen.getByText("Finish Exam"));
+
+      // Verify the gauntlet attempt was recorded with domain breakdown
+      expect(mockRecordGauntletAttempt).toHaveBeenCalledWith(
+        expect.objectContaining({
+          domainBreakdown: expect.any(Object),
+          score: expect.any(Number),
+          totalQuestions: 5,
+          timeSpentSeconds: expect.any(Number),
+        }),
+      );
+    });
+
+    it("should maintain exam state through scenario viewing", async () => {
+      render(<ExamGauntlet onExit={mockOnExit} />);
+
+      fireEvent.click(screen.getByText("Start Exam"));
+
+      // Mark one scenario complete
+      const markCompleteButtons = screen.getAllByText("Mark Complete");
+      fireEvent.click(markCompleteButtons[0]);
+
+      expect(screen.getByText("1 / 5 completed")).toBeInTheDocument();
+
+      // View a different scenario (if no onLaunchScenario)
+      const launchButtons = screen.getAllByText("Launch");
+      fireEvent.click(launchButtons[0]);
+
+      await waitFor(() => {
+        expect(screen.getByText("Back to List")).toBeInTheDocument();
+      });
+
+      // Go back to list
+      fireEvent.click(screen.getByText("Back to List"));
+
+      // Progress should still be maintained
+      expect(screen.getByText("1 / 5 completed")).toBeInTheDocument();
+    });
+
+    it("should display domain distribution in results", () => {
+      render(<ExamGauntlet onExit={mockOnExit} />);
+
+      fireEvent.click(screen.getByText("Start Exam"));
+
+      // Complete some scenarios and finish
+      const markCompleteButtons = screen.getAllByText("Mark Complete");
+      fireEvent.click(markCompleteButtons[0]);
+
+      fireEvent.click(screen.getByText("Finish Exam"));
+
+      // Domain breakdown should be visible
+      expect(screen.getByText("Domain Breakdown")).toBeInTheDocument();
+    });
+
+    it("should calculate passing status correctly at 70% threshold", () => {
+      render(<ExamGauntlet onExit={mockOnExit} />);
+
+      fireEvent.click(screen.getByText("Start Exam"));
+
+      // Complete 4 out of 5 scenarios (80%)
+      const markCompleteButtons = screen.getAllByText("Mark Complete");
+      fireEvent.click(markCompleteButtons[0]);
+      fireEvent.click(markCompleteButtons[1]);
+      fireEvent.click(markCompleteButtons[2]);
+      fireEvent.click(markCompleteButtons[3]);
+
+      fireEvent.click(screen.getByText("Finish Exam"));
+
+      // Score should be 80% which passes
+      expect(screen.getByText("80%")).toBeInTheDocument();
+      expect(screen.getByText("Exam Passed!")).toBeInTheDocument();
+    });
+  });
 });
