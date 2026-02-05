@@ -347,4 +347,108 @@ describe("BaseSimulator", () => {
       expect(result).toBeNull();
     });
   });
+
+  describe("getHelpFromRegistry", () => {
+    it("should return formatted help from registry", async () => {
+      // Create a test simulator that exposes the protected method
+      class RegistryTestSimulator extends BaseSimulator {
+        constructor() {
+          super();
+          this.initializeDefinitionRegistry();
+        }
+
+        getMetadata(): SimulatorMetadata {
+          return {
+            name: "test",
+            version: "1.0",
+            description: "Test",
+            commands: [],
+          };
+        }
+
+        execute() {
+          return { output: "", exitCode: 0 };
+        }
+
+        public testGetHelp(
+          command: string,
+        ): { output: string; exitCode: number } | null {
+          return this.getHelpFromRegistry(command);
+        }
+      }
+
+      const sim = new RegistryTestSimulator();
+      await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for registry init
+
+      const result = sim.testGetHelp("nvidia-smi");
+
+      expect(result).not.toBeNull();
+      expect(result?.output).toContain("nvidia-smi");
+      expect(result?.output).toContain("Description:");
+      expect(result?.exitCode).toBe(0);
+    });
+
+    it("should return null for unknown command", async () => {
+      class RegistryTestSimulator extends BaseSimulator {
+        constructor() {
+          super();
+          this.initializeDefinitionRegistry();
+        }
+
+        getMetadata(): SimulatorMetadata {
+          return {
+            name: "test",
+            version: "1.0",
+            description: "Test",
+            commands: [],
+          };
+        }
+
+        execute() {
+          return { output: "", exitCode: 0 };
+        }
+
+        public testGetHelp(
+          command: string,
+        ): { output: string; exitCode: number } | null {
+          return this.getHelpFromRegistry(command);
+        }
+      }
+
+      const sim = new RegistryTestSimulator();
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const result = sim.testGetHelp("unknown-command-xyz");
+
+      expect(result).toBeNull();
+    });
+
+    it("should return null when registry not initialized", () => {
+      class NoRegistrySimulator extends BaseSimulator {
+        getMetadata(): SimulatorMetadata {
+          return {
+            name: "test",
+            version: "1.0",
+            description: "Test",
+            commands: [],
+          };
+        }
+
+        execute() {
+          return { output: "", exitCode: 0 };
+        }
+
+        public testGetHelp(
+          command: string,
+        ): { output: string; exitCode: number } | null {
+          return this.getHelpFromRegistry(command);
+        }
+      }
+
+      const sim = new NoRegistrySimulator();
+      const result = sim.testGetHelp("nvidia-smi");
+
+      expect(result).toBeNull();
+    });
+  });
 });
