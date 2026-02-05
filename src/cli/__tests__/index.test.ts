@@ -36,4 +36,22 @@ describe("CLI Module Exports", () => {
 
     expect(CommandExerciseGenerator).toBeDefined();
   });
+
+  it("should export formatters", async () => {
+    const {
+      ANSI,
+      formatCommandHelp,
+      formatFlagHelp,
+      formatErrorMessage,
+      formatExitCode,
+      formatValidationError,
+    } = await import("../index");
+
+    expect(ANSI).toBeDefined();
+    expect(formatCommandHelp).toBeDefined();
+    expect(formatFlagHelp).toBeDefined();
+    expect(formatErrorMessage).toBeDefined();
+    expect(formatExitCode).toBeDefined();
+    expect(formatValidationError).toBeDefined();
+  });
 });

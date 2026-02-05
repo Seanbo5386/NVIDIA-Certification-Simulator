@@ -34,3 +34,13 @@ export type { ExplainOptions } from "./explainCommand";
 // Exercise Generator
 export { CommandExerciseGenerator } from "./CommandExerciseGenerator";
 export type { CommandExercise } from "./CommandExerciseGenerator";
+
+// Formatters
+export {
+  ANSI,
+  formatCommandHelp,
+  formatFlagHelp,
+  formatErrorMessage,
+  formatExitCode,
+  formatValidationError,
+} from "./formatters";
