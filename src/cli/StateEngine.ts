@@ -2,6 +2,15 @@
 import type { CommandDefinitionRegistry } from "./CommandDefinitionRegistry";
 import type { StateInteraction } from "./types";
 
+export interface ExecutionContext {
+  isRoot: boolean;
+}
+
+export interface CanExecuteResult {
+  valid: boolean;
+  reason?: string;
+}
+
 /**
  * StateEngine enforces realistic command sequences using state_interactions
  * from JSON definitions.
@@ -51,5 +60,39 @@ export class StateEngine {
   getStateInteractions(command: string): StateInteraction | undefined {
     const def = this.registry.getDefinition(command);
     return def?.state_interactions;
+  }
+
+  /**
+   * Check if command can execute given current context
+   */
+  canExecute(
+    command: string,
+    flags: string[],
+    context: ExecutionContext,
+  ): CanExecuteResult {
+    const error = this.getPrerequisiteError(command, flags, context);
+    if (error) {
+      return { valid: false, reason: error };
+    }
+    return { valid: true };
+  }
+
+  /**
+   * Get human-readable prerequisite error, or null if prerequisites met
+   */
+  getPrerequisiteError(
+    command: string,
+    flags: string[],
+    context: ExecutionContext,
+  ): string | null {
+    // Check root requirement
+    if (this.requiresRoot(command, flags) && !context.isRoot) {
+      return `${command}: Operation requires root privileges. Run with sudo.`;
+    }
+
+    // Future: Check state prerequisites from state_interactions.prerequisites
+    // For now, just permission checking
+
+    return null;
   }
 }
