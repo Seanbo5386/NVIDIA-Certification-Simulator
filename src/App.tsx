@@ -4,7 +4,9 @@ import { FaultInjection } from "./components/FaultInjection";
 import { LabWorkspace } from "./components/LabWorkspace";
 import { ExamWorkspace } from "./components/ExamWorkspace";
 import { WelcomeScreen } from "./components/WelcomeScreen";
-import { Documentation } from "./components/Documentation";
+// Documentation import kept for potential future use - component not rendered in current tab structure
+import { ReferenceTab } from "./components/ReferenceTab";
+import { StateManagementTab } from "./components/StateManagementTab";
 import { StudyDashboard } from "./components/StudyDashboard";
 import { LearningPaths } from "./components/LearningPaths";
 import { SpacedReviewDrill } from "./components/SpacedReviewDrill";
@@ -19,7 +21,8 @@ import { safeParseClusterJSON } from "./utils/clusterSchema";
 import {
   Monitor,
   BookOpen,
-  Settings,
+  Database,
+  FlaskConical,
   Play,
   Pause,
   RotateCcw,
@@ -30,7 +33,7 @@ import {
   Trophy,
 } from "lucide-react";
 
-type View = "simulator" | "labs" | "docs";
+type View = "simulator" | "labs" | "reference" | "state";
 
 function App() {
   const [currentView, setCurrentView] = useState<View>("simulator");
@@ -255,7 +258,7 @@ function App() {
                 : "border-transparent text-gray-400 hover:text-gray-200"
             }`}
           >
-            <Settings className="w-4 h-4" />
+            <FlaskConical className="w-4 h-4" />
             <span className="font-medium">Labs & Scenarios</span>
             {/* Review Notification Badge */}
             {dueReviewCount > 0 && (
@@ -273,15 +276,26 @@ function App() {
             )}
           </button>
           <button
-            onClick={() => setCurrentView("docs")}
+            onClick={() => setCurrentView("reference")}
             className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-              currentView === "docs"
+              currentView === "reference"
                 ? "border-nvidia-green text-nvidia-green"
                 : "border-transparent text-gray-400 hover:text-gray-200"
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span className="font-medium">Documentation</span>
+            <span className="font-medium">Reference</span>
+          </button>
+          <button
+            onClick={() => setCurrentView("state")}
+            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+              currentView === "state"
+                ? "border-nvidia-green text-nvidia-green"
+                : "border-transparent text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            <Database className="w-4 h-4" />
+            <span className="font-medium">State Management</span>
           </button>
         </div>
       </nav>
@@ -638,7 +652,8 @@ function App() {
           </div>
         )}
 
-        {currentView === "docs" && <Documentation />}
+        {currentView === "reference" && <ReferenceTab />}
+        {currentView === "state" && <StateManagementTab />}
       </main>
 
       {/* Footer */}
