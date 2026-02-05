@@ -361,4 +361,17 @@ describe("DcgmiSimulator", () => {
       expect(result.output).toContain("unrecognized option");
     });
   });
+
+  describe("Help from JSON definitions", () => {
+    it("dcgmi --help should return registry-based help", async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      const parsed = parse("dcgmi --help");
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain("dcgmi");
+      expect(result.output).toContain("Description:");
+    });
+  });
 });
