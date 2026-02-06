@@ -204,12 +204,37 @@ export const useSimulationStore = create<SimulationState>()(
       updateGPU: (nodeId, gpuId, updates) =>
         set((state) => {
           const node = state.cluster.nodes.find((n) => n.id === nodeId);
-          if (node) {
-            const gpu = node.gpus.find((g) => g.id === gpuId);
-            if (gpu) {
-              Object.assign(gpu, updates);
-            }
+          if (!node) return;
+          const gpu = node.gpus.find((g) => g.id === gpuId);
+          if (!gpu) return;
+
+          // Clamp values to physical bounds
+          if (updates.temperature !== undefined) {
+            updates.temperature = Math.max(
+              0,
+              Math.min(120, updates.temperature),
+            );
           }
+          if (updates.memoryUsed !== undefined) {
+            updates.memoryUsed = Math.max(
+              0,
+              Math.min(gpu.memoryTotal, updates.memoryUsed),
+            );
+          }
+          if (updates.utilization !== undefined) {
+            updates.utilization = Math.max(
+              0,
+              Math.min(100, updates.utilization),
+            );
+          }
+          if (updates.powerDraw !== undefined) {
+            updates.powerDraw = Math.max(
+              0,
+              Math.min(gpu.powerLimit * 1.1, updates.powerDraw),
+            );
+          }
+
+          Object.assign(gpu, updates);
         }),
 
       updateHCAs: (nodeId, hcas) =>
