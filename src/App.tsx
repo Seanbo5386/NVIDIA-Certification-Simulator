@@ -39,7 +39,9 @@ function App() {
   const [currentView, setCurrentView] = useState<View>("simulator");
   const [showLabWorkspace, setShowLabWorkspace] = useState(false);
   const [showExamWorkspace, setShowExamWorkspace] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(
+    () => localStorage.getItem("ncp-aii-welcome-dismissed") !== "true",
+  );
   const [showStudyDashboard, setShowStudyDashboard] = useState(false);
   const [showLearningPaths, setShowLearningPaths] = useState(false);
   const [showSpacedReviewDrill, setShowSpacedReviewDrill] = useState(false);
@@ -680,7 +682,14 @@ function App() {
         <ExamWorkspace onClose={() => setShowExamWorkspace(false)} />
       )}
       {/* Welcome Splash Screen */}
-      {showWelcome && <WelcomeScreen onClose={() => setShowWelcome(false)} />}
+      {showWelcome && (
+        <WelcomeScreen
+          onClose={() => {
+            localStorage.setItem("ncp-aii-welcome-dismissed", "true");
+            setShowWelcome(false);
+          }}
+        />
+      )}
 
       {/* Study Dashboard Modal */}
       {showStudyDashboard && (
