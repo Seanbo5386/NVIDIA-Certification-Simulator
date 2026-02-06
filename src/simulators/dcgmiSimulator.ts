@@ -506,28 +506,82 @@ export class DcgmiSimulator extends BaseSimulator {
       return this.createError("Missing required flag: -c/--check");
     }
 
-    let output = `Health monitoring:\n`;
-    node.gpus.forEach((gpu, idx) => {
-      const health = gpu.healthStatus;
-      const symbol = health === "OK" ? "✓" : health === "Warning" ? "⚠" : "✗";
-      const color =
-        health === "OK"
-          ? "\x1b[32m"
-          : health === "Warning"
-            ? "\x1b[33m"
-            : "\x1b[31m";
-      output += `\n  GPU ${idx}: ${color}${symbol} ${health}\x1b[0m\n`;
+    // Build health check results for each subsystem
+    const checks = [
+      { system: "PCIe", healthy: true },
+      { system: "Memory", healthy: true },
+      { system: "Inforom", healthy: true },
+      { system: "Thermal", healthy: true },
+      { system: "Power", healthy: true },
+      { system: "NVLink", healthy: true },
+    ];
 
-      if (gpu.xidErrors.length > 0) {
-        output += `    XID Errors: ${gpu.xidErrors.length}\n`;
-      }
+    // Check actual GPU state for issues
+    for (const gpu of node.gpus) {
       if (gpu.eccErrors.doubleBit > 0) {
-        output += `    ECC Errors: ${gpu.eccErrors.doubleBit} uncorrectable\n`;
+        const memCheck = checks.find((c) => c.system === "Memory");
+        if (memCheck) memCheck.healthy = false;
       }
       if (gpu.temperature > 80) {
-        output += `    Temperature: ${Math.round(gpu.temperature)}°C (HIGH)\n`;
+        const thermalCheck = checks.find((c) => c.system === "Thermal");
+        if (thermalCheck) thermalCheck.healthy = false;
       }
-    });
+      if (gpu.xidErrors.length > 0) {
+        const pcieCheck = checks.find((c) => c.system === "PCIe");
+        if (pcieCheck) pcieCheck.healthy = false;
+      }
+    }
+
+    // Compute column widths
+    const sysWidth = Math.max(
+      "System".length,
+      ...checks.map((c) => c.system.length),
+    );
+    const statusWidth = Math.max(
+      "Status".length,
+      "Healthy".length,
+      "Warning".length,
+    );
+    const sep = `+${"-".repeat(sysWidth + 2)}+${"-".repeat(statusWidth + 2)}+`;
+
+    let output = `Health Monitor Report\n`;
+    output += `${sep}\n`;
+    output += `| ${"System".padEnd(sysWidth)} | ${"Status".padEnd(statusWidth)} |\n`;
+    output += `${sep}\n`;
+    for (const check of checks) {
+      const status = check.healthy ? "Healthy" : "Warning";
+      output += `| ${check.system.padEnd(sysWidth)} | ${status.padEnd(statusWidth)} |\n`;
+    }
+    output += `${sep}\n`;
+
+    // Append per-GPU detail if issues found
+    const hasIssues = node.gpus.some(
+      (gpu) =>
+        gpu.xidErrors.length > 0 ||
+        gpu.eccErrors.doubleBit > 0 ||
+        gpu.temperature > 80,
+    );
+    if (hasIssues) {
+      output += `\nDetailed GPU Status:\n`;
+      node.gpus.forEach((gpu, idx) => {
+        if (
+          gpu.xidErrors.length > 0 ||
+          gpu.eccErrors.doubleBit > 0 ||
+          gpu.temperature > 80
+        ) {
+          output += `  GPU ${idx}:\n`;
+          if (gpu.xidErrors.length > 0) {
+            output += `    XID Errors: ${gpu.xidErrors.length}\n`;
+          }
+          if (gpu.eccErrors.doubleBit > 0) {
+            output += `    ECC Errors: ${gpu.eccErrors.doubleBit} uncorrectable\n`;
+          }
+          if (gpu.temperature > 80) {
+            output += `    Temperature: ${Math.round(gpu.temperature)}°C (HIGH)\n`;
+          }
+        }
+      });
+    }
     return this.createSuccess(output);
   }
 

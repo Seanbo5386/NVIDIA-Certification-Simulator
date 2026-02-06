@@ -117,23 +117,25 @@ describe("DcgmiSimulator", () => {
   });
 
   describe("Health Check Command", () => {
-    it("should perform health check with health -g 0 -c", () => {
+    it("should display health check in bordered table format", () => {
       const parsed = parse("dcgmi health -g 0 -c");
       const result = simulator.execute(parsed, context);
 
       expect(result.exitCode).toBe(0);
-      expect(result.output).toContain("Health monitoring"); // Actual format
-      expect(result.output).toContain("GPU 0:");
-      expect(result.output).toContain("GPU 1:");
+      expect(result.output).toContain("+---"); // Bordered table markers
+      expect(result.output).toContain("| System");
+      expect(result.output).toContain("| Status");
+      expect(result.output).toContain("Health Monitor Report");
     });
 
-    it("should show healthy status for GPUs", () => {
+    it("should show healthy status for all subsystems", () => {
       const parsed = parse("dcgmi health -g 0 -c");
       const result = simulator.execute(parsed, context);
 
-      // Output uses colored status indicators
-      expect(result.output).toContain("Health monitoring");
-      expect(result.output).toContain("GPU 0:");
+      expect(result.output).toContain("| PCIe");
+      expect(result.output).toContain("| Memory");
+      expect(result.output).toContain("| Thermal");
+      expect(result.output).toContain("Healthy");
     });
 
     it("should require group flag", () => {
@@ -337,20 +339,26 @@ describe("DcgmiSimulator", () => {
       expect(result.output.length).toBeGreaterThan(0);
     });
 
-    it("should format health output", () => {
+    it("should format health output as bordered table", () => {
       const parsed = parse("dcgmi health -g 0 -c");
       const result = simulator.execute(parsed, context);
 
-      // Health monitoring should produce output
+      // Health monitoring should produce bordered table output
       expect(result.output.length).toBeGreaterThan(0);
+      expect(result.output).toContain("+---");
+      expect(result.output).toContain("|");
     });
   });
 
   describe("CommandDefinitionRegistry Integration", () => {
     it("should have definition registry initialized after construction", async () => {
-      // Wait for async initialization
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      expect(simulator["definitionRegistry"]).not.toBeNull();
+      // Wait for async initialization (lazy-loaded JSON imports may take longer)
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
     });
 
     it("should reject unknown flags with suggestion", () => {
@@ -364,7 +372,12 @@ describe("DcgmiSimulator", () => {
 
   describe("Help from JSON definitions", () => {
     it("dcgmi --help should return registry-based help", async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
 
       const parsed = parse("dcgmi --help");
       const result = simulator.execute(parsed, context);
