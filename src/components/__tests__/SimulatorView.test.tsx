@@ -4,7 +4,8 @@ import { SimulatorView } from "../SimulatorView";
 
 // ResizeObserver is not available in jsdom
 beforeAll(() => {
-  global.ResizeObserver = class ResizeObserver {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).ResizeObserver = class ResizeObserver {
     observe() {}
     unobserve() {}
     disconnect() {}
