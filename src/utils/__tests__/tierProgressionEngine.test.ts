@@ -449,8 +449,6 @@ describe("Tier Progression Engine - selectGauntletScenarios", () => {
     });
 
     it("should use default count of 10", () => {
-      const scenarios = createSampleScenarios();
-
       // Create more tier 2+ scenarios to ensure we can select 10
       const manyScenarios: Scenario[] = [];
       for (let i = 0; i < 20; i++) {
@@ -877,14 +875,6 @@ describe("Tier Progression Engine - Integration", () => {
   });
 
   it("should support gauntlet scenario selection for exam prep", () => {
-    const state = createState({
-      unlockedTiers: {
-        "gpu-monitoring": 2,
-        "infiniband-tools": 2,
-        "cluster-tools": 3,
-      },
-    });
-
     const scenarios: Scenario[] = [];
     for (let i = 0; i < 30; i++) {
       scenarios.push({

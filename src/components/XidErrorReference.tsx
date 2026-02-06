@@ -15,7 +15,6 @@ import {
 } from "lucide-react";
 import {
   XID_ERRORS,
-  type XIDError,
   type XIDSeverity,
   type XIDCategory,
 } from "@/data/xidErrors";
