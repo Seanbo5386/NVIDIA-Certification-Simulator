@@ -1,10 +1,15 @@
 import type { CommandDefinition, CommandCategory } from "./types";
 
-// Import all JSON files from data/output using Vite's lazy glob import
-// This avoids bundling all 150+ JSON files into the main chunk (~3.7MB)
-const commandModules = import.meta.glob("../data/output/**/*.json", {
-  eager: false,
-});
+// Import command definition JSON files from data/output using Vite's lazy glob import
+// Excludes relationships/ (reference-only, no runtime consumers) and schema.json
+const commandModules = import.meta.glob(
+  [
+    "../data/output/**/*.json",
+    "!../data/output/relationships/**",
+    "!../data/output/schema.json",
+  ],
+  { eager: false },
+);
 
 /**
  * Loads command definitions from JSON files in src/data/output/
