@@ -1,6 +1,7 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
+import { createDebouncedStorage } from "@/utils/debouncedStorage";
 import type {
   ClusterConfig,
   GPU,
@@ -644,6 +645,7 @@ export const useSimulationStore = create<SimulationState>()(
     })),
     {
       name: "nvidia-simulator-storage",
+      storage: createJSONStorage(() => createDebouncedStorage(2000)),
       partialize: (state) => ({
         cluster: state.cluster,
         simulationSpeed: state.simulationSpeed,
