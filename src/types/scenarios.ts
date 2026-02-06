@@ -156,6 +156,9 @@ export interface ScenarioStep {
     title: string;
     url: string;
   }>;
+
+  // Narrative quiz (present only for narrative scenario steps)
+  narrativeQuiz?: NarrativeQuiz;
 }
 
 export interface Scenario {
@@ -194,6 +197,13 @@ export interface Scenario {
   cumulativeSkills?: string[];
   explanationGateId?: string;
   toolHints?: boolean;
+
+  // Narrative scenario metadata (present only for narrative scenarios)
+  narrative?: {
+    hook: string;
+    setting: string;
+    resolution: string;
+  };
 }
 
 export interface Lab {
