@@ -793,154 +793,33 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
           }
 
           // Basic Linux commands for labs
-          case "lscpu": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "free": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "dmidecode": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "dmesg": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "lspci": {
-            const parsed = parseCommand(cmdLine);
-            result = pciToolsSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "journalctl": {
-            const parsed = parseCommand(cmdLine);
-            result = pciToolsSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          // Per spec Section 2.1: systemctl status nvsm-core
-          case "systemctl": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "hostnamectl": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "timedatectl": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "lsmod": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "modinfo": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "top": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "ps": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "numactl": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "uptime": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
-          case "uname": {
-            const parsed = parseCommand(cmdLine);
-            result = basicSystemSimulator.current.execute(
-              parsed,
-              currentContext.current,
-            );
-            break;
-          }
-
+          case "lscpu":
+          case "free":
+          case "dmidecode":
+          case "dmesg":
+          case "systemctl":
+          case "hostnamectl":
+          case "timedatectl":
+          case "lsmod":
+          case "modinfo":
+          case "top":
+          case "ps":
+          case "numactl":
+          case "uptime":
+          case "uname":
           case "hostname": {
             const parsed = parseCommand(cmdLine);
             result = basicSystemSimulator.current.execute(
+              parsed,
+              currentContext.current,
+            );
+            break;
+          }
+
+          case "lspci":
+          case "journalctl": {
+            const parsed = parseCommand(cmdLine);
+            result = pciToolsSimulator.current.execute(
               parsed,
               currentContext.current,
             );
