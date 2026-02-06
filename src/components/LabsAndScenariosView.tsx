@@ -1,6 +1,13 @@
+import { useMemo } from "react";
 import { FaultInjection } from "./FaultInjection";
-import { Trophy, GraduationCap, TrendingUp } from "lucide-react";
-import { getAllScenarios } from "../utils/scenarioLoader";
+import {
+  Trophy,
+  GraduationCap,
+  TrendingUp,
+  Clock,
+  Crosshair,
+} from "lucide-react";
+import { getAllScenarios, getScenarioMetadata } from "../utils/scenarioLoader";
 
 interface LabsAndScenariosViewProps {
   onStartScenario: (scenarioId: string) => void;
@@ -11,6 +18,23 @@ interface LabsAndScenariosViewProps {
   learningProgress: { completed: number; total: number };
 }
 
+const DOMAIN_INFO: Record<
+  string,
+  { name: string; weight: string; number: number }
+> = {
+  domain1: { name: "Systems & Server Bring-Up", weight: "31%", number: 1 },
+  domain2: { name: "Physical Layer Management", weight: "5%", number: 2 },
+  domain3: { name: "Control Plane Installation", weight: "19%", number: 3 },
+  domain4: { name: "Cluster Test & Verification", weight: "33%", number: 4 },
+  domain5: { name: "Troubleshooting & Optimization", weight: "12%", number: 5 },
+};
+
+const DIFFICULTY_COLORS: Record<string, string> = {
+  beginner: "bg-green-900/50 text-green-300 border-green-700",
+  intermediate: "bg-yellow-900/50 text-yellow-300 border-yellow-700",
+  advanced: "bg-red-900/50 text-red-300 border-red-700",
+};
+
 export function LabsAndScenariosView({
   onStartScenario,
   onBeginExam,
@@ -19,14 +43,32 @@ export function LabsAndScenariosView({
   onOpenExamGauntlet,
   learningProgress,
 }: LabsAndScenariosViewProps) {
-  const scenariosByDomain = getAllScenarios();
+  const scenariosByDomain = useMemo(() => getAllScenarios(), []);
 
-  const startDomain = (domain: string) => {
-    const ids = scenariosByDomain[domain];
-    if (ids && ids.length > 0) {
-      onStartScenario(ids[0]);
+  const domainScenarios = useMemo(() => {
+    const result: Record<
+      string,
+      { id: string; title: string; difficulty: string; estimatedTime: number }[]
+    > = {};
+    for (const [domain, ids] of Object.entries(scenariosByDomain)) {
+      result[domain] = ids
+        .map((id) => {
+          const meta = getScenarioMetadata(id);
+          return meta ? { id, ...meta } : null;
+        })
+        .filter(
+          (
+            s,
+          ): s is {
+            id: string;
+            title: string;
+            difficulty: string;
+            estimatedTime: number;
+          } => s !== null,
+        );
     }
-  };
+    return result;
+  }, [scenariosByDomain]);
 
   return (
     <div data-testid="labs-list" className="p-6 h-full overflow-auto">
@@ -34,193 +76,69 @@ export function LabsAndScenariosView({
         {/* Fault Injection System */}
         <FaultInjection />
 
-        {/* Lab Scenarios */}
+        {/* Narrative Missions */}
         <div className="mt-8">
-          <h2 className="text-2xl font-bold text-nvidia-green mb-6">
-            Interactive Labs & Scenarios
+          <h2 className="text-2xl font-bold text-nvidia-green mb-2">
+            Missions
           </h2>
+          <p className="text-gray-400 text-sm mb-6">
+            Immersive narrative scenarios covering all NCP-AII exam domains.
+            Each mission puts you in a realistic datacenter situation.
+          </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Domain 1: Systems and Server Bring-Up */}
-            <div
-              data-testid="domain-1-card"
-              className="bg-gray-800 rounded-lg p-6 border border-gray-700"
-            >
-              <div className="text-sm text-nvidia-green font-semibold mb-2">
-                Domain 1 • 31%
-              </div>
-              <h3 className="text-lg font-bold mb-3">
-                Systems & Server Bring-Up
-              </h3>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  DGX SuperPOD Initial Deployment
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  Firmware Upgrade Workflow
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  Cable Validation
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  Power and Cooling Validation
-                </li>
-              </ul>
-              <button
-                onClick={() => startDomain("domain1")}
-                className="mt-4 w-full bg-nvidia-green text-black py-2 rounded-lg font-medium hover:bg-nvidia-darkgreen transition-colors"
-              >
-                Start Labs
-              </button>
-            </div>
+            {Object.entries(DOMAIN_INFO).map(([domainKey, info]) => {
+              const scenarios = domainScenarios[domainKey] || [];
+              return (
+                <div
+                  key={domainKey}
+                  data-testid={`domain-${info.number}-card`}
+                  className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden"
+                >
+                  <div className="px-6 pt-5 pb-3">
+                    <div className="text-sm text-nvidia-green font-semibold mb-1">
+                      Domain {info.number} &bull; {info.weight}
+                    </div>
+                    <h3 className="text-lg font-bold mb-3">{info.name}</h3>
+                  </div>
 
-            {/* Domain 2: Physical Layer Management */}
-            <div
-              data-testid="domain-2-card"
-              className="bg-gray-800 rounded-lg p-6 border border-gray-700"
-            >
-              <div className="text-sm text-nvidia-green font-semibold mb-2">
-                Domain 2 • 5%
-              </div>
-              <h3 className="text-lg font-bold mb-3">
-                Physical Layer Management
-              </h3>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  BlueField DPU Configuration
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  MIG Partitioning
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  Advanced MIG Scenarios
-                </li>
-              </ul>
-              <button
-                onClick={() => startDomain("domain2")}
-                className="mt-4 w-full bg-nvidia-green text-black py-2 rounded-lg font-medium hover:bg-nvidia-darkgreen transition-colors"
-              >
-                Start Labs
-              </button>
-            </div>
-
-            {/* Domain 3: Control Plane Installation */}
-            <div
-              data-testid="domain-3-card"
-              className="bg-gray-800 rounded-lg p-6 border border-gray-700"
-            >
-              <div className="text-sm text-nvidia-green font-semibold mb-2">
-                Domain 3 • 19%
-              </div>
-              <h3 className="text-lg font-bold mb-3">
-                Control Plane Installation
-              </h3>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  BCM High Availability Setup
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  Slurm with GPU GRES
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  Container Toolkit Setup
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  Pyxis/Enroot with Slurm
-                </li>
-              </ul>
-              <button
-                onClick={() => startDomain("domain3")}
-                className="mt-4 w-full bg-nvidia-green text-black py-2 rounded-lg font-medium hover:bg-nvidia-darkgreen transition-colors"
-              >
-                Start Labs
-              </button>
-            </div>
-
-            {/* Domain 4: Cluster Test and Verification */}
-            <div
-              data-testid="domain-4-card"
-              className="bg-gray-800 rounded-lg p-6 border border-gray-700"
-            >
-              <div className="text-sm text-nvidia-green font-semibold mb-2">
-                Domain 4 • 33%
-              </div>
-              <h3 className="text-lg font-bold mb-3">
-                Cluster Test & Verification
-              </h3>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  Single-Node Stress Test
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  HPL Benchmark
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  NCCL Tests (Single & Multi-Node)
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  Storage Validation
-                </li>
-              </ul>
-              <button
-                onClick={() => startDomain("domain4")}
-                className="mt-4 w-full bg-nvidia-green text-black py-2 rounded-lg font-medium hover:bg-nvidia-darkgreen transition-colors"
-              >
-                Start Labs
-              </button>
-            </div>
-
-            {/* Domain 5: Troubleshooting */}
-            <div
-              data-testid="domain-5-card"
-              className="bg-gray-800 rounded-lg p-6 border border-gray-700"
-            >
-              <div className="text-sm text-nvidia-green font-semibold mb-2">
-                Domain 5 • 12%
-              </div>
-              <h3 className="text-lg font-bold mb-3">
-                Troubleshooting & Optimization
-              </h3>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  Low HPL Performance
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  GPU Faults in NVSM
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  InfiniBand Link Errors
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-nvidia-green">▸</span>
-                  Container GPU Visibility Issues
-                </li>
-              </ul>
-              <button
-                onClick={() => startDomain("domain5")}
-                className="mt-4 w-full bg-nvidia-green text-black py-2 rounded-lg font-medium hover:bg-nvidia-darkgreen transition-colors"
-              >
-                Start Labs
-              </button>
-            </div>
+                  <div className="px-4 pb-4 space-y-2">
+                    {scenarios.map((scenario) => (
+                      <button
+                        key={scenario.id}
+                        onClick={() => onStartScenario(scenario.id)}
+                        className="w-full text-left p-3 rounded-lg bg-gray-900 hover:bg-gray-700 transition-colors group"
+                      >
+                        <div className="flex items-start gap-2">
+                          <Crosshair className="w-4 h-4 text-nvidia-green mt-0.5 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-gray-200 group-hover:text-white truncate">
+                              {scenario.title}
+                            </div>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span
+                                className={`text-xs px-1.5 py-0.5 rounded border ${DIFFICULTY_COLORS[scenario.difficulty] || "bg-gray-700 text-gray-300 border-gray-600"}`}
+                              >
+                                {scenario.difficulty}
+                              </span>
+                              <span className="text-xs text-gray-500 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
+                                {scenario.estimatedTime}m
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                    {scenarios.length === 0 && (
+                      <p className="text-xs text-gray-500 px-3 py-2">
+                        No scenarios available
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
 
             {/* Practice Exam */}
             <div
@@ -259,20 +177,6 @@ export function LabsAndScenariosView({
                 Tackle 10 weighted scenarios in a timed exam format. Simulates
                 the real DCA certification experience with domain-based scoring.
               </p>
-              <ul className="space-y-2 text-sm text-gray-300 mb-4">
-                <li className="flex items-start gap-2">
-                  <span className="text-orange-400">▸</span>
-                  10 scenarios weighted by exam domains
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-orange-400">▸</span>
-                  Choose 30, 60, or 90 minute time limit
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-orange-400">▸</span>
-                  Detailed domain performance breakdown
-                </li>
-              </ul>
               <button
                 onClick={onOpenExamGauntlet}
                 className="w-full bg-orange-600 text-white py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors"
@@ -308,20 +212,6 @@ export function LabsAndScenariosView({
                 </div>
               </div>
 
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-400">▸</span>
-                  Structured curricula for each domain
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-400">▸</span>
-                  Step-by-step interactive tutorials
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-purple-400">▸</span>
-                  Hands-on command practice
-                </li>
-              </ul>
               <button
                 onClick={onOpenLearningPaths}
                 className="mt-4 w-full bg-purple-600 text-white py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
@@ -339,24 +229,10 @@ export function LabsAndScenariosView({
                 Track Your Progress
               </div>
               <h3 className="text-lg font-bold mb-3">Study Dashboard</h3>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-400">▸</span>
-                  View exam history & scores
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-400">▸</span>
-                  Track domain performance
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-400">▸</span>
-                  Study streak & recommendations
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-400">▸</span>
-                  Identify weak areas
-                </li>
-              </ul>
+              <p className="text-sm text-gray-300 mb-4">
+                View exam history, track domain performance, and identify weak
+                areas to focus your study.
+              </p>
               <button
                 onClick={onOpenStudyDashboard}
                 className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
