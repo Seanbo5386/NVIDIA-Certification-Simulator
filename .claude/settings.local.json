@@ -52,7 +52,8 @@
       "Bash(npx eslint:*)",
       "Bash(npm run typecheck:*)",
       "Bash(git stash:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

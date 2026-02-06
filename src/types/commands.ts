@@ -1,7 +1,7 @@
 // Command types and interfaces for terminal simulation
 
-import type { ClusterConfig } from '@/types/hardware';
-import type { ScenarioContext } from '@/store/scenarioContext';
+import type { ClusterConfig } from "@/types/hardware";
+import type { ScenarioContext } from "@/store/scenarioContext";
 
 /**
  * Command execution context
@@ -55,18 +55,6 @@ export interface CommandResult {
 }
 
 /**
- * Legacy command interface (for backward compatibility)
- * @deprecated Use BaseSimulator instead
- */
-export interface Command {
-  name: string;
-  aliases?: string[];
-  description: string;
-  execute: (args: string[], context: CommandContext) => Promise<CommandResult> | CommandResult;
-  autocomplete?: (partial: string, context: CommandContext) => string[];
-}
-
-/**
  * Command history entry
  */
 export interface CommandHistory {
@@ -78,9 +66,13 @@ export interface CommandHistory {
 /**
  * Terminal theme option
  */
-export type TerminalTheme = 'dark' | 'nvidia' | 'matrix';
+export type TerminalTheme = "dark" | "nvidia" | "matrix";
 
 // Re-export types from other modules for convenience
-export type { ParsedCommand } from '@/utils/commandParser';
-export type { CommandHandler, SimulatorMetadata, CommandMetadata, FlagMetadata } from '@/simulators/BaseSimulator';
-export type { CommandDescriptor, CommandCategory } from '@/utils/commandRegistry';
+export type { ParsedCommand } from "@/utils/commandParser";
+export type {
+  CommandHandler,
+  SimulatorMetadata,
+  CommandMetadata,
+  FlagMetadata,
+} from "@/simulators/BaseSimulator";
