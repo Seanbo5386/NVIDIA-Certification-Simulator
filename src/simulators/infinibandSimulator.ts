@@ -7,6 +7,24 @@ import {
 import { useSimulationStore } from "@/store/simulationStore";
 
 /**
+ * Maps InfiniBand link rate (Gb/s) to the correct standard name.
+ * - QDR = 40 Gb/s (10 Gb/s per lane x 4)
+ * - FDR = 56 Gb/s (14 Gb/s per lane x 4)
+ * - EDR = 100 Gb/s (25 Gb/s per lane x 4)
+ * - HDR = 200 Gb/s (50 Gb/s per lane x 4)
+ * - NDR = 400 Gb/s (100 Gb/s per lane x 4)
+ * - XDR = 800 Gb/s (200 Gb/s per lane x 4)
+ */
+export function getIBStandardName(rateGbps: number): string {
+  if (rateGbps >= 800) return "XDR";
+  if (rateGbps >= 400) return "NDR";
+  if (rateGbps >= 200) return "HDR";
+  if (rateGbps >= 100) return "EDR";
+  if (rateGbps >= 56) return "FDR";
+  return "QDR";
+}
+
+/**
  * InfiniBand Simulator
  *
  * Handles multiple InfiniBand diagnostic commands: ibstat, ibportstate, ibporterrors,
@@ -352,7 +370,8 @@ Options:
         output += `  Cable Type: QSFP-DD AOC\n`;
         output += `  Cable Length: 5m\n`;
         output += `  Link State: ${hca.ports[0]?.state || "Active"}\n`;
-        output += `  Link Speed: 400 Gb/s (HDR)\n`;
+        const portRate = hca.ports[0]?.rate || 400;
+        output += `  Link Speed: ${portRate} Gb/s (${getIBStandardName(portRate)})\n`;
 
         // Add signal quality metrics
         const rxPower = -2.5 + Math.random() * 0.5; // -2.5 to -2.0 dBm
