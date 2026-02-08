@@ -9,13 +9,13 @@
 
 **A browser-based training environment for the NCP-AII (NVIDIA-Certified Professional: AI Infrastructure) certification exam**
 
-[Features](#features) • [Quick Start](#quick-start) • [Commands](#available-commands) • [Labs](#interactive-labs) • [Architecture](#architecture)
+[Features](#features) · [Quick Start](#quick-start) · [Commands](#available-commands) · [Scenarios](#narrative-scenarios) · [Architecture](#architecture)
 
 </div>
 
 ---
 
-## 🎯 Overview
+## Overview
 
 The NVIDIA AI Infrastructure Certification Simulator provides realistic, hands-on experience with the complete NVIDIA datacenter stack. Practice every task from the NCP-AII certification exam in a safe, simulated environment that feels like operating a real DGX SuperPOD.
 
@@ -23,33 +23,68 @@ The NVIDIA AI Infrastructure Certification Simulator provides realistic, hands-o
 
 - **GPU Management**: nvidia-smi, MIG partitioning, power/clock management
 - **BMC Operations**: ipmitool for out-of-band management and sensor monitoring
-- **Health Monitoring**: DCGM diagnostics, NVSM health checks
+- **Health Monitoring**: DCGM diagnostics, NVSM health checks, Fabric Manager
 - **InfiniBand Fabric**: Cable validation, error counters, fabric diagnostics
 - **Troubleshooting**: XID errors, performance issues, hardware faults
-- **BlueField DPUs**: Mode switching, configuration
 - **Cluster Management**: Slurm, BCM, Docker, NGC, Enroot containers
+- **Storage**: Lustre, NFS, df, mount
 
-## ✨ Features
+## Features
 
-### 🖥️ Realistic Terminal Emulation
+### Realistic Terminal Emulation
 
 - Full xterm.js-powered terminal with ANSI color support
-- Command history (↑/↓ arrows)
-- Accurate output formatting matching real NVIDIA tools
+- Command history (Up/Down arrows) and readline shortcuts (Ctrl+A/E/W/U/K)
+- Accurate output formatting validated against real NVIDIA tool output
 - Tab completion for commands and arguments
 - Pipe support (`|`) for command chaining with `grep`, `head`, `tail`
 
-### 📊 Real-Time Dashboard
+### Narrative Scenario Engine
+
+30 story-driven scenarios across all 5 NCP-AII exam domains. Each scenario puts you in the role of a datacenter engineer responding to real-world situations:
+
+- **Mission briefing** with narrative hook, setting, and stakes
+- **SITUATION/TASK framing** per step — what's happening and what you need to do
+- **Inline quizzes** that test conceptual understanding mid-scenario
+- **autoFaults** — automatic fault injection per step so cluster state matches the narrative
+- **Resolution screen** that ties the story together and reinforces learning
+- Difficulty levels (beginner/intermediate/advanced) with estimated completion times
+
+### Sandbox Isolation
+
+Each scenario runs in its own isolated sandbox — faults and mutations never leak between scenarios or to the global cluster:
+
+- Per-scenario deep-cloned cluster state (ScenarioContext)
+- All 19 simulators route through sandbox-aware resolve helpers
+- Clean exit discards the sandbox entirely; global state stays pristine
+
+### Free Mode
+
+A standalone sandbox environment that unlocks after completing 3 missions. Provides full FaultInjection controls and Terminal without any scenario structure — for open-ended experimentation and practice.
+
+### Learning System
+
+A tiered progression system built on spaced repetition:
+
+- **6 Command Families**: gpu-monitoring, infiniband-tools, bmc-hardware, cluster-tools, container-tools, diagnostics
+- **3-Tier Progression**: Guided (tool specified) → Choice (problem area identified) → Realistic (symptom only, no hints)
+- **WhichToolQuiz**: Scenario-based quizzes testing tool selection intuition
+- **SpacedReviewDrill**: SM-2 algorithm schedules retention drills at optimal intervals
+- **ExplanationGates**: 56 post-scenario conceptual checks
+- **ExamGauntlet**: Timed random scenario testing for exam prep
+- **StudyDashboard**: Progress overview with domain breakdown and study recommendations
+
+### Real-Time Dashboard
 
 - Live GPU metrics (utilization, memory, temperature, power)
-- Cluster health monitoring
+- Cluster health monitoring with heatmap visualization
 - Per-node GPU status cards
 - XID error tracking
 - InfiniBand fabric status
-- **Interactive NVLink topology visualization** (D3.js)
-- **InfiniBand fabric map** with switch and host details
+- Interactive NVLink topology visualization (D3.js)
+- InfiniBand fabric map with switch and host details
 
-### 🔧 Comprehensive Tool Simulation
+### Comprehensive Tool Simulation
 
 #### nvidia-smi
 
@@ -64,7 +99,7 @@ The NVIDIA AI Infrastructure Certification Simulator provides realistic, hands-o
 
 - GPU discovery
 - Diagnostic modes (short/medium/long)
-- Health monitoring
+- Health monitoring with 8 subsystems
 - Group management
 - Statistics collection
 
@@ -77,32 +112,52 @@ The NVIDIA AI Infrastructure Certification Simulator provides realistic, hands-o
 - FRU inventory
 - SEL (System Event Log)
 
+#### nvsm (NVIDIA System Management)
+
+- Interactive hierarchical navigation (CWT mode)
+- Health checks with dot-leader formatting
+- Show alerts and system overview
+
 #### InfiniBand Tools
 
 - `ibstat` - HCA status and port information
-- `ibporterrors` - Error counter monitoring
+- `ibdiagnet` - Full fabric diagnostics
 - `iblinkinfo` - Fabric link discovery
 - `perfquery` - Performance counters
-- `ibdiagnet` - Full fabric diagnostics
 
-### 📚 Learning Resources
+#### Cluster Management
 
-- XID error reference guide
-- Command documentation with examples
-- Quick start tutorials
-- Exam domain coverage guides
-- **Learning commands**: `explain <command>` for detailed help, `hint` for lab guidance
-- Adaptive learning system that tracks progress and suggests focus areas
-- Domain-specific study modes with progress analytics
+- `sinfo`, `squeue`, `scontrol`, `sbatch`, `scancel` - Slurm workload manager
+- `bcm` - Base Command Manager with node/job management
+- `cmsh` - Cluster management shell with interactive modes
+- `docker`, `enroot`, `pyxis` - Container runtimes
 
-### 💾 State Management
+#### Additional Tools
 
-- Persistent cluster configuration
-- Export/import cluster state as JSON
-- Simulation controls (play/pause/reset)
-- Multi-node cluster support (up to 32 DGX systems)
+- `nv-fabricmanager` - NVSwitch fabric management and diagnostics
+- `lspci` - PCI device listing with verbose modes
+- `journalctl` - System journal with XID error tracking
+- `nvidia-bug-report.sh` - Bug report generation with XID database
+- `df`, `mount`, `lfs` - Storage and Lustre filesystem tools
+- `sensors`, `dmidecode` - Hardware monitoring
 
-## 🚀 Quick Start
+### Practice Exam
+
+- 168 questions across all 5 NCP-AII domains
+- Timed exam mode (90 minutes) with question navigation
+- Multiple-choice and multiple-select question types
+- Domain breakdown in results
+- Passing score tracking
+
+### Documentation Reference
+
+- System architecture overview with node layout and hardware specs
+- Searchable CLI tool reference with collapsible categories
+- Troubleshooting playbooks with 4 diagnostic scenarios
+- XID error reference with severity filtering
+- Exam guide with domain coverage and study tips
+
+## Quick Start
 
 ### Prerequisites
 
@@ -135,14 +190,13 @@ npm run build
 npm run preview
 ```
 
-## 📖 Usage Guide
+## Usage Guide
 
 ### Getting Started
 
-1. **Dashboard View**: Start here to see cluster health, GPU metrics, and node status
-2. **Terminal View**: Access the command-line interface for hands-on practice
-3. **Labs & Scenarios**: Follow guided exercises covering all 5 exam domains
-4. **Documentation**: Reference materials, command guides, and XID error lookup
+1. **Simulator**: Terminal and dashboard for hands-on command practice
+2. **Labs & Scenarios**: 30 narrative missions with guided exercises across all 5 exam domains
+3. **Documentation**: Reference materials, command guides, troubleshooting playbooks, and XID error lookup
 
 ### Your First Commands
 
@@ -169,20 +223,22 @@ dcgmi diag --mode 1
 
 # Check InfiniBand status
 ibstat
+
+# Get help on any command
+explain-json nvidia-smi
+
+# Practice exercises
+practice nvidia-smi
 ```
 
-### Node Selection
+### Learning Commands
 
-Use the Dashboard to select which DGX node you're working on. The terminal automatically switches context when you change nodes.
+- `explain-json <command>` - Detailed command reference from JSON definitions
+- `practice <command>` - Auto-generated practice exercises
+- `explain <command>` - Quick command overview
+- `hint` - Context-aware guidance during scenarios
 
-### Simulation Controls
-
-- **Play/Pause**: Start or pause the simulation (metrics updates, fault injection)
-- **Reset**: Return to default cluster configuration
-- **Export**: Download cluster state as JSON
-- **Import**: Load a saved cluster configuration
-
-## 🎓 Available Commands
+## Available Commands
 
 ### GPU Management
 
@@ -221,121 +277,115 @@ Use the Dashboard to select which DGX node you're working on. The terminal autom
 
 ### InfiniBand Tools
 
-| Command        | Description            | Example         |
-| -------------- | ---------------------- | --------------- |
-| `ibstat`       | Port status            | `ibstat`        |
-| `ibporterrors` | Error counters         | `ibporterrors`  |
-| `iblinkinfo`   | Fabric link info       | `iblinkinfo -v` |
-| `perfquery`    | Performance counters   | `perfquery`     |
-| `ibdiagnet`    | Full fabric diagnostic | `ibdiagnet`     |
+| Command      | Description            | Example         |
+| ------------ | ---------------------- | --------------- |
+| `ibstat`     | Port status            | `ibstat`        |
+| `iblinkinfo` | Fabric link info       | `iblinkinfo -v` |
+| `perfquery`  | Performance counters   | `perfquery`     |
+| `ibdiagnet`  | Full fabric diagnostic | `ibdiagnet`     |
 
-## 🧪 Interactive Labs
+### Cluster Management
 
-The simulator includes **64 guided lab scenarios** covering all 5 NCP-AII exam domains:
+| Command              | Description              | Example                     |
+| -------------------- | ------------------------ | --------------------------- |
+| `sinfo`              | Slurm partition status   | `sinfo`                     |
+| `squeue`             | Job queue                | `squeue`                    |
+| `scontrol show node` | Node details             | `scontrol show node dgx-01` |
+| `sbatch`             | Submit batch job         | `sbatch job.sh`             |
+| `bcm`                | Base Command Manager     | `bcm-node list`             |
+| `cmsh`               | Cluster management shell | `cmsh`                      |
+
+## Narrative Scenarios
+
+The simulator includes **30 narrative scenarios** covering all 5 NCP-AII exam domains:
 
 ### Domain 1: Systems and Server Bring-Up (31%)
 
-- BMC Configuration and IPMI Setup
-- Server POST Verification
-- Driver Installation and Troubleshooting
-- Firmware Verification and Updates
-- GPU Feature Discovery
-- Hardware Inventory Validation
-- Network Bonding Configuration
-- UEFI/BIOS Validation
-- Fabric Manager Setup
+Story-driven scenarios covering BMC configuration, server POST verification, driver installation, firmware validation, GPU discovery, hardware inventory, network bonding, and Fabric Manager setup.
 
 ### Domain 2: Physical Layer Management (5%)
 
-- NVLink Topology Analysis
-- MIG Configuration and Advanced Reconfiguration
-- NVLink Error Recovery
-- GPU Power Optimization
-- BlueField DPU Configuration
+Scenarios for NVLink topology analysis, MIG configuration, NVLink error recovery, GPU power optimization, and cable diagnostics.
 
 ### Domain 3: Control Plane Installation (19%)
 
-- BCM High Availability Setup
-- Slurm Configuration and GRES Setup
-- Container Runtime Configuration
-- NGC Container Pipelines
-- Pyxis/Enroot Advanced Workflows
-- Lustre Client Validation
-- NFS Performance Tuning
-- DCGM Policy Setup
-- Kubernetes GPU Operator
+Scenarios for Slurm configuration, container runtime setup, NGC pipelines, Pyxis/Enroot workflows, Lustre validation, and DCGM policy configuration.
 
 ### Domain 4: Cluster Test and Verification (33%)
 
-- DCGMI Diagnostics
-- NCCL Testing and Multi-Node Optimization
-- HPL Benchmark Workflows
-- Cluster Health Monitoring
-- GPU Bandwidth Validation
-- InfiniBand Stress Testing
-- AI Training Validation
-- ECC Error Investigation
-- Burn-in Testing
-- ClusterKit Assessment
+Scenarios for DCGMI diagnostics, NCCL testing, HPL benchmarks, cluster health monitoring, GPU bandwidth validation, InfiniBand stress testing, ECC error investigation, and ClusterKit assessment.
 
 ### Domain 5: Troubleshooting and Optimization (12%)
 
-- XID Error Analysis and Triage
-- Thermal Troubleshooting
-- PCIe Bandwidth Diagnosis
-- InfiniBand Fabric Partitioning
-- Container GPU Visibility Debug
-- Memory Leak Detection
-- Driver Mismatch Resolution
-- SEL Log Analysis
-- Cable Diagnostics
+Scenarios for XID error investigation, thermal troubleshooting, network diagnostics, memory issues, and cable detective work — each with automatic fault injection that makes the simulated cluster exhibit the exact symptoms you're investigating.
 
-## 🏗️ Architecture
+## Architecture
 
 ### Technology Stack
 
 - **Frontend**: React 18 with TypeScript
 - **Terminal**: xterm.js with FitAddon and WebLinksAddon
-- **State Management**: Zustand with persistence
+- **State Management**: Zustand with persistence (5 stores)
 - **Styling**: TailwindCSS with custom NVIDIA theme
 - **Icons**: Lucide React
 - **Build Tool**: Vite
-- **Visualization**: Recharts (for metrics), D3.js (for topology and network maps)
+- **Visualization**: Recharts (metrics), D3.js (topology and network maps)
+- **Testing**: Vitest, React Testing Library, Playwright (E2E)
 
 ### Project Structure
 
 ```
 src/
-├── components/           # React components (37 components)
-│   ├── Terminal.tsx     # xterm.js terminal emulator
-│   ├── Dashboard.tsx    # Real-time metrics dashboard
-│   ├── TopologyGraph.tsx # D3.js NVLink visualization
-│   ├── InfiniBandMap.tsx # D3.js InfiniBand fabric map
-│   ├── LearningPaths.tsx # Domain-based learning interface
-│   ├── ProgressAnalytics.tsx # Study progress tracking
+├── components/          # React components (54 components)
+│   ├── Terminal.tsx      # xterm.js terminal with command routing
+│   ├── Dashboard.tsx     # Real-time metrics dashboard
+│   ├── LabWorkspace.tsx  # Scenario execution workspace
+│   ├── LabsAndScenariosView.tsx # Mission browser with domain cards
+│   ├── Documentation.tsx # Tabbed reference (Architecture, Commands, XID, Exam Guide)
+│   ├── FreeMode.tsx      # Standalone sandbox environment
+│   ├── FaultInjection.tsx # Fault injection controls
+│   ├── NarrativeIntro.tsx # Mission briefing screen
+│   ├── ExamWorkspace.tsx  # Timed practice exam
+│   ├── ClusterHeatmap.tsx # GPU utilization heatmap
+│   ├── TopologyGraph.tsx  # D3.js NVLink visualization
 │   └── ...
-├── simulators/          # Command simulators (20+ simulators)
+├── simulators/          # Command simulators (19 simulators + BaseSimulator)
+│   ├── BaseSimulator.ts   # Base class with sandbox-aware resolve helpers
 │   ├── nvidiaSmiSimulator.ts
 │   ├── dcgmiSimulator.ts
 │   ├── ipmitoolSimulator.ts
 │   ├── infinibandSimulator.ts
 │   ├── slurmSimulator.ts
-│   ├── mellanoxSimulator.ts
-│   ├── bcmSimulator.ts
+│   ├── fabricManagerSimulator.ts
+│   ├── nvsmSimulator.ts
 │   └── ...
+├── cli/                 # Data-driven CLI framework
+│   ├── CommandDefinitionLoader.ts
+│   ├── CommandDefinitionRegistry.ts
+│   └── CommandExerciseGenerator.ts
 ├── data/                # Static data
-│   ├── scenarios/       # 64 lab scenario definitions
-│   └── examQuestions.json # 168 practice exam questions
+│   ├── narrativeScenarios.json  # 30 narrative scenarios
+│   ├── examQuestions.json       # 168 practice exam questions
+│   ├── commandFamilies.json     # 6 command family definitions
+│   ├── quizQuestions.json       # Tool selection quizzes
+│   ├── explanationGates.json    # 56 post-scenario knowledge checks
+│   └── commands/                # 150+ JSON command definitions
 ├── store/               # Zustand state management
-│   └── simulationStore.ts
+│   ├── simulationStore.ts       # Cluster state, GPU metrics, exam state
+│   ├── scenarioContext.ts       # Per-scenario sandbox isolation
+│   ├── learningProgressStore.ts # Quiz scores, tier unlocks, spaced repetition
+│   ├── learningStore.ts         # Domain progress, study sessions
+│   └── tierNotificationStore.ts # Tier unlock notifications
 ├── types/               # TypeScript type definitions
-├── utils/               # Utilities (50+ modules)
-│   ├── clusterFactory.ts
-│   ├── adaptiveLearning.ts
-│   ├── tabCompletion.ts
-│   ├── commandMetadata.ts
-│   └── learningPaths/   # Learning path engine
-└── App.tsx             # Main application component
+├── utils/               # Utilities (36 modules)
+│   ├── scenarioLoader.ts        # Scenario loading and fault application
+│   ├── narrativeAdapter.ts      # Narrative-to-scenario conversion
+│   ├── tierProgressionEngine.ts # Tier unlock logic
+│   ├── spacedRepetition.ts      # SM-2 algorithm
+│   ├── examEngine.ts            # Exam question selection and scoring
+│   ├── clusterFactory.ts        # DGX cluster generation
+│   └── tabCompletion.ts         # Terminal tab completion
+└── App.tsx              # Main application (3-tab layout)
 ```
 
 ### Hardware Models
@@ -343,100 +393,80 @@ src/
 The simulator accurately models:
 
 - **DGX Systems**: A100, H100, H200, B200, GB200 NVL72
-- **GPUs**: A100 (80GB), H100 SXM, H200 SXM with full specs
+- **GPUs**: A100 (80GB), H100 SXM, H200 SXM with full specs and accurate power limits
 - **MIG Profiles**: All 6 standard profiles (1g.5gb through 7g.40gb)
 - **NVLink**: 12 links (A100) / 18 links (H100) with error tracking
-- **BlueField DPUs**: All 4 operational modes
 - **InfiniBand**: HDR (200Gb/s) and NDR (400Gb/s) with error counters
 - **BMC**: Sensor readings, power management, firmware info
+- **NVSwitch**: UUID format, power ranges, diagnostic modes
 
-## 🔍 XID Error Reference
+## XID Error Reference
 
 Common GPU XID errors you'll encounter:
 
 | XID | Description               | Action                                   |
 | --- | ------------------------- | ---------------------------------------- |
+| 8   | GPU memory access fault   | Check application memory usage           |
 | 13  | Graphics engine exception | Check application, possible GPU issue    |
+| 14  | GPU driver error          | Update driver, check compatibility       |
 | 31  | GPU memory page fault     | Application bug or memory corruption     |
 | 48  | Double-bit ECC error      | Replace GPU if persistent                |
 | 63  | ECC page retirement       | Monitor; excessive retirements = replace |
 | 79  | GPU fallen off bus        | Check PCIe slot, reseat GPU              |
 | 119 | GSP error                 | Driver/firmware mismatch                 |
 
-## 🛣️ Roadmap
-
-### Completed
-
-- [x] NVSM simulator with hierarchical navigation
-- [x] Mellanox tools (mlxconfig, mlxlink, mlxcables, mlxtrace)
-- [x] Slurm commands (sinfo, squeue, scontrol, sbatch, scancel)
-- [x] Docker/NGC/Singularity/Enroot commands
-- [x] BCM (Base Command Manager) simulator
-- [x] Interactive lab scenarios with step-by-step guidance (64 labs across all domains)
-- [x] Practice exam with timed questions (168 questions)
-- [x] Fault injection system for troubleshooting practice
-- [x] Multi-node NCCL test simulation
-- [x] HPL benchmark simulation
-- [x] D3.js topology visualization (NVLink and InfiniBand fabric maps)
-- [x] Tab completion for commands
-- [x] Enhanced feedback system with "did you mean?" suggestions
-- [x] Domain-specific study modes
-- [x] Adaptive learning system
-- [x] Progress analytics dashboard
-- [x] Learning tools (`explain`, `hint` commands)
-
-### In Progress
-
-- [ ] Command history search (Ctrl+R)
-- [ ] Expanded command documentation with official NVIDIA references
-
-### Future Enhancements
-
-- WebSocket support for multi-user scenarios
-- Collaborative training sessions
-- Achievement/badge system for completed labs
-- Custom scenario creation
-- API for integration with LMS platforms
-- Instructor dashboard
-
-## 🧪 Testing
+## Testing
 
 ### Unit Tests
 
-The project has **1500+ unit tests** covering simulators, utilities, and components. Run with Vitest:
+The project has **2,956 unit tests** across 126 test files covering simulators, stores, utilities, components, and data validation:
 
 ```bash
 npm run test           # Watch mode
 npm run test:run       # Single run
 npm run test:coverage  # With coverage report
-npm run test:ui        # Interactive UI
 ```
 
 ### E2E Tests
 
-Comprehensive Playwright test suite covering all Phase 1 features:
+Playwright is configured for end-to-end testing:
 
 ```bash
 npm run test:e2e          # All E2E tests
 npm run test:e2e:ui       # Interactive mode
-npm run test:e2e:debug    # Debug mode
 npm run test:e2e:report   # View HTML report
 ```
 
-**E2E Test Coverage:**
+## Roadmap
 
-- ClusterKit commands (~20 tests)
-- Burn-in tests: NCCL, HPL, NeMo (~25 tests)
-- Firmware and cable validation (~20 tests)
-- Lab scenarios across all domains (~30 tests)
-- Integration workflows (~15 tests)
-- Visual regression across 3 viewports
+### Completed
 
-Tests run on 3 viewport sizes: Desktop (1920x1080), Laptop (1366x768), Large Display (2560x1440).
+- [x] 19 command simulators with realistic output validated against real tools
+- [x] 30 narrative scenarios with story-driven learning across all 5 domains
+- [x] Sandbox isolation (per-scenario deep-cloned state)
+- [x] AutoFaults system for automatic per-step fault injection
+- [x] Free Mode sandbox (unlocks at 3 completed missions)
+- [x] 3-tier learning progression with spaced repetition
+- [x] Practice exam with 168 timed questions
+- [x] D3.js topology visualization (NVLink and InfiniBand fabric maps)
+- [x] Tab completion and readline shortcuts
+- [x] Data-driven CLI framework with 150+ JSON command definitions
+- [x] `explain-json` and `practice` terminal commands
+- [x] Fault injection system for troubleshooting practice
+- [x] Study dashboard with progress analytics
+- [x] 2,956 unit tests with 0 TypeScript errors
 
-See [E2E Test Documentation](tests/e2e/README.md) for details.
+### Future Enhancements
 
-## 🤝 Contributing
+- E2E test coverage with Playwright
+- Command history search (Ctrl+R)
+- WebSocket support for multi-user scenarios
+- Achievement/badge system for completed missions
+- Custom scenario creation
+- API for integration with LMS platforms
+- Instructor dashboard
+
+## Contributing
 
 Contributions are welcome! This simulator is designed to help engineers prepare for NVIDIA certification. If you'd like to add features or fix issues:
 
@@ -446,17 +476,17 @@ Contributions are welcome! This simulator is designed to help engineers prepare 
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is provided for educational purposes. NVIDIA, DGX, A100, H100, and related trademarks are property of NVIDIA Corporation.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - NVIDIA for comprehensive datacenter documentation
 - The open-source community for amazing tools (xterm.js, React, Vite)
 - All engineers preparing for NCP-AII certification
 
-## 📞 Support
+## Support
 
 If you encounter issues or have questions:
 
@@ -468,8 +498,8 @@ If you encounter issues or have questions:
 
 <div align="center">
 
-**Built with ⚡ for AI Infrastructure Engineers**
+**Built for AI Infrastructure Engineers**
 
-[Get Started](#quick-start) • [View Labs](#interactive-labs) • [Report Bug](../../issues)
+[Get Started](#quick-start) · [View Scenarios](#narrative-scenarios) · [Report Bug](../../issues)
 
 </div>
