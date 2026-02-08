@@ -5,7 +5,6 @@ import type {
   SimulatorMetadata,
 } from "@/types/commands";
 import { BaseSimulator } from "./BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 import type { GPU, InfiniBandHCA } from "@/types/hardware";
 
 /**
@@ -215,6 +214,8 @@ export class BasicSystemSimulator extends BaseSimulator {
         return this.handleUname(parsed, context);
       case "hostname":
         return this.handleHostname(parsed, context);
+      case "sensors":
+        return this.handleSensors(parsed, context);
       case "fw-check":
       case "firmware":
         return this.handleFirmwareCheck(parsed, context);
@@ -539,12 +540,10 @@ Available types:
     const grepNvidia = rawCommand.includes("grep -i nvidia");
 
     // Check simulation store for any active XID errors (from fault injection)
-    const state = useSimulationStore.getState();
     const xidMessages: string[] = [];
 
     // Only check current node's GPUs for XID errors
-    const currentNodeId = context.currentNode || "dgx-00";
-    const currentNode = state.cluster.nodes.find((n) => n.id === currentNodeId);
+    const currentNode = this.resolveNode(context);
 
     // Generate timestamp formatter
     const formatTimestamp = (seconds: number): string => {
@@ -1113,9 +1112,7 @@ vermagic:       5.15.0-91-generic SMP mod_unload modversions`,
   ): CommandResult {
     // Note: -b (batch mode) and -n (iterations) are accepted but we return a single snapshot
 
-    const state = useSimulationStore.getState();
-    const currentNodeId = context.currentNode || "dgx-00";
-    const currentNode = state.cluster.nodes.find((n) => n.id === currentNodeId);
+    const currentNode = this.resolveNode(context);
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", { hour12: false });
@@ -1363,9 +1360,7 @@ vermagic:       5.15.0-91-generic SMP mod_unload modversions`,
     const grepSlurm =
       rawCommand.includes("grep slurm") || rawCommand.includes("grep -i slurm");
 
-    const state = useSimulationStore.getState();
-    const currentNodeId = context.currentNode || "dgx-00";
-    const currentNode = state.cluster.nodes.find((n) => n.id === currentNodeId);
+    const currentNode = this.resolveNode(context);
 
     // Process list
     const processes = [
@@ -1674,9 +1669,7 @@ vermagic:       5.15.0-91-generic SMP mod_unload modversions`,
     const showHardware = this.hasAnyFlag(parsed, ["H", "hardware"]);
     const showPolicy = this.hasAnyFlag(parsed, ["show", "s"]);
 
-    const state = useSimulationStore.getState();
-    const currentNodeId = context.currentNode || "dgx-00";
-    const currentNode = state.cluster.nodes.find((n) => n.id === currentNodeId);
+    const currentNode = this.resolveNode(context);
 
     const numGpus = currentNode ? currentNode.gpus.length : 8;
     const numSockets = currentNode ? currentNode.cpuCount : 2;
@@ -1751,9 +1744,7 @@ Options:
     _parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
-    const state = useSimulationStore.getState();
-    const currentNodeId = context.currentNode || "dgx-00";
-    const currentNode = state.cluster.nodes.find((n) => n.id === currentNodeId);
+    const currentNode = this.resolveNode(context);
 
     const now = new Date();
     const timeStr = now.toLocaleTimeString("en-US", {
@@ -1887,10 +1878,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
-    const cluster = useSimulationStore.getState().cluster;
-    const node =
-      cluster.nodes.find((n) => n.id === context.currentNode) ||
-      cluster.nodes[0];
+    const node = this.resolveNode(context) || this.resolveAllNodes(context)[0];
 
     const component = parsed.positionalArgs[0] || "all";
 
@@ -1935,5 +1923,123 @@ Options:
     }
 
     return this.createSuccess(output);
+  }
+
+  /**
+   * Handle sensors command (lm-sensors)
+   * Displays hardware sensor readings grouped by chip
+   */
+  private handleSensors(
+    _parsed: ParsedCommand,
+    context: CommandContext,
+  ): CommandResult {
+    const currentNode = this.resolveNode(context);
+    if (!currentNode) {
+      return this.createError("sensors: No node context available");
+    }
+
+    const sensors = currentNode.bmc?.sensors || [];
+    let output = "";
+
+    // Group sensors by type for lm-sensors style output
+    const tempSensors = sensors.filter(
+      (s) =>
+        s.unit.toLowerCase() === "degrees c" ||
+        s.name.toLowerCase().includes("temp"),
+    );
+    const fanSensors = sensors.filter(
+      (s) =>
+        s.unit.toLowerCase() === "rpm" || s.name.toLowerCase().includes("fan"),
+    );
+    const voltSensors = sensors.filter(
+      (s) =>
+        s.unit.toLowerCase() === "volts" ||
+        s.name.toLowerCase().includes("volt"),
+    );
+    const powerSensors = sensors.filter(
+      (s) =>
+        s.unit.toLowerCase() === "watts" ||
+        s.name.toLowerCase().includes("pwr") ||
+        s.name.toLowerCase().includes("power"),
+    );
+
+    // coretemp-isa-0000 chip (CPU temps)
+    output += "coretemp-isa-0000\n";
+    output += "Adapter: ISA adapter\n";
+    const cpuTemps = tempSensors.filter(
+      (s) =>
+        s.name.toLowerCase().includes("cpu") ||
+        s.name.toLowerCase().includes("core") ||
+        s.name.toLowerCase().includes("inlet"),
+    );
+    if (cpuTemps.length > 0) {
+      cpuTemps.forEach((s) => {
+        const high = s.upperWarning || 80.0;
+        const crit = s.upperCritical || 100.0;
+        output += `${s.name}:      +${s.reading.toFixed(1)}°C  (high = +${high.toFixed(1)}°C, crit = +${crit.toFixed(1)}°C)\n`;
+      });
+    } else {
+      // Default CPU temps if none in BMC data
+      output += `Core 0:           +52.0°C  (high = +80.0°C, crit = +100.0°C)\n`;
+      output += `Core 1:           +48.0°C  (high = +80.0°C, crit = +100.0°C)\n`;
+    }
+    output += "\n";
+
+    // nct6775-isa-0290 chip (system board sensors)
+    output += "nct6775-isa-0290\n";
+    output += "Adapter: ISA adapter\n";
+
+    // Voltages
+    if (voltSensors.length > 0) {
+      voltSensors.forEach((s) => {
+        output += `${s.name}:    +${s.reading.toFixed(2)} V\n`;
+      });
+    }
+
+    // Fans
+    if (fanSensors.length > 0) {
+      fanSensors.forEach((s) => {
+        output += `${s.name}:       ${Math.round(s.reading)} RPM\n`;
+      });
+    } else {
+      output += `fan1:             4200 RPM\n`;
+      output += `fan2:             4150 RPM\n`;
+    }
+
+    // Board temps
+    const boardTemps = tempSensors.filter(
+      (s) =>
+        !s.name.toLowerCase().includes("cpu") &&
+        !s.name.toLowerCase().includes("core") &&
+        !s.name.toLowerCase().includes("gpu") &&
+        !s.name.toLowerCase().includes("inlet"),
+    );
+    boardTemps.forEach((s) => {
+      const high = s.upperWarning || 85.0;
+      const crit = s.upperCritical || 95.0;
+      output += `${s.name}:      +${s.reading.toFixed(1)}°C  (high = +${high.toFixed(1)}°C, crit = +${crit.toFixed(1)}°C)\n`;
+    });
+    output += "\n";
+
+    // nvidia GPU temps
+    if (currentNode.gpus.length > 0) {
+      currentNode.gpus.forEach((gpu) => {
+        output += `nvidia-smi-${gpu.id}\n`;
+        output += `Adapter: PCI adapter\n`;
+        output += `GPU ${gpu.id} (${gpu.name}): +${gpu.temperature.toFixed(1)}°C  (high = +83.0°C, crit = +90.0°C)\n\n`;
+      });
+    }
+
+    // Power sensors
+    if (powerSensors.length > 0) {
+      output += "power_meter-acpi-0\n";
+      output += "Adapter: ACPI interface\n";
+      powerSensors.forEach((s) => {
+        output += `${s.name}:     ${s.reading.toFixed(1)} W\n`;
+      });
+      output += "\n";
+    }
+
+    return this.createSuccess(output.trimEnd());
   }
 }

@@ -5,6 +5,7 @@ interface NarrativeScenario {
   id: string;
   domain: 1 | 2 | 3 | 4 | 5;
   title: string;
+  difficulty: string;
   narrative: {
     hook: string;
     setting: string;
@@ -15,10 +16,19 @@ interface NarrativeScenario {
   steps: NarrativeStep[];
 }
 
+interface AutoFault {
+  nodeId: string;
+  gpuId?: number;
+  type: string;
+  severity: string;
+  parameters?: Record<string, unknown>;
+}
+
 interface NarrativeStep {
   id: string;
   situation: string;
   task: string;
+  expectedCommands?: string[];
   hints: string[];
   validation: {
     type: string;
@@ -31,6 +41,7 @@ interface NarrativeStep {
     correctIndex: number;
     explanation: string;
   };
+  autoFaults?: AutoFault[];
 }
 
 const scenarios = scenariosData.scenarios as NarrativeScenario[];
@@ -50,8 +61,8 @@ describe("narrativeScenarios.json", () => {
     expect(Array.isArray(scenarios)).toBe(true);
   });
 
-  it("should have 28 narrative scenarios", () => {
-    expect(scenarios.length).toBe(28);
+  it("should have 30 narrative scenarios", () => {
+    expect(scenarios.length).toBe(30);
   });
 
   it("should cover all 5 domains", () => {
@@ -68,9 +79,9 @@ describe("narrativeScenarios.json", () => {
       expect(domain1.length).toBe(7);
     });
 
-    it("should have 2 scenarios for Domain 2 (Physical Layer, 5%)", () => {
+    it("should have 4 scenarios for Domain 2 (Physical Layer, 5%)", () => {
       const domain2 = scenarios.filter((s) => s.domain === 2);
-      expect(domain2.length).toBe(2);
+      expect(domain2.length).toBe(4);
     });
 
     it("should have 6 scenarios for Domain 3 (Control Plane, 19%)", () => {
@@ -231,6 +242,211 @@ describe("narrativeScenarios.json", () => {
         s.steps.forEach((step) => {
           expect(step.situation.length).toBeGreaterThan(10);
           expect(step.task.length).toBeGreaterThan(10);
+        });
+      });
+    });
+  });
+
+  describe("autoFaults validation", () => {
+    const validFaultTypes = [
+      "xid-error",
+      "thermal",
+      "ecc-error",
+      "nvlink-failure",
+      "gpu-hang",
+      "power",
+      "memory-full",
+      "driver-error",
+      "pcie-error",
+    ];
+
+    const allAutoFaults = scenarios.flatMap((s) =>
+      s.steps.flatMap((step) =>
+        (step.autoFaults || []).map((fault) => ({
+          scenarioId: s.id,
+          stepId: step.id,
+          ...fault,
+        })),
+      ),
+    );
+
+    it("all autoFaults entries should have valid fault types", () => {
+      expect(allAutoFaults.length).toBeGreaterThan(0);
+      allAutoFaults.forEach((fault) => {
+        expect(validFaultTypes).toContain(fault.type);
+      });
+    });
+
+    it("autoFaults should have valid nodeId (non-empty string) and gpuId (number >= 0)", () => {
+      allAutoFaults.forEach((fault) => {
+        expect(typeof fault.nodeId).toBe("string");
+        expect(fault.nodeId.length).toBeGreaterThan(0);
+        if (fault.gpuId !== undefined) {
+          expect(typeof fault.gpuId).toBe("number");
+          expect(fault.gpuId).toBeGreaterThanOrEqual(0);
+        }
+      });
+    });
+
+    it("no autoFaults should reference gpuId > 7 (max 8 GPUs per DGX node, 0-indexed)", () => {
+      allAutoFaults.forEach((fault) => {
+        if (fault.gpuId !== undefined) {
+          expect(fault.gpuId).toBeLessThanOrEqual(7);
+        }
+      });
+    });
+
+    it("autoFaults parameters should have correct fields for their type", () => {
+      allAutoFaults.forEach((fault) => {
+        if (fault.type === "xid-error" && fault.parameters) {
+          expect(fault.parameters).toHaveProperty("xid");
+          expect(typeof fault.parameters.xid).toBe("number");
+        }
+        if (fault.type === "thermal" && fault.parameters) {
+          expect(fault.parameters).toHaveProperty("targetTemp");
+          expect(typeof fault.parameters.targetTemp).toBe("number");
+        }
+        if (fault.type === "ecc-error" && fault.parameters) {
+          expect(fault.parameters).toHaveProperty("singleBit");
+          expect(typeof fault.parameters.singleBit).toBe("number");
+        }
+        if (fault.type === "memory-full" && fault.parameters) {
+          expect(fault.parameters).toHaveProperty("memoryUsed");
+          expect(typeof fault.parameters.memoryUsed).toBe("number");
+        }
+      });
+    });
+
+    it("autoFaults should have valid severity values", () => {
+      allAutoFaults.forEach((fault) => {
+        expect(["warning", "critical"]).toContain(fault.severity);
+      });
+    });
+  });
+
+  describe("scenario coverage and completeness", () => {
+    it("should have all 30 scenarios present with at least 2 steps each", () => {
+      expect(scenarios.length).toBe(30);
+      scenarios.forEach((s) => {
+        expect(s.steps.length).toBeGreaterThanOrEqual(2);
+      });
+    });
+
+    it("all scenario difficulty levels should be valid", () => {
+      const validDifficulties = ["beginner", "intermediate", "advanced"];
+      scenarios.forEach((s) => {
+        expect(validDifficulties).toContain(s.difficulty);
+      });
+    });
+
+    it("step validation types should be valid", () => {
+      const validValidationTypes = [
+        "command",
+        "output",
+        "state",
+        "multi-command",
+        "quiz",
+      ];
+      scenarios.forEach((s) => {
+        s.steps.forEach((step) => {
+          expect(validValidationTypes).toContain(step.validation.type);
+        });
+      });
+    });
+
+    it("all expectedCommands should reference known simulator commands", () => {
+      const knownCommandPrefixes = [
+        "nvidia-smi",
+        "nvidia-bug-report",
+        "nvidia-bug-report.sh",
+        "dcgmi",
+        "nvsm",
+        "nvtop",
+        "nvcc",
+        "ipmitool",
+        "sensors",
+        "dmidecode",
+        "ibstat",
+        "ibdiagnet",
+        "iblinkinfo",
+        "ibhosts",
+        "ibswitches",
+        "ibnetdiscover",
+        "ibping",
+        "ibtracert",
+        "ibcableerrors",
+        "ibporterrors",
+        "perfquery",
+        "sinfo",
+        "squeue",
+        "scontrol",
+        "sacct",
+        "sacctmgr",
+        "sbatch",
+        "srun",
+        "docker",
+        "enroot",
+        "nvidia-container-cli",
+        "gpu-burn",
+        "all_reduce_perf",
+        "ib_write_bw",
+        "ib_read_bw",
+        "cat",
+        "dmesg",
+        "lspci",
+        "lsmod",
+        "lscpu",
+        "modinfo",
+        "uname",
+        "hostname",
+        "systemctl",
+        "journalctl",
+        "ip",
+        "free",
+        "df",
+        "iostat",
+        "mount",
+        "dpkg",
+        "apt",
+        "ldconfig",
+        "efibootmgr",
+        "ssh",
+        "mpirun",
+        "numactl",
+        "taskset",
+        "ofed_info",
+        "mlxfwmanager",
+        "mlxconfig",
+        "mlxlink",
+        "mlxcables",
+        "mst",
+        "sminfo",
+        "smpquery",
+        "env",
+        "nfsstat",
+        "lfs",
+        "NCCL_DEBUG=INFO",
+        "NCCL_IB_DISABLE=0",
+        "NCCL_P2P_DISABLE=0",
+      ];
+      scenarios.forEach((s) => {
+        s.steps.forEach((step) => {
+          if (step.expectedCommands) {
+            step.expectedCommands.forEach((cmd) => {
+              const cmdRoot = cmd.split(" ")[0].split("/")[0];
+              expect(knownCommandPrefixes).toContain(cmdRoot);
+            });
+          }
+        });
+      });
+    });
+
+    it("validation pattern fields should be valid regex strings", () => {
+      scenarios.forEach((s) => {
+        s.steps.forEach((step) => {
+          if (step.validation.pattern) {
+            expect(() => new RegExp(step.validation.pattern!)).not.toThrow();
+          }
         });
       });
     });

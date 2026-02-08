@@ -5,6 +5,7 @@ import {
   type SimulatorMetadata,
 } from "@/simulators/BaseSimulator";
 import { useSimulationStore } from "@/store/simulationStore";
+import type { DGXNode } from "@/types/hardware";
 
 interface SlurmJob {
   jobId: number;
@@ -64,13 +65,11 @@ export class SlurmSimulator extends BaseSimulator {
   }
 
   private getNode(context: CommandContext) {
-    const state = useSimulationStore.getState();
-    return state.cluster.nodes.find((n) => n.id === context.currentNode);
+    return this.resolveNode(context);
   }
 
-  private getAllNodes(_context: CommandContext) {
-    const state = useSimulationStore.getState();
-    return state.cluster.nodes;
+  private getAllNodes(context: CommandContext) {
+    return this.resolveAllNodes(context);
   }
 
   /**
@@ -79,10 +78,7 @@ export class SlurmSimulator extends BaseSimulator {
    * + = ascending (default), - = descending
    * Fields: n=name, t=state, P=partition, c=cpus, m=memory, G=gres
    */
-  private sortNodes(
-    nodes: typeof useSimulationStore.prototype.getState.cluster.nodes,
-    sortSpec: string,
-  ) {
+  private sortNodes(nodes: DGXNode[], sortSpec: string) {
     const sortFields = sortSpec.split(",");
 
     return [...nodes].sort((a, b) => {
@@ -123,7 +119,7 @@ export class SlurmSimulator extends BaseSimulator {
   }
 
   // sinfo - Show partition and node information
-  executeSinfo(parsed: ParsedCommand, _context: CommandContext): CommandResult {
+  executeSinfo(parsed: ParsedCommand, context: CommandContext): CommandResult {
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       return (
@@ -141,7 +137,7 @@ export class SlurmSimulator extends BaseSimulator {
     const flagError = this.validateFlagsWithRegistry(parsed, "sinfo");
     if (flagError) return flagError;
 
-    let nodes = [...useSimulationStore.getState().cluster.nodes];
+    let nodes = [...this.resolveAllNodes(context)];
 
     // Handle --sort / -S flag
     const sortSpec = this.getFlagString(parsed, ["S", "sort"]);
@@ -905,8 +901,7 @@ export class SlurmSimulator extends BaseSimulator {
         );
       }
 
-      const simState = useSimulationStore.getState();
-      const nodes = simState.cluster.nodes;
+      const nodes = this.resolveAllNodes(context);
       const node = nodes.find((n) => n.id === nodeName);
 
       if (!node) {
@@ -925,7 +920,11 @@ export class SlurmSimulator extends BaseSimulator {
           maint: "drain",
         };
         const mappedState = stateMap[state] || "idle";
-        simState.setSlurmState(nodeName, mappedState, reason);
+        this.resolveMutator(context).setSlurmState(
+          nodeName,
+          mappedState,
+          reason,
+        );
       }
 
       return this.createSuccess(`Node ${nodeName} updated successfully`);

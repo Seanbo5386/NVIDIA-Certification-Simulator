@@ -5,7 +5,6 @@ import type {
   SimulatorMetadata,
 } from "@/types/commands";
 import { BaseSimulator } from "./BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 
 interface BCMJob {
   id: number;
@@ -92,14 +91,12 @@ export class BcmSimulator extends BaseSimulator {
     }
   }
 
-  private getNodes(_context: CommandContext) {
-    const state = useSimulationStore.getState();
-    return state.cluster.nodes;
+  private getNodes(context: CommandContext) {
+    return this.resolveAllNodes(context);
   }
 
-  private getCluster(_context: CommandContext) {
-    const state = useSimulationStore.getState();
-    return state.cluster;
+  private getCluster(context: CommandContext) {
+    return this.resolveCluster(context);
   }
 
   // Main BCM command (interactive shell)
@@ -239,7 +236,7 @@ export class BcmSimulator extends BaseSimulator {
         node.hostname.padEnd(COL_HOSTNAME) +
         node.systemType.padEnd(COL_TYPE) +
         padColAnsi(status, COL_STATUS) +
-        node.gpus.length +
+        `${node.gpus.length} x ${node.gpus[0]?.name ?? "Unknown"}` +
         "\n";
     });
 

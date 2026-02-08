@@ -251,7 +251,7 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
     const prompt = () => {
       if (shellState.mode === "nvsm") {
         // Use NVSM's current prompt
-        term.write(`\x1b[36m${shellState.prompt || "nvsm-> "}\x1b[0m`);
+        term.write(`\x1b[36m${shellState.prompt || "nvsm> "}\x1b[0m`);
       } else if (shellState.mode === "cmsh") {
         term.write(
           `\x1b[36m${shellState.prompt || "[root@dgx-headnode]% "}\x1b[0m`,
@@ -807,7 +807,8 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
           case "numactl":
           case "uptime":
           case "uname":
-          case "hostname": {
+          case "hostname":
+          case "sensors": {
             const parsed = parseCommand(cmdLine);
             result = basicSystemSimulator.current.execute(
               parsed,

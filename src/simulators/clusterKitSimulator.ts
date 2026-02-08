@@ -11,7 +11,6 @@ import type {
   InfiniBandHCA,
   InfiniBandPort,
 } from "@/types/hardware";
-import { useSimulationStore } from "@/store/simulationStore";
 
 export class ClusterKitSimulator extends BaseSimulator {
   constructor() {
@@ -84,7 +83,7 @@ export class ClusterKitSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     context: CommandContext,
   ): DGXNode {
-    const cluster = useSimulationStore.getState().cluster;
+    const cluster = this.resolveCluster(context);
     const nodeFlag = parsed.flags.get("node") || context.currentNode;
 
     if (nodeFlag) {

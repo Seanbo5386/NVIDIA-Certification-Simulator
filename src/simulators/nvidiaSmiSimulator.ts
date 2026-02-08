@@ -5,7 +5,6 @@ import {
   BaseSimulator,
   type SimulatorMetadata,
 } from "@/simulators/BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 import { MIG_PROFILES } from "@/utils/clusterFactory";
 import { generateTimestamp } from "@/utils/outputTemplates";
 
@@ -419,10 +418,10 @@ export class NvidiaSmiSimulator extends BaseSimulator {
   }
 
   private getNode(context: CommandContext) {
-    const state = useSimulationStore.getState();
+    const cluster = this.resolveCluster(context);
     return (
-      state.cluster.nodes.find((n) => n.id === context.currentNode) ||
-      state.cluster.nodes[0]
+      cluster.nodes.find((n) => n.id === context.currentNode) ||
+      cluster.nodes[0]
     );
   }
 
@@ -1179,7 +1178,7 @@ export class NvidiaSmiSimulator extends BaseSimulator {
     const migValue = parsed.flags.get("mig");
     const enable = migValue === "1" || migValue === true;
 
-    useSimulationStore.getState().setMIGMode(node.id, gpuId, enable);
+    this.resolveMutator(context).setMIGMode(node.id, gpuId, enable);
 
     if (enable) {
       return this.createSuccess(
@@ -1213,7 +1212,7 @@ export class NvidiaSmiSimulator extends BaseSimulator {
       );
     }
 
-    useSimulationStore.getState().updateGPU(node.id, gpuId, { powerLimit });
+    this.resolveMutator(context).updateGPU(node.id, gpuId, { powerLimit });
 
     return this.createSuccess(
       `Power limit for GPU ${gpuId} set to ${powerLimit} W`,
@@ -1235,9 +1234,9 @@ export class NvidiaSmiSimulator extends BaseSimulator {
     const gpuId = this.getFlagNumber(parsed, ["i", "id"], 0);
     const enable = parsed.flags.get("pm") === "1";
 
-    useSimulationStore
-      .getState()
-      .updateGPU(node.id, gpuId, { persistenceMode: enable });
+    this.resolveMutator(context).updateGPU(node.id, gpuId, {
+      persistenceMode: enable,
+    });
 
     return this.createSuccess(
       `Persistence mode ${enable ? "enabled" : "disabled"} for GPU ${gpuId}`,
@@ -1295,7 +1294,7 @@ export class NvidiaSmiSimulator extends BaseSimulator {
       const xidCodes = criticalXIDs.map((xid) => xid.code).join(", ");
 
       // Clear XID errors after reset
-      useSimulationStore.getState().updateGPU(node.id, gpuId, {
+      this.resolveMutator(context).updateGPU(node.id, gpuId, {
         xidErrors: [],
         healthStatus: "OK",
         temperature: 45,
@@ -1311,7 +1310,7 @@ export class NvidiaSmiSimulator extends BaseSimulator {
     }
 
     // Normal GPU reset (no critical errors)
-    useSimulationStore.getState().updateGPU(node.id, gpuId, {
+    this.resolveMutator(context).updateGPU(node.id, gpuId, {
       xidErrors: [],
       healthStatus: "OK",
       utilization: 0,
@@ -1475,7 +1474,7 @@ export class NvidiaSmiSimulator extends BaseSimulator {
           : [],
       }));
 
-      useSimulationStore.getState().updateGPU(node.id, gpuId, {
+      this.resolveMutator(context).updateGPU(node.id, gpuId, {
         migInstances: [...gpu.migInstances, ...newInstances],
       });
 
@@ -1491,7 +1490,7 @@ export class NvidiaSmiSimulator extends BaseSimulator {
     // Handle -dgi (destroy GPU instances)
     if (this.hasAnyFlag(parsed, ["dgi", "dci"])) {
       const gpuId = this.getFlagNumber(parsed, ["i", "id"], 0);
-      useSimulationStore.getState().updateGPU(node.id, gpuId, {
+      this.resolveMutator(context).updateGPU(node.id, gpuId, {
         migInstances: [],
       });
 

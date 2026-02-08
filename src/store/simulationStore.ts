@@ -377,7 +377,9 @@ export const useSimulationStore = create<SimulationState>()(
 
       startLab: (labId) => set({ activeLabId: labId }),
 
-      completeScenarioStep: (scenarioId, stepId) =>
+      completeScenarioStep: (scenarioId, stepId) => {
+        let nextStepIndex = -1;
+
         set((state) => {
           const progress = state.scenarioProgress[scenarioId];
           if (!progress) return;
@@ -392,7 +394,7 @@ export const useSimulationStore = create<SimulationState>()(
           progress.steps[stepIndex].endTime = Date.now();
 
           // Start next step if exists
-          const nextStepIndex = stepIndex + 1;
+          nextStepIndex = stepIndex + 1;
           if (nextStepIndex < progress.steps.length) {
             progress.steps[nextStepIndex].startTime = Date.now();
           }
@@ -412,9 +414,41 @@ export const useSimulationStore = create<SimulationState>()(
           if (allCompleted && !state.completedScenarios.includes(scenarioId)) {
             state.completedScenarios.push(scenarioId);
           }
-        }),
+        });
 
-      exitScenario: () => set({ activeScenario: null }),
+        // Apply auto-faults for the next step (outside Immer set)
+        // Uses dynamic import to avoid circular dependency with scenarioContext
+        const currentState = get();
+        const scenario = currentState.activeScenario;
+        if (
+          scenario &&
+          nextStepIndex >= 0 &&
+          nextStepIndex < scenario.steps.length
+        ) {
+          const nextStep = scenario.steps[nextStepIndex];
+          if (nextStep.autoFaults && nextStep.autoFaults.length > 0) {
+            Promise.all([
+              import("@/store/scenarioContext"),
+              import("@/utils/scenarioLoader"),
+            ]).then(
+              ([{ scenarioContextManager }, { applyFaultsToContext }]) => {
+                const activeContext = scenarioContextManager.getActiveContext();
+                if (activeContext) {
+                  applyFaultsToContext(nextStep.autoFaults!, activeContext);
+                }
+              },
+            );
+          }
+        }
+      },
+
+      exitScenario: () => {
+        set({ activeScenario: null });
+        // Clean up sandbox context (dynamic import to avoid circular deps)
+        import("@/store/scenarioContext").then(({ scenarioContextManager }) => {
+          scenarioContextManager.clearAll();
+        });
+      },
 
       // Hint actions
       revealHint: (scenarioId, stepId, hintId) =>

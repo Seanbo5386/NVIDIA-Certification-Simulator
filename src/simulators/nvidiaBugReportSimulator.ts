@@ -4,7 +4,6 @@ import {
   BaseSimulator,
   type SimulatorMetadata,
 } from "@/simulators/BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 import type { DGXNode, GPU } from "@/types/hardware";
 
 /**
@@ -94,8 +93,7 @@ export class NvidiaBugReportSimulator extends BaseSimulator {
   }
 
   private getNode(context: CommandContext): DGXNode | undefined {
-    const state = useSimulationStore.getState();
-    return state.cluster.nodes.find((n) => n.id === context.currentNode);
+    return this.resolveNode(context);
   }
 
   private generateReport(
@@ -309,7 +307,12 @@ export class NvidiaBugReportSimulator extends BaseSimulator {
       number,
       { severity: string; description: string }
     > = {
+      8: {
+        severity: "critical",
+        description: "GPU has fallen off the bus (GSP error)",
+      },
       13: { severity: "warning", description: "Graphics Engine Exception" },
+      14: { severity: "warning", description: "Thermal violation" },
       31: { severity: "critical", description: "GPU memory page fault" },
       32: {
         severity: "warning",

@@ -1282,6 +1282,395 @@
       ]
     },
     {
+      "id": "domain2-fiber-optic-fault",
+      "domain": 2,
+      "title": "The Fiber Optic Fault",
+      "narrative": {
+        "hook": "A newly racked DGX node's InfiniBand ports refuse to train at full NDR 400 Gb/s speed.",
+        "setting": "The datacenter team just installed a new DGX H100 node. Cabling is complete, but the fabric manager reports degraded link widths on two ports.",
+        "resolution": "You traced the issue to a faulty QSFP-DD transceiver with dirty fiber connectors, confirmed via mlxlink eye diagram analysis and mlxcables diagnostics. After reseating and cleaning the optics, all ports trained at full 4x NDR speed."
+      },
+      "commandFamilies": ["infiniband-tools", "gpu-monitoring", "bmc-hardware"],
+      "estimatedMinutes": 15,
+      "difficulty": "beginner",
+      "steps": [
+        {
+          "id": "step-1",
+          "situation": "The new DGX H100 node has been racked and cabled. The network team says two InfiniBand ports are showing reduced bandwidth.",
+          "task": "Start by checking the InfiniBand HCA port status to see which ports are active and their link rates.",
+          "expectedCommands": ["ibstat"],
+          "hints": [
+            "ibstat shows HCA port status",
+            "Look at the 'Rate' field for each port",
+            "NDR should show 400 Gb/s"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "ibstat",
+            "pattern": "State|Rate"
+          }
+        },
+        {
+          "id": "step-2",
+          "situation": "ibstat shows ports 1 and 2 are Active but at only 100 Gb/s instead of 400 Gb/s. The ports are training at reduced width (1x instead of 4x).",
+          "task": "Check the fabric-wide link information to see how these ports appear to the rest of the network.",
+          "expectedCommands": ["iblinkinfo"],
+          "hints": [
+            "iblinkinfo shows all fabric links",
+            "Look for links with reduced width",
+            "4x means full width, 1x means degraded"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "iblinkinfo",
+            "pattern": "link|width"
+          },
+          "quiz": {
+            "question": "What does a link training at 1x width instead of 4x typically indicate?",
+            "options": [
+              "Normal speed negotiation",
+              "A physical cable or transceiver problem",
+              "Software driver misconfiguration",
+              "Insufficient power to the HCA"
+            ],
+            "correctIndex": 1,
+            "explanation": "Reduced link width (1x instead of 4x) almost always points to a physical layer issue — damaged fiber lanes, dirty connectors, or a failing transceiver. The link trains on whatever lanes still work."
+          }
+        },
+        {
+          "id": "step-3",
+          "situation": "iblinkinfo confirms two links on the new node are at 1x width. All other nodes are at 4x. The problem is isolated to this node's ports.",
+          "task": "Use mlxcables to inspect the transceiver module information on the affected ports.",
+          "expectedCommands": ["mlxcables"],
+          "hints": [
+            "mlxcables shows cable and transceiver details",
+            "Check the transceiver type and status",
+            "Look for temperature warnings or faults"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "mlxcables",
+            "pattern": "cable|transceiver|QSFP"
+          }
+        },
+        {
+          "id": "step-4",
+          "situation": "mlxcables shows the QSFP-DD transceivers are installed, but one reports elevated temperature and the other shows a 'high bit error rate' flag.",
+          "task": "Run mlxlink to check the physical signal quality and eye diagram metrics on the degraded port.",
+          "expectedCommands": ["mlxlink -d mlx5_0 -p 1 -c"],
+          "hints": [
+            "mlxlink -d <device> -p <port> shows link details",
+            "Add -c for cable/eye info",
+            "Look at signal-to-noise ratio"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "mlxlink",
+            "pattern": "eye|signal|cable"
+          },
+          "quiz": {
+            "question": "What does an 'eye diagram' measure in a high-speed link?",
+            "options": [
+              "Power consumption over time",
+              "Signal quality and timing margins",
+              "Number of connected devices",
+              "Cable length in meters"
+            ],
+            "correctIndex": 1,
+            "explanation": "Eye diagrams show signal quality by overlaying bit transitions. A 'wide open' eye means clean signals with good timing margins. A 'closed' eye means poor signal integrity — the receiver can't distinguish 0s from 1s reliably."
+          }
+        },
+        {
+          "id": "step-5",
+          "situation": "mlxlink shows the eye height is critically low on lanes 2 and 3, indicating poor signal quality on those fiber strands.",
+          "task": "Check the PCIe connectivity to make sure the HCA itself is healthy and properly seated.",
+          "expectedCommands": ["lspci | grep Mellanox"],
+          "hints": [
+            "lspci lists PCI devices",
+            "Grep for Mellanox or ConnectX",
+            "Verify link speed and width"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "lspci",
+            "pattern": "Mellanox|ConnectX"
+          }
+        },
+        {
+          "id": "step-6",
+          "situation": "lspci confirms the ConnectX-7 HCA is properly seated at PCIe Gen5 x16. The HCA hardware is fine — the problem is definitely in the optics or cabling.",
+          "task": "Check the BMC sensors to see if the node's ambient temperature could be affecting the transceivers.",
+          "expectedCommands": ["sensors"],
+          "hints": [
+            "sensors shows thermal data",
+            "Check ambient temperature",
+            "Transceivers are sensitive to heat"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "sensors",
+            "pattern": "temp"
+          }
+        },
+        {
+          "id": "step-7",
+          "situation": "Temperatures are within normal range. The issue is isolated to the transceiver optics. The fiber connectors likely got contaminated during installation.",
+          "task": "After cleaning the fiber connectors and reseating the transceivers, verify the ports have come up at full speed.",
+          "expectedCommands": ["ibstat"],
+          "hints": [
+            "ibstat to re-check port rates",
+            "Should now show 400 Gb/s",
+            "Both ports should be 4x width"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "ibstat",
+            "pattern": "Rate|400"
+          }
+        },
+        {
+          "id": "step-8",
+          "situation": "Both ports now show 400 Gb/s at full 4x width. The fiber cleaning resolved the issue.",
+          "task": "Run a final iblinkinfo to confirm the node is fully integrated into the fabric at full bandwidth.",
+          "expectedCommands": ["iblinkinfo"],
+          "hints": [
+            "iblinkinfo for fabric-wide view",
+            "All links should show 4x",
+            "No degraded links remaining"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "iblinkinfo",
+            "pattern": "4x|link"
+          },
+          "quiz": {
+            "question": "What is the most common cause of degraded InfiniBand link width on newly installed nodes?",
+            "options": [
+              "Firmware mismatch between switches",
+              "Dirty or damaged fiber connectors",
+              "Incorrect subnet manager configuration",
+              "Insufficient PCIe bandwidth"
+            ],
+            "correctIndex": 1,
+            "explanation": "Contaminated fiber connectors are the #1 cause of link issues in new installations. Even microscopic dust particles can block enough light to degrade individual lanes, causing the link to train at reduced width."
+          }
+        }
+      ]
+    },
+    {
+      "id": "domain2-fabric-health-check",
+      "domain": 2,
+      "title": "The Fabric Health Check",
+      "narrative": {
+        "hook": "A brand new 8-node GPU pod needs physical layer sign-off before going into production.",
+        "setting": "You are the validation engineer responsible for certifying that the InfiniBand fabric meets NVIDIA's specifications before handing the pod over to the operations team.",
+        "resolution": "You completed a comprehensive physical layer audit using ibdiagnet, perfquery, and mlxlink. You caught two marginal links with elevated symbol error rates and one misconfigured port speed, preventing production issues before they started."
+      },
+      "commandFamilies": [
+        "infiniband-tools",
+        "gpu-monitoring",
+        "bmc-hardware",
+        "diagnostics"
+      ],
+      "estimatedMinutes": 20,
+      "difficulty": "intermediate",
+      "steps": [
+        {
+          "id": "step-1",
+          "situation": "The new 8-node DGX pod installation is complete. Before handing it off to production, you need to validate the InfiniBand fabric physical layer.",
+          "task": "Start with a high-level fabric topology scan to verify all expected nodes and switches are present.",
+          "expectedCommands": ["ibnetdiscover"],
+          "hints": [
+            "ibnetdiscover maps the fabric topology",
+            "Count nodes and switches",
+            "Verify expected node count"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "ibnetdiscover",
+            "pattern": "Switch|HCA"
+          }
+        },
+        {
+          "id": "step-2",
+          "situation": "ibnetdiscover shows all 8 DGX nodes and the expected leaf/spine switches. Topology looks correct.",
+          "task": "Check all fabric link states and widths to identify any degraded connections.",
+          "expectedCommands": ["iblinkinfo"],
+          "hints": [
+            "iblinkinfo shows link status fabric-wide",
+            "Every link should be 4x NDR",
+            "Look for any reduced-width links"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "iblinkinfo",
+            "pattern": "link|4x|width"
+          },
+          "quiz": {
+            "question": "During fabric validation, why is checking link width as important as checking link speed?",
+            "options": [
+              "Width affects latency more than speed",
+              "A link can negotiate full speed but reduced width, hiding bandwidth loss",
+              "Width determines the number of connected nodes",
+              "Speed and width are always the same value"
+            ],
+            "correctIndex": 1,
+            "explanation": "A link can train at NDR speed but only 1x or 2x width instead of 4x, delivering a fraction of expected bandwidth. This is why checking both speed and width is critical during validation — speed alone can be misleading."
+          }
+        },
+        {
+          "id": "step-3",
+          "situation": "iblinkinfo reveals all links are at 4x width, but you need to check for physical layer errors that might indicate marginal connections.",
+          "task": "Run ibdiagnet to perform a comprehensive fabric diagnostic including error counter checks.",
+          "expectedCommands": ["ibdiagnet"],
+          "hints": [
+            "ibdiagnet runs full fabric diagnostics",
+            "Check for port counter errors",
+            "Look at the summary report"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "ibdiagnet",
+            "pattern": "diag|error|check"
+          }
+        },
+        {
+          "id": "step-4",
+          "situation": "ibdiagnet flagged two ports on node dgx-03 with non-zero SymbolErrorCounter values. These need deeper investigation.",
+          "task": "Use perfquery to get the detailed error counters on the flagged ports.",
+          "expectedCommands": ["perfquery"],
+          "hints": [
+            "perfquery reads port performance counters",
+            "SymbolErrors indicate signal problems",
+            "LinkDowned means link dropped completely"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "perfquery",
+            "pattern": "Symbol|Error|counter"
+          },
+          "quiz": {
+            "question": "What do non-zero SymbolErrorCounter values on a brand new installation indicate?",
+            "options": [
+              "Normal break-in period for new hardware",
+              "Potential cable or transceiver quality issues",
+              "Software driver needs updating",
+              "Switch firmware is outdated"
+            ],
+            "correctIndex": 1,
+            "explanation": "Symbol errors on new installations point to physical layer problems — marginal cables, dirty connectors, or defective transceivers. New hardware should have zero symbol errors. Any non-zero count warrants investigation before going to production."
+          }
+        },
+        {
+          "id": "step-5",
+          "situation": "perfquery shows 847 SymbolErrors on port 1 and 1,203 on port 2 of dgx-03. These are accumulating — the links are marginal.",
+          "task": "Use mlxlink to inspect signal quality on the affected ports of dgx-03.",
+          "expectedCommands": ["mlxlink -d mlx5_0 -p 1"],
+          "hints": [
+            "mlxlink -d <device> -p <port>",
+            "Check signal-to-noise ratio",
+            "Look at eye height/width metrics"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "mlxlink",
+            "pattern": "eye|signal|link"
+          }
+        },
+        {
+          "id": "step-6",
+          "situation": "mlxlink shows marginal eye height on 2 of 4 lanes. The cables on these ports likely have dirty connectors or micro-bends.",
+          "task": "Check the cable information with mlxcables to document which cables need replacement.",
+          "expectedCommands": ["mlxcables"],
+          "hints": [
+            "mlxcables identifies cable types",
+            "Note serial numbers for replacement",
+            "Check cable length and part number"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "mlxcables",
+            "pattern": "cable|serial|QSFP"
+          }
+        },
+        {
+          "id": "step-7",
+          "situation": "You've documented the marginal cables. The cabling team has cleaned and reseated the connectors. Now verify the fix.",
+          "task": "Clear the error counters and re-check after a brief soak period to verify errors have stopped.",
+          "expectedCommands": ["perfquery -x"],
+          "hints": [
+            "perfquery -x shows extended counters",
+            "Counters should be zero after reset",
+            "Monitor for new errors"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "perfquery",
+            "pattern": "counter|Symbol"
+          }
+        },
+        {
+          "id": "step-8",
+          "situation": "Error counters are now clean. Time to verify the GPUs on all nodes can see each other properly.",
+          "task": "Run nvidia-smi on one of the nodes to confirm GPU health before the final validation step.",
+          "expectedCommands": ["nvidia-smi"],
+          "hints": [
+            "nvidia-smi for GPU status",
+            "All 8 GPUs should be healthy",
+            "Check for any ECC errors"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "nvidia-smi",
+            "pattern": "GPU|MiB"
+          }
+        },
+        {
+          "id": "step-9",
+          "situation": "GPUs look healthy. Final step: run a comprehensive fabric diagnostic to confirm everything passes.",
+          "task": "Run ibdiagnet one final time to generate a clean validation report for the handoff.",
+          "expectedCommands": ["ibdiagnet"],
+          "hints": [
+            "ibdiagnet for final validation",
+            "All checks should pass",
+            "Save report for records"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "ibdiagnet",
+            "pattern": "pass|check|error"
+          }
+        },
+        {
+          "id": "step-10",
+          "situation": "ibdiagnet reports all clear — zero errors, full-width links across the entire pod.",
+          "task": "Check the node health via ibstat one final time and document the validated link rates for the sign-off report.",
+          "expectedCommands": ["ibstat"],
+          "hints": [
+            "ibstat for final port status",
+            "Document link rates",
+            "All ports should be 400 Gb/s"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "ibstat",
+            "pattern": "Active|Rate"
+          },
+          "quiz": {
+            "question": "Why is it important to run a full ibdiagnet validation before production handoff?",
+            "options": [
+              "It's required by NVIDIA licensing",
+              "It catches marginal links that work now but will fail under production load",
+              "It configures the subnet manager automatically",
+              "It updates firmware on all switches"
+            ],
+            "correctIndex": 1,
+            "explanation": "ibdiagnet catches marginal physical layer issues — links with low error margins that may work during idle testing but fail under the thermal and electrical stress of production GPU workloads. Catching these before handoff prevents costly production outages."
+          }
+        }
+      ]
+    },
+    {
       "id": "domain3-slurm-setup",
       "domain": 3,
       "title": "The Slurm Setup",
@@ -1988,9 +2377,10 @@
         {
           "id": "step-3",
           "situation": "nvidia-smi shows all GPUs present, but GPU 3 on dgx-04 shows high memory usage even when idle.",
-          "task": "Check GPU 3 on dgx-04 for ECC memory errors.",
-          "expectedCommands": ["nvidia-smi -q -i 3"],
+          "task": "SSH to dgx-04 and check GPU 3 for ECC memory errors.",
+          "expectedCommands": ["ssh dgx-04", "nvidia-smi -q -i 3"],
           "hints": [
+            "SSH to dgx-04 to inspect the GPU locally",
             "nvidia-smi -q for details",
             "Look for ECC errors section",
             "Check volatile and aggregate counts"
@@ -1999,7 +2389,16 @@
             "type": "command",
             "command": "nvidia-smi",
             "pattern": "-q|ECC|error"
-          }
+          },
+          "autoFaults": [
+            {
+              "nodeId": "dgx-04",
+              "gpuId": 3,
+              "type": "ecc-error",
+              "severity": "critical",
+              "parameters": { "singleBit": 150, "doubleBit": 8 }
+            }
+          ]
         },
         {
           "id": "step-4",
@@ -2219,9 +2618,10 @@
         {
           "id": "step-4",
           "situation": "iblinkinfo shows dgx-07 port 2 is running at 1x width instead of 4x!",
-          "task": "Check detailed port status on dgx-07 for the degraded port.",
-          "expectedCommands": ["ibstat"],
+          "task": "SSH to dgx-07 and check detailed port status for the degraded port.",
+          "expectedCommands": ["ssh dgx-07", "ibstat"],
           "hints": [
+            "SSH to dgx-07 to check its local port status",
             "ibstat on dgx-07",
             "Check port 2 specifically",
             "Note physical state"
@@ -2798,8 +3198,9 @@
           "id": "step-1",
           "situation": "Monitoring alerts show frequent XID 79 errors on dgx-05 over the past 24 hours.",
           "task": "Check system logs for XID error patterns and frequency.",
-          "expectedCommands": ["dmesg | grep -i xid"],
+          "expectedCommands": ["ssh dgx-05", "dmesg | grep -i xid"],
           "hints": [
+            "First SSH to the affected node to check its local logs",
             "dmesg for kernel messages",
             "Look for NVRM XID errors",
             "Note error frequency"
@@ -2825,6 +3226,18 @@
             "command": "nvidia-smi",
             "pattern": "GPU|ERR"
           },
+          "autoFaults": [
+            {
+              "nodeId": "dgx-05",
+              "gpuId": 2,
+              "type": "xid-error",
+              "severity": "critical",
+              "parameters": {
+                "xid": 79,
+                "description": "GPU has fallen off the bus"
+              }
+            }
+          ],
           "quiz": {
             "question": "What does XID 79 (GPU has fallen off the bus) typically indicate?",
             "options": [
@@ -3040,6 +3453,15 @@
             "command": "nvidia-smi",
             "pattern": "pmon|process"
           },
+          "autoFaults": [
+            {
+              "nodeId": "dgx-00",
+              "gpuId": 0,
+              "type": "memory-full",
+              "severity": "critical",
+              "parameters": { "memoryUsed": 79000 }
+            }
+          ],
           "quiz": {
             "question": "What causes GPU memory fragmentation?",
             "options": [
@@ -3270,9 +3692,10 @@
         {
           "id": "step-3",
           "situation": "All ports show Active. But 'active' doesn't mean error-free.",
-          "task": "Check InfiniBand error counters for accumulated errors.",
-          "expectedCommands": ["perfquery"],
+          "task": "SSH to dgx-03 and check InfiniBand error counters for accumulated errors.",
+          "expectedCommands": ["ssh dgx-03", "perfquery"],
           "hints": [
+            "SSH to dgx-03 to check its local error counters",
             "perfquery shows counters",
             "Look for symbol errors",
             "CRC errors indicate issues"
@@ -3281,7 +3704,15 @@
             "type": "command",
             "command": "perfquery",
             "pattern": "error|Symbol|Rcv"
-          }
+          },
+          "autoFaults": [
+            {
+              "nodeId": "dgx-03",
+              "gpuId": 0,
+              "type": "nvlink-failure",
+              "severity": "warning"
+            }
+          ]
         },
         {
           "id": "step-4",
@@ -5577,9 +6008,10 @@
         {
           "id": "step-2",
           "situation": "ibstat shows all local ports Active but one port keeps flapping. Need to see the full fabric link status.",
-          "task": "Check link information across the entire fabric to identify degraded connections.",
-          "expectedCommands": ["iblinkinfo"],
+          "task": "SSH to dgx-05 and check link information to identify degraded connections.",
+          "expectedCommands": ["ssh dgx-05", "iblinkinfo"],
           "hints": [
+            "SSH to dgx-05 to examine its link from the local perspective",
             "iblinkinfo shows all fabric links",
             "Look for reduced width or speed",
             "Note port and GUID of issues"
@@ -5589,6 +6021,15 @@
             "command": "iblinkinfo",
             "pattern": "link|width|speed"
           },
+          "autoFaults": [
+            {
+              "nodeId": "dgx-05",
+              "gpuId": 3,
+              "type": "thermal",
+              "severity": "warning",
+              "parameters": { "targetTemp": 92 }
+            }
+          ],
           "quiz": {
             "question": "What are the common types of InfiniBand cables used in datacenter clusters?",
             "options": [

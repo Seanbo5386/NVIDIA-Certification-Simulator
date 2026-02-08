@@ -5,7 +5,6 @@ import type {
   SimulatorMetadata,
 } from "@/types/commands";
 import { BaseSimulator } from "./BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 import type { GPU, DGXNode, XIDError } from "@/types/hardware";
 
 // Extended node type for NVSwitch support (not in base DGXNode type)
@@ -78,10 +77,7 @@ export class NvlinkAuditSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
-    const cluster = useSimulationStore.getState().cluster;
-    const node =
-      cluster.nodes.find((n) => n.id === context.currentNode) ||
-      cluster.nodes[0];
+    const node = this.resolveNode(context) || this.resolveAllNodes(context)[0];
 
     if (!node) {
       return this.createError("Error: No node found");

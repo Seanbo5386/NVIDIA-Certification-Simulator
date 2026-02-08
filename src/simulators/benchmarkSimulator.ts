@@ -10,7 +10,6 @@
 import { BaseSimulator } from "./BaseSimulator";
 import type { CommandContext, CommandResult } from "@/types/commands";
 import type { ParsedCommand } from "@/utils/commandParser";
-import { useSimulationStore } from "@/store/simulationStore";
 import type { GPU, DGXNode } from "@/types/hardware";
 
 export class BenchmarkSimulator extends BaseSimulator {
@@ -437,7 +436,7 @@ ${efficiency < 0.8 ? "\n\x1b[33mNote: Efficiency below 80% may indicate:\n  - Su
       return this.createError("No node selected");
     }
 
-    const state = useSimulationStore.getState();
+    const allNodes = this.resolveAllNodes(context);
     const totalGPUs = ngpus * numNodes;
     const isMultiNode = numNodes > 1;
 
@@ -465,7 +464,7 @@ ${efficiency < 0.8 ? "\n\x1b[33mNote: Efficiency below 80% may indicate:\n  - Su
     // Show devices from multiple nodes if multi-node
     let rank = 0;
     for (let nodeIdx = 0; nodeIdx < numNodes; nodeIdx++) {
-      const currentNode = state.cluster.nodes[nodeIdx] || node;
+      const currentNode = allNodes[nodeIdx] || node;
       const hostname =
         currentNode.hostname ||
         `dgx-${nodeIdx.toString().padStart(2, "0")}.cluster.local`;
@@ -750,11 +749,7 @@ Testing ${gpusToTest.length} GPU(s) for ${duration} seconds
   }
 
   private getNode(context: CommandContext): DGXNode | undefined {
-    const state = useSimulationStore.getState();
-    return (
-      state.cluster.nodes.find((n: DGXNode) => n.id === context.currentNode) ||
-      state.cluster.nodes[0]
-    );
+    return this.resolveNode(context) || this.resolveAllNodes(context)[0];
   }
 
   private calculateNCCLBandwidthMultiNode(

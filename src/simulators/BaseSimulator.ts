@@ -10,6 +10,13 @@
 
 import type { CommandResult, CommandContext } from "@/types/commands";
 import type { ParsedCommand } from "@/utils/commandParser";
+import type {
+  ClusterConfig,
+  DGXNode,
+  GPU,
+  HealthStatus,
+  XIDError,
+} from "@/types/hardware";
 import {
   commandInterceptor,
   type FlagDefinition,
@@ -24,6 +31,22 @@ import {
   formatValidationError,
 } from "@/cli/formatters";
 import { StateEngine } from "@/cli/StateEngine";
+import { useSimulationStore } from "@/store/simulationStore";
+
+/**
+ * Interface for routing state mutations to either ScenarioContext or global store
+ */
+export interface StateMutator {
+  updateGPU(nodeId: string, gpuId: number, updates: Partial<GPU>): void;
+  addXIDError(nodeId: string, gpuId: number, error: XIDError): void;
+  updateNodeHealth(nodeId: string, health: HealthStatus): void;
+  setMIGMode(nodeId: string, gpuId: number, enabled: boolean): void;
+  setSlurmState(
+    nodeId: string,
+    state: "idle" | "alloc" | "drain" | "down",
+    reason?: string,
+  ): void;
+}
 
 /**
  * Command handler function type
@@ -861,5 +884,74 @@ export abstract class BaseSimulator {
       }
     }
     return null;
+  }
+
+  // ============================================
+  // Context-Aware State Access (Sandbox Support)
+  // ============================================
+
+  /**
+   * Resolve the cluster config from context or global store.
+   * Priority: context.cluster > context.scenarioContext.getCluster() > global store
+   */
+  protected resolveCluster(context: CommandContext): ClusterConfig {
+    if (context.cluster) {
+      return context.cluster;
+    }
+    if (context.scenarioContext) {
+      return context.scenarioContext.getCluster();
+    }
+    return useSimulationStore.getState().cluster;
+  }
+
+  /**
+   * Resolve the current node from context or global store.
+   * Uses resolveCluster() and finds by context.currentNode.
+   */
+  protected resolveNode(context: CommandContext): DGXNode | undefined {
+    const cluster = this.resolveCluster(context);
+    return cluster.nodes.find((n) => n.id === context.currentNode);
+  }
+
+  /**
+   * Resolve all nodes from context or global store.
+   */
+  protected resolveAllNodes(context: CommandContext): DGXNode[] {
+    return this.resolveCluster(context).nodes;
+  }
+
+  /**
+   * Resolve a StateMutator that routes mutations to ScenarioContext when active,
+   * or to the global simulation store otherwise.
+   */
+  protected resolveMutator(context: CommandContext): StateMutator {
+    const sc = context.scenarioContext;
+    if (sc) {
+      return {
+        updateGPU: (nodeId, gpuId, updates) =>
+          sc.updateGPU(nodeId, gpuId, updates),
+        addXIDError: (nodeId, gpuId, error) =>
+          sc.addXIDError(nodeId, gpuId, error),
+        updateNodeHealth: (nodeId, health) =>
+          sc.updateNodeHealth(nodeId, health),
+        setMIGMode: (nodeId, gpuId, enabled) =>
+          sc.setMIGMode(nodeId, gpuId, enabled),
+        setSlurmState: (nodeId, state, reason) =>
+          sc.setSlurmState(nodeId, state, reason),
+      };
+    }
+    const store = useSimulationStore.getState();
+    return {
+      updateGPU: (nodeId, gpuId, updates) =>
+        store.updateGPU(nodeId, gpuId, updates),
+      addXIDError: (nodeId, gpuId, error) =>
+        store.addXIDError(nodeId, gpuId, error),
+      updateNodeHealth: (nodeId, health) =>
+        store.updateNodeHealth(nodeId, health),
+      setMIGMode: (nodeId, gpuId, enabled) =>
+        store.setMIGMode(nodeId, gpuId, enabled),
+      setSlurmState: (nodeId, state, reason) =>
+        store.setSlurmState(nodeId, state, reason),
+    };
   }
 }

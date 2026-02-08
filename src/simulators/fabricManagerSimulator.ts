@@ -4,13 +4,35 @@ import {
   BaseSimulator,
   type SimulatorMetadata,
 } from "@/simulators/BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 import type {
   GPU,
   DGXNode,
   NVLinkConnection,
   XIDError,
 } from "@/types/hardware";
+
+/**
+ * Generate a deterministic 8-character hex string from a seed.
+ * Uses a simple hash to produce consistent results per switch index.
+ */
+function hexGroup(seed: number): string {
+  // Simple deterministic hash: multiply by large prime, take lower 32 bits
+  const h = (seed * 2654435761) >>> 0;
+  return h.toString(16).padStart(8, "0");
+}
+
+/**
+ * Generate a realistic NVSwitch UUID in the format:
+ *   NVSwitch-xxxxxxxx-xxxxxxxx-xxxxxxxx-xxxxxxxx
+ * where each group is 8 hex digits. Deterministic per switch index.
+ */
+function generateNvSwitchUUID(switchIndex: number): string {
+  const g1 = hexGroup(switchIndex * 4 + 1);
+  const g2 = hexGroup(switchIndex * 4 + 2);
+  const g3 = hexGroup(switchIndex * 4 + 3);
+  const g4 = hexGroup(switchIndex * 4 + 4);
+  return `NVSwitch-${g1}-${g2}-${g3}-${g4}`;
+}
 
 /**
  * NVIDIA Fabric Manager Simulator
@@ -113,8 +135,7 @@ export class FabricManagerSimulator extends BaseSimulator {
   }
 
   private getNode(context: CommandContext) {
-    const state = useSimulationStore.getState();
-    return state.cluster.nodes.find((n) => n.id === context.currentNode);
+    return this.resolveNode(context);
   }
 
   private executeStatus(
@@ -218,9 +239,9 @@ export class FabricManagerSimulator extends BaseSimulator {
     output += `${"─".repeat(60)}\n`;
 
     for (let i = 0; i < nvswitchCount; i++) {
-      const uuid = `NVSwitch-${i}-${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+      const uuid = generateNvSwitchUUID(i);
       const temp = 45 + Math.floor(Math.random() * 15);
-      const power = 30 + Math.floor(Math.random() * 20);
+      const power = 60 + Math.floor(Math.random() * 61); // 60-120W range (realistic for NVSwitch3)
       output += `   ${i}      | ${uuid.padEnd(37)} | Active | ${temp}C  | ${power}W\n`;
     }
 

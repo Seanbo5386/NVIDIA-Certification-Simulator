@@ -63,7 +63,7 @@ let lastCompletionResult: CompletionResult | null = null;
  */
 function getPromptString(config: KeyboardHandlerConfig): string {
   if (config.shellMode === "nvsm") {
-    return config.shellPrompt || "nvsm-> ";
+    return config.shellPrompt || "nvsm> ";
   } else if (config.shellMode === "cmsh") {
     return config.shellPrompt || "[root@dgx-headnode]% ";
   }

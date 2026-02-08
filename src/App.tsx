@@ -4,14 +4,13 @@ import { LabsAndScenariosView } from "./components/LabsAndScenariosView";
 import { LabWorkspace } from "./components/LabWorkspace";
 import { ExamWorkspace } from "./components/ExamWorkspace";
 import { WelcomeScreen } from "./components/WelcomeScreen";
-// Documentation import kept for potential future use - component not rendered in current tab structure
-import { ReferenceTab } from "./components/ReferenceTab";
-import { StateManagementTab } from "./components/StateManagementTab";
+import { Documentation } from "./components/Documentation";
 import { StudyDashboard } from "./components/StudyDashboard";
 import { LearningPaths } from "./components/LearningPaths";
 import { SpacedReviewDrill } from "./components/SpacedReviewDrill";
 import { TierUnlockNotificationContainer } from "./components/TierUnlockNotification";
 import { ExamGauntlet } from "./components/ExamGauntlet";
+import { FreeMode } from "./components/FreeMode";
 import { getTotalPathStats } from "./utils/learningPathEngine";
 import { useSimulationStore } from "./store/simulationStore";
 import { useLearningProgressStore } from "./store/learningProgressStore";
@@ -21,7 +20,6 @@ import { safeParseClusterJSON } from "./utils/clusterSchema";
 import {
   Monitor,
   BookOpen,
-  Database,
   FlaskConical,
   Play,
   Pause,
@@ -30,7 +28,7 @@ import {
   Upload,
 } from "lucide-react";
 
-type View = "simulator" | "labs" | "reference" | "state";
+type View = "simulator" | "labs" | "reference";
 
 function App() {
   const [currentView, setCurrentView] = useState<View>("simulator");
@@ -43,6 +41,7 @@ function App() {
   const [showLearningPaths, setShowLearningPaths] = useState(false);
   const [showSpacedReviewDrill, setShowSpacedReviewDrill] = useState(false);
   const [showExamGauntlet, setShowExamGauntlet] = useState(false);
+  const [showFreeMode, setShowFreeMode] = useState(false);
   const [learningProgress, setLearningProgress] = useState({
     completed: 0,
     total: 0,
@@ -286,22 +285,7 @@ function App() {
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span className="font-medium">Reference</span>
-          </button>
-          <button
-            role="tab"
-            id="tab-state"
-            aria-selected={currentView === "state"}
-            aria-controls="panel-state"
-            onClick={() => setCurrentView("state")}
-            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-              currentView === "state"
-                ? "border-nvidia-green text-nvidia-green"
-                : "border-transparent text-gray-400 hover:text-gray-200"
-            }`}
-          >
-            <Database className="w-4 h-4" />
-            <span className="font-medium">State Management</span>
+            <span className="font-medium">Documentation</span>
           </button>
         </div>
       </nav>
@@ -324,12 +308,12 @@ function App() {
             onOpenLearningPaths={() => setShowLearningPaths(true)}
             onOpenStudyDashboard={() => setShowStudyDashboard(true)}
             onOpenExamGauntlet={() => setShowExamGauntlet(true)}
+            onOpenFreeMode={() => setShowFreeMode(true)}
             learningProgress={learningProgress}
           />
         )}
 
-        {currentView === "reference" && <ReferenceTab />}
-        {currentView === "state" && <StateManagementTab />}
+        {currentView === "reference" && <Documentation />}
       </main>
 
       {/* Footer */}
@@ -412,6 +396,9 @@ function App() {
       {showExamGauntlet && (
         <ExamGauntlet onExit={() => setShowExamGauntlet(false)} />
       )}
+
+      {/* Free Mode */}
+      {showFreeMode && <FreeMode onClose={() => setShowFreeMode(false)} />}
 
       {/* Tier Unlock Notifications */}
       <TierUnlockNotificationContainer

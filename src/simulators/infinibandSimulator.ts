@@ -4,7 +4,6 @@ import {
   BaseSimulator,
   type SimulatorMetadata,
 } from "@/simulators/BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 
 /**
  * Maps InfiniBand link rate (Gb/s) to the correct standard name.
@@ -52,8 +51,7 @@ export class InfiniBandSimulator extends BaseSimulator {
   }
 
   private getNode(context: CommandContext) {
-    const state = useSimulationStore.getState();
-    return state.cluster.nodes.find((n) => n.id === context.currentNode);
+    return this.resolveNode(context);
   }
 
   /**
@@ -402,7 +400,7 @@ Options:
    */
   executeIbnetdiscover(
     parsed: ParsedCommand,
-    _context: CommandContext,
+    context: CommandContext,
   ): CommandResult {
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
@@ -426,8 +424,7 @@ Options:
       return this.createSuccess("ibnetdiscover 5.9-0");
     }
 
-    const state = useSimulationStore.getState();
-    const nodes = state.cluster.nodes;
+    const nodes = this.resolveAllNodes(context);
 
     const hcaOnly = this.hasAnyFlag(parsed, ["H", "Hca_list"]);
     const switchOnly = this.hasAnyFlag(parsed, ["S", "Switch_list"]);

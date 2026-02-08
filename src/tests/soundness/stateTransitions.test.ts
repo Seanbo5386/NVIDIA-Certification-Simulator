@@ -21,8 +21,8 @@ describe("State Transitions", () => {
   let context: CommandContext;
 
   beforeEach(() => {
+    useSimulationStore.getState().resetSimulation();
     store = useSimulationStore.getState();
-    store.resetSimulation();
     nvidiaSmi = new NvidiaSmiSimulator();
     dcgmi = new DcgmiSimulator();
     slurm = new SlurmSimulator();

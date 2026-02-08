@@ -42,7 +42,7 @@ export interface CommandResult {
    * **Examples:**
    * ```typescript
    * // Enter interactive mode
-   * return { output: 'Starting nvsm...', exitCode: 0, prompt: 'nvsm-> ' };
+   * return { output: 'Starting nvsm...', exitCode: 0, prompt: 'nvsm> ' };
    *
    * // Stay in interactive mode with new prompt
    * return { output: 'Switched mode', exitCode: 0, prompt: '[root@node->device]% ' };

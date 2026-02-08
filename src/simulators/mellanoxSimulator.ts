@@ -5,7 +5,6 @@ import type {
   SimulatorMetadata,
 } from "@/types/commands";
 import { BaseSimulator } from "./BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 import type { BlueFieldDPU, InfiniBandHCA } from "@/types/hardware";
 
 // Alias for shorter code
@@ -111,8 +110,7 @@ export class MellanoxSimulator extends BaseSimulator {
   }
 
   private getNode(context: CommandContext) {
-    const state = useSimulationStore.getState();
-    return state.cluster.nodes.find((n) => n.id === context.currentNode);
+    return this.resolveNode(context);
   }
 
   // MST (Mellanox Software Tools)
@@ -325,10 +323,7 @@ export class MellanoxSimulator extends BaseSimulator {
           };
 
           // Update state
-          const state = useSimulationStore.getState();
-          const nodeToUpdate = state.cluster.nodes.find(
-            (n) => n.id === context.currentNode,
-          );
+          const nodeToUpdate = this.resolveNode(context);
           if (nodeToUpdate) {
             nodeToUpdate.dpus = nodeToUpdate.dpus.map((d) =>
               d.id === dpuDevice.id ? updatedDPU : d,
@@ -349,12 +344,9 @@ export class MellanoxSimulator extends BaseSimulator {
             },
           };
 
-          const state = useSimulationStore.getState();
-          const nodeToUpdate = state.cluster.nodes.find(
-            (n) => n.id === context.currentNode,
-          );
-          if (nodeToUpdate) {
-            nodeToUpdate.dpus = nodeToUpdate.dpus.map((d) =>
+          const nodeToUpdate2 = this.resolveNode(context);
+          if (nodeToUpdate2) {
+            nodeToUpdate2.dpus = nodeToUpdate2.dpus.map((d) =>
               d.id === dpuDevice.id ? updatedDPU : d,
             );
           }

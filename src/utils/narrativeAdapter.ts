@@ -60,6 +60,9 @@ export function narrativeStepToScenarioStep(
 
     // Preserve quiz for narrative UI
     narrativeQuiz: step.quiz,
+
+    // Pass through auto-faults for sandbox injection
+    autoFaults: step.autoFaults,
   };
 }
 
@@ -78,6 +81,7 @@ function convertValidation(
       description: `Run ${validation.command || expectedCommands[0]}`,
       expectedCommands,
       outputPattern: validation.pattern,
+      requireAllCommands: expectedCommands.length > 1,
     });
   } else if (validation.type === "output" && validation.pattern) {
     rules.push({

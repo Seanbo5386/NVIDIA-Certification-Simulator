@@ -5,7 +5,6 @@ import {
   BaseSimulator,
   type SimulatorMetadata,
 } from "@/simulators/BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 
 export class IpmitoolSimulator extends BaseSimulator {
   /**
@@ -343,11 +342,7 @@ export class IpmitoolSimulator extends BaseSimulator {
   }
 
   private getNode(context: CommandContext) {
-    const state = useSimulationStore.getState();
-    return (
-      state.cluster.nodes.find((n) => n.id === context.currentNode) ||
-      state.cluster.nodes[0]
-    );
+    return this.resolveNode(context) || this.resolveAllNodes(context)[0];
   }
 
   /**

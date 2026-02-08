@@ -6,7 +6,10 @@ import {
   TrendingUp,
   Clock,
   Crosshair,
+  FlaskConical,
+  Lock,
 } from "lucide-react";
+import { useSimulationStore } from "../store/simulationStore";
 import { getAllScenarios, getScenarioMetadata } from "../utils/scenarioLoader";
 
 interface LabsAndScenariosViewProps {
@@ -15,6 +18,7 @@ interface LabsAndScenariosViewProps {
   onOpenLearningPaths: () => void;
   onOpenStudyDashboard: () => void;
   onOpenExamGauntlet: () => void;
+  onOpenFreeMode: () => void;
   learningProgress: { completed: number; total: number };
 }
 
@@ -35,14 +39,28 @@ const DIFFICULTY_COLORS: Record<string, string> = {
   advanced: "bg-red-900/50 text-red-300 border-red-700",
 };
 
+const DIFFICULTY_ORDER: Record<string, number> = {
+  beginner: 0,
+  intermediate: 1,
+  advanced: 2,
+};
+
 export function LabsAndScenariosView({
   onStartScenario,
   onBeginExam,
   onOpenLearningPaths,
   onOpenStudyDashboard,
   onOpenExamGauntlet,
+  onOpenFreeMode,
   learningProgress,
 }: LabsAndScenariosViewProps) {
+  const scenarioProgress = useSimulationStore((s) => s.scenarioProgress);
+  const completedCount = useMemo(
+    () => Object.values(scenarioProgress).filter((p) => p.completed).length,
+    [scenarioProgress],
+  );
+  const freeModeUnlocked = completedCount >= 3;
+
   const scenariosByDomain = useMemo(() => getAllScenarios(), []);
 
   const domainScenarios = useMemo(() => {
@@ -65,6 +83,11 @@ export function LabsAndScenariosView({
             difficulty: string;
             estimatedTime: number;
           } => s !== null,
+        )
+        .sort(
+          (a, b) =>
+            (DIFFICULTY_ORDER[a.difficulty] ?? 99) -
+            (DIFFICULTY_ORDER[b.difficulty] ?? 99),
         );
     }
     return result;
@@ -238,6 +261,38 @@ export function LabsAndScenariosView({
                 className="mt-4 w-full bg-blue-600 text-white py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
               >
                 View Progress
+              </button>
+            </div>
+
+            {/* Free Mode */}
+            <div
+              data-testid="free-mode-card"
+              className={`bg-gray-800 rounded-lg p-6 border ${freeModeUnlocked ? "border-teal-600" : "border-gray-700 opacity-75"}`}
+            >
+              <div className="text-sm text-teal-400 font-semibold mb-2 flex items-center gap-2">
+                {freeModeUnlocked ? (
+                  <FlaskConical className="w-4 h-4" />
+                ) : (
+                  <Lock className="w-4 h-4" />
+                )}
+                Sandbox
+              </div>
+              <h3 className="text-lg font-bold mb-3">Free Mode</h3>
+              <p className="text-sm text-gray-300 mb-4">
+                {freeModeUnlocked
+                  ? "Open sandbox with manual fault injection. Explore commands and scenarios without guided steps."
+                  : `Complete ${3 - completedCount} more mission${3 - completedCount !== 1 ? "s" : ""} to unlock Free Mode.`}
+              </p>
+              <button
+                onClick={onOpenFreeMode}
+                disabled={!freeModeUnlocked}
+                className={`mt-4 w-full py-2 rounded-lg font-medium transition-colors ${
+                  freeModeUnlocked
+                    ? "bg-teal-600 text-white hover:bg-teal-700"
+                    : "bg-gray-700 text-gray-500 cursor-not-allowed"
+                }`}
+              >
+                {freeModeUnlocked ? "Enter Free Mode" : "Locked"}
               </button>
             </div>
           </div>

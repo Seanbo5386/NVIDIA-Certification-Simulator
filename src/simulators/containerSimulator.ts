@@ -5,7 +5,6 @@ import type {
   SimulatorMetadata,
 } from "@/types/commands";
 import { BaseSimulator } from "./BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 
 interface Container {
   id: string;
@@ -119,8 +118,7 @@ export class ContainerSimulator extends BaseSimulator {
   }
 
   private getNode(context: CommandContext) {
-    const state = useSimulationStore.getState();
-    return state.cluster.nodes.find((n) => n.id === context.currentNode);
+    return this.resolveNode(context);
   }
 
   // Docker commands

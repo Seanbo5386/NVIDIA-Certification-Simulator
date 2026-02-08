@@ -6,7 +6,6 @@ import type {
 } from "@/types/commands";
 import { BaseSimulator } from "./BaseSimulator";
 import type { DGXNode, GPU } from "@/types/hardware";
-import { useSimulationStore } from "@/store/simulationStore";
 
 /**
  * NVSM Interactive Shell State
@@ -33,7 +32,7 @@ interface TargetNode {
  * Implements NVIDIA System Management CLI per spec Section 2
  *
  * Supports:
- * - Interactive shell mode (nvsm->)
+ * - Interactive shell mode (nvsm>)
  * - Navigation verbs: cd, show, set, dump, exit, help
  * - Target hierarchy with CWT
  * - Health checks with dot-leader formatting
@@ -70,12 +69,12 @@ export class NvsmSimulator extends BaseSimulator {
     };
   }
 
-  // Dot-leader width for health checks (spec Section 2.3)
-  private readonly DOT_LEADER_WIDTH = 55;
+  // Total visible width for health check lines (spec Section 2.3)
+  // Format: "description.........dots......... STATUS" = 70 chars
+  private readonly HEALTH_LINE_WIDTH = 70;
 
   private getNode(context: CommandContext): DGXNode | undefined {
-    const state = useSimulationStore.getState();
-    return state.cluster.nodes.find((n) => n.id === context.currentNode);
+    return this.resolveNode(context);
   }
 
   /**
@@ -171,7 +170,11 @@ export class NvsmSimulator extends BaseSimulator {
     status: "Healthy" | "Warning" | "Critical",
   ): string {
     const statusFormatted = this.formatHealthStatus(status);
-    const dotsNeeded = this.DOT_LEADER_WIDTH - description.length;
+    // Visible status length (without ANSI codes)
+    const statusLen = status.length;
+    // Total visible width = description + dots + " " + status
+    const dotsNeeded =
+      this.HEALTH_LINE_WIDTH - description.length - 1 - statusLen;
     const dots = ".".repeat(Math.max(1, dotsNeeded));
     return `${description}${dots} ${statusFormatted}`;
   }
@@ -467,13 +470,13 @@ export class NvsmSimulator extends BaseSimulator {
 
   /**
    * Get interactive prompt
-   * Per spec: nvsm-> or nvsm(/path)->
+   * Per spec: nvsm> or nvsm(/path)>
    */
   getPrompt(): string {
     if (this.shellState.currentPath === "/systems/localhost") {
-      return "nvsm-> ";
+      return "nvsm> ";
     }
-    return `nvsm(${this.shellState.currentPath})-> `;
+    return `nvsm(${this.shellState.currentPath})> `;
   }
 
   /**

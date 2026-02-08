@@ -13,7 +13,6 @@ import {
   BaseSimulator,
   type SimulatorMetadata,
 } from "@/simulators/BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 
 export class DcgmiSimulator extends BaseSimulator {
   constructor() {
@@ -303,8 +302,7 @@ export class DcgmiSimulator extends BaseSimulator {
    * Get the current node from simulation store
    */
   private getNode(context: CommandContext) {
-    const state = useSimulationStore.getState();
-    return state.cluster.nodes.find((n) => n.id === context.currentNode);
+    return this.resolveNode(context);
   }
 
   /**
@@ -508,12 +506,16 @@ export class DcgmiSimulator extends BaseSimulator {
 
     // Build health check results for each subsystem
     const checks = [
+      { system: "Driver", healthy: true },
+      { system: "CUDA Runtime", healthy: true },
       { system: "PCIe", healthy: true },
       { system: "Memory", healthy: true },
       { system: "Inforom", healthy: true },
       { system: "Thermal", healthy: true },
       { system: "Power", healthy: true },
       { system: "NVLink", healthy: true },
+      { system: "Volatile Double-Bit ECC", healthy: true },
+      { system: "Persistence Mode", healthy: true },
     ];
 
     // Check actual GPU state for issues
@@ -521,6 +523,10 @@ export class DcgmiSimulator extends BaseSimulator {
       if (gpu.eccErrors.doubleBit > 0) {
         const memCheck = checks.find((c) => c.system === "Memory");
         if (memCheck) memCheck.healthy = false;
+        const eccCheck = checks.find(
+          (c) => c.system === "Volatile Double-Bit ECC",
+        );
+        if (eccCheck) eccCheck.healthy = false;
       }
       if (gpu.temperature > 80) {
         const thermalCheck = checks.find((c) => c.system === "Thermal");
@@ -529,6 +535,12 @@ export class DcgmiSimulator extends BaseSimulator {
       if (gpu.xidErrors.length > 0) {
         const pcieCheck = checks.find((c) => c.system === "PCIe");
         if (pcieCheck) pcieCheck.healthy = false;
+      }
+      if (!gpu.persistenceMode) {
+        const persistCheck = checks.find(
+          (c) => c.system === "Persistence Mode",
+        );
+        if (persistCheck) persistCheck.healthy = false;
       }
     }
 

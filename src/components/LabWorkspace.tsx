@@ -15,9 +15,6 @@ import {
   BookOpen,
   Lock,
   Wrench,
-  Book,
-  PanelRightClose,
-  PanelRightOpen,
 } from "lucide-react";
 import { HintManager } from "@/utils/hintManager";
 import { commandTracker } from "@/utils/commandValidator";
@@ -28,7 +25,6 @@ import {
 } from "@/utils/tierProgressionEngine";
 import commandFamiliesData from "@/data/commandFamilies.json";
 import type { CommandFamily } from "@/types/commandFamilies";
-import { CommandFamilyCards } from "./CommandFamilyCards";
 import { NarrativeIntro } from "./NarrativeIntro";
 import { InlineQuiz } from "./InlineQuiz";
 import { NarrativeResolution } from "./NarrativeResolution";
@@ -112,9 +108,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
 
   const [showHints, setShowHints] = useState<Record<string, number>>({});
   const [toolHintsSidebarOpen, setToolHintsSidebarOpen] = useState(true);
-  const [showReferenceSidebar, setShowReferenceSidebar] = useState(false);
   const isSmallScreen = useMediaQuery("(max-width: 1279px)");
-  const isMobile = useMediaQuery("(max-width: 767px)");
   const [showNarrativeIntro, setShowNarrativeIntro] = useState(true);
   const [quizResults, setQuizResults] = useState<Record<string, boolean>>({});
 
@@ -139,11 +133,6 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
         })),
       );
   }, [activeScenario, commandFamilies]);
-
-  // Get relevant command family IDs for the reference sidebar
-  const relevantFamilyIds = useMemo(() => {
-    return activeScenario?.commandFamilies || [];
-  }, [activeScenario]);
 
   // Check if scenario is unlocked based on tier and progress
   const checkScenarioUnlocked = useMemo(() => {
@@ -1024,84 +1013,6 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
           <span className="font-semibold">Lab Guide</span>
         </button>
       )}
-
-      {/* Reference Sidebar Toggle Button */}
-      {relevantFamilyIds.length > 0 && (
-        <button
-          onClick={() => setShowReferenceSidebar(!showReferenceSidebar)}
-          className={`fixed right-4 top-1/2 -translate-y-1/2 z-40 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-l-lg shadow-lg transition-all duration-300 flex items-center gap-2 ${
-            showReferenceSidebar
-              ? "translate-x-[360px] md:translate-x-[400px]"
-              : ""
-          }`}
-          title={
-            showReferenceSidebar ? "Hide Reference" : "Show Tool Reference"
-          }
-          data-testid="reference-sidebar-toggle"
-        >
-          <Book className="w-5 h-5" />
-          {!showReferenceSidebar && !isMobile && (
-            <span className="text-sm font-medium">Reference</span>
-          )}
-          {showReferenceSidebar ? (
-            <PanelRightClose className="w-4 h-4" />
-          ) : (
-            <PanelRightOpen className="w-4 h-4" />
-          )}
-        </button>
-      )}
-
-      {/* Reference Sidebar Backdrop (mobile) */}
-      {isMobile && showReferenceSidebar && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 transition-opacity duration-300"
-          onClick={() => setShowReferenceSidebar(false)}
-        />
-      )}
-
-      {/* Reference Sidebar */}
-      <div
-        data-testid="reference-sidebar"
-        className={`fixed inset-y-0 right-0 z-50 w-[90vw] max-w-[360px] md:max-w-[400px] bg-gray-900 shadow-2xl flex flex-col border-l border-blue-500 overflow-hidden transition-transform duration-300 ease-in-out ${
-          showReferenceSidebar ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        {/* Reference Sidebar Header */}
-        <div className="bg-gray-800 px-4 py-4 border-b border-gray-700 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Book className="w-5 h-5 text-blue-400" />
-            <h3 className="text-lg font-semibold text-white">Tool Reference</h3>
-          </div>
-          <button
-            onClick={() => setShowReferenceSidebar(false)}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-            title="Close Reference"
-          >
-            <X className="w-5 h-5 text-gray-400" />
-          </button>
-        </div>
-
-        {/* Reference Sidebar Content */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <p className="text-sm text-gray-400 mb-4">
-            Quick reference for tools relevant to this scenario. Click on a tool
-            family to expand and see available commands.
-          </p>
-          {relevantFamilyIds.map((familyId) => (
-            <div key={familyId} className="mb-4">
-              <CommandFamilyCards familyId={familyId} mode="reference" />
-            </div>
-          ))}
-        </div>
-
-        {/* Reference Sidebar Footer */}
-        <div className="border-t border-gray-700 p-4 bg-gray-800">
-          <p className="text-xs text-gray-500 text-center">
-            {relevantFamilyIds.length} tool{" "}
-            {relevantFamilyIds.length === 1 ? "family" : "families"} available
-          </p>
-        </div>
-      </div>
     </>
   );
 }

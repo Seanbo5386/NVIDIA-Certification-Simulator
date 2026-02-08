@@ -9,7 +9,6 @@ import { BaseSimulator } from "./BaseSimulator";
 import type { CommandContext, CommandResult } from "@/types/commands";
 import type { ParsedCommand } from "@/utils/commandParser";
 import type { DGXNode } from "@/types/hardware";
-import { useSimulationStore } from "@/store/simulationStore";
 
 export class NeMoSimulator extends BaseSimulator {
   constructor() {
@@ -230,10 +229,7 @@ export class NeMoSimulator extends BaseSimulator {
   }
 
   private getNode(context: CommandContext): DGXNode {
-    const state = useSimulationStore.getState();
-    return (
-      state.cluster.nodes.find((n: DGXNode) => n.id === context.currentNode) ||
-      state.cluster.nodes[0]
-    );
+    return (this.resolveNode(context) ||
+      this.resolveAllNodes(context)[0]) as DGXNode;
   }
 }

@@ -5,7 +5,33 @@ import type {
   SimulatorMetadata,
 } from "@/types/commands";
 import { BaseSimulator } from "./BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
+
+/**
+ * Format a Date as "MMM DD HH:MM:SS" (e.g., "Feb 08 14:23:45").
+ * This matches the real journalctl timestamp format used on Linux systems.
+ */
+function formatJournalTimestamp(date: Date): string {
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const month = months[date.getMonth()];
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  return `${month} ${day} ${hours}:${minutes}:${seconds}`;
+}
 
 /**
  * PciToolsSimulator
@@ -84,17 +110,15 @@ export class PciToolsSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
-    const cluster = useSimulationStore.getState().cluster;
-    const node =
-      cluster.nodes.find((n) => n.id === context.currentNode) ||
-      cluster.nodes[0];
+    const node = this.resolveNode(context) || this.resolveAllNodes(context)[0];
 
     if (!node) {
       return this.createSuccess("No PCI devices found");
     }
 
-    // Check for verbose flag
-    const verbose = this.hasAnyFlag(parsed, ["v", "vv"]);
+    // Check for verbose flags: -v for verbose, -vv for very verbose
+    const veryVerbose = this.hasAnyFlag(parsed, ["vv"]);
+    const verbose = veryVerbose || this.hasAnyFlag(parsed, ["v"]);
 
     // Check for device filter (-d 10de: for NVIDIA devices)
     const nvidiaFilter =
@@ -121,6 +145,13 @@ export class PciToolsSimulator extends BaseSimulator {
         output += `\tLatency: 0, Cache Line Size: 64 bytes\n`;
         output += `\tInterrupt: pin A routed to IRQ ${16 + idx}\n`;
         output += `\tMemory at fc000000 (64-bit, prefetchable) [size=32M]\n`;
+
+        // Very verbose (-vv) adds link status details
+        if (veryVerbose) {
+          output += `\tCapabilities: [100] Express Endpoint, MSI 00\n`;
+          output += `\tLnkCap:\tPort #0, Speed 16GT/s, Width x16\n`;
+          output += `\tLnkSta:\tSpeed 16GT/s, Width x16\n`;
+        }
 
         // Add error annotations if XID errors exist - cross-tool fault propagation
         if (gpu.xidErrors && gpu.xidErrors.length > 0) {
@@ -159,10 +190,7 @@ export class PciToolsSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
-    const cluster = useSimulationStore.getState().cluster;
-    const node =
-      cluster.nodes.find((n) => n.id === context.currentNode) ||
-      cluster.nodes[0];
+    const node = this.resolveNode(context) || this.resolveAllNodes(context)[0];
 
     if (!node) {
       return this.createError("No node found");
@@ -233,18 +261,16 @@ export class PciToolsSimulator extends BaseSimulator {
       // Add XID error entries
       if (gpu.xidErrors && gpu.xidErrors.length > 0) {
         hasErrors = true;
-        gpu.xidErrors.forEach((xid) => {
-          const timeStr = new Date(xid.timestamp).toLocaleString("en-US", {
-            month: "short",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          });
+        gpu.xidErrors.forEach((xid, xidIdx) => {
+          const timeStr = formatJournalTimestamp(new Date(xid.timestamp));
+          const pid = 12345 + gpu.id * 100 + xidIdx;
+          const channel = (gpu.id * 16 + xidIdx + 1)
+            .toString(16)
+            .padStart(8, "0");
 
-          // Main XID message
+          // Main XID message with pid and channel info
           errorEntries.push(
-            `${timeStr} ${node.hostname} kernel: NVRM: Xid (PCI:0000:${pciAddr}): ${xid.code}, ${xid.description}`,
+            `${timeStr} ${node.hostname} kernel: NVRM: Xid (PCI:0000:${pciAddr}): ${xid.code}, pid=${pid}, Ch ${channel}, ${xid.description}`,
           );
 
           // Additional context for critical XID codes
@@ -278,13 +304,7 @@ export class PciToolsSimulator extends BaseSimulator {
       // Add thermal warnings
       if (gpu.temperature > 80) {
         hasErrors = true;
-        const timeStr = now.toLocaleString("en-US", {
-          month: "short",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        });
+        const timeStr = formatJournalTimestamp(now);
         errorEntries.push(
           `${timeStr} ${node.hostname} kernel: NVRM: GPU at 0000:${pciAddr}: temperature (${gpu.temperature}C) has reached slowdown threshold`,
         );
@@ -296,13 +316,7 @@ export class PciToolsSimulator extends BaseSimulator {
         (gpu.eccErrors.singleBit > 0 || gpu.eccErrors.doubleBit > 0)
       ) {
         hasErrors = true;
-        const timeStr = now.toLocaleString("en-US", {
-          month: "short",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        });
+        const timeStr = formatJournalTimestamp(now);
         if (gpu.eccErrors.doubleBit > 0) {
           errorEntries.push(
             `${timeStr} ${node.hostname} kernel: NVRM: GPU at 0000:${pciAddr}: DOUBLE-BIT ECC error detected (count: ${gpu.eccErrors.doubleBit})`,

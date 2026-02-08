@@ -159,6 +159,9 @@ export interface ScenarioStep {
 
   // Narrative quiz (present only for narrative scenario steps)
   narrativeQuiz?: NarrativeQuiz;
+
+  // Auto-faults to inject when this step begins
+  autoFaults?: FaultInjectionConfig[];
 }
 
 export interface Scenario {
@@ -460,6 +463,7 @@ export interface NarrativeStep {
     pattern?: string;
   };
   quiz?: NarrativeQuiz;
+  autoFaults?: FaultInjectionConfig[];
 }
 
 export interface NarrativeQuiz {

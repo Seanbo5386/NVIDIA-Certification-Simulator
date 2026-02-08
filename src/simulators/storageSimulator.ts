@@ -143,9 +143,9 @@ export class StorageSimulator extends BaseSimulator {
       {
         device: "lustre@tcp:/scratch",
         type: "lustre",
-        size: humanReadable ? "100T" : "104857600000",
-        used: humanReadable ? "67T" : "70254387200",
-        avail: humanReadable ? "33T" : "34603212800",
+        size: humanReadable ? "1.2P" : "1258291200000",
+        used: humanReadable ? "804T" : "843308236800",
+        avail: humanReadable ? "396T" : "414982963200",
         usePercent: "67%",
         inodes: "6553600000",
         inodesUsed: "4390912000",
@@ -158,32 +158,57 @@ export class StorageSimulator extends BaseSimulator {
     let output = "";
 
     if (showInodes) {
-      // Inode mode
-      output =
-        "Filesystem" +
-        (showType ? "      Type   " : "").padEnd(20) +
-        "  Inodes  IUsed   IFree IUse% Mounted on\n";
+      // Inode mode - numeric columns right-aligned
+      const devW = 20;
+      const typeW = 8;
+      const inodesW = 12;
+      const iusedW = 12;
+      const ifreeW = 12;
+      const ipctW = 6;
+      const hdr =
+        "Filesystem".padEnd(devW) +
+        (showType ? "Type".padEnd(typeW) : "") +
+        "Inodes".padStart(inodesW) +
+        " " +
+        "IUsed".padStart(iusedW) +
+        " " +
+        "IFree".padStart(ifreeW) +
+        " " +
+        "IUse%".padStart(ipctW) +
+        " " +
+        "Mounted on\n";
+      output = hdr;
       filesystems.forEach((fs) => {
-        const device = fs.device.padEnd(20);
-        const type = showType ? fs.type.padEnd(8) : "";
-        output += `${device}${type}${fs.inodes.padStart(9)} ${fs.inodesUsed.padStart(7)} ${fs.inodesAvail.padStart(7)} ${fs.inodesPercent.padStart(5)} ${fs.mount}\n`;
+        const device = fs.device.padEnd(devW);
+        const type = showType ? fs.type.padEnd(typeW) : "";
+        output += `${device}${type}${fs.inodes.padStart(inodesW)} ${fs.inodesUsed.padStart(iusedW)} ${fs.inodesAvail.padStart(ifreeW)} ${fs.inodesPercent.padStart(ipctW)} ${fs.mount}\n`;
       });
     } else {
-      // Regular mode
+      // Regular mode - numeric columns right-aligned
+      const devW = 20;
+      const typeW = 8;
+      const sizeW = humanReadable ? 6 : 13;
+      const usedW = humanReadable ? 6 : 13;
+      const availW = humanReadable ? 6 : 13;
+      const pctW = 5;
       const sizeLabel = humanReadable ? "Size" : "1K-blocks";
-      output =
-        "Filesystem" +
-        (showType ? "      Type   " : "").padEnd(20) +
-        ` ${sizeLabel.padStart(10)}  Used  Avail Use% Mounted on\n`;
+      const hdr =
+        "Filesystem".padEnd(devW) +
+        (showType ? "Type".padEnd(typeW) : "") +
+        sizeLabel.padStart(sizeW) +
+        " " +
+        "Used".padStart(usedW) +
+        " " +
+        "Avail".padStart(availW) +
+        " " +
+        "Use%".padStart(pctW) +
+        " " +
+        "Mounted on\n";
+      output = hdr;
       filesystems.forEach((fs) => {
-        const device = fs.device.padEnd(20);
-        const type = showType ? fs.type.padEnd(8) : "";
-        const size = humanReadable ? fs.size.padStart(5) : fs.size.padStart(10);
-        const used = humanReadable ? fs.used.padStart(5) : fs.used.padStart(10);
-        const avail = humanReadable
-          ? fs.avail.padStart(6)
-          : fs.avail.padStart(10);
-        output += `${device}${type}${size} ${used} ${avail} ${fs.usePercent.padStart(4)} ${fs.mount}\n`;
+        const device = fs.device.padEnd(devW);
+        const type = showType ? fs.type.padEnd(typeW) : "";
+        output += `${device}${type}${fs.size.padStart(sizeW)} ${fs.used.padStart(usedW)} ${fs.avail.padStart(availW)} ${fs.usePercent.padStart(pctW)} ${fs.mount}\n`;
       });
     }
 
@@ -225,24 +250,24 @@ lustre@tcp:/scratch on /scratch type lustre (rw,flock,user_xattr,lazystatfs)
         if (humanReadable) {
           return this
             .createSuccess(`UUID                       bytes        Used   Available Use% Mounted on
-lustre-MDT0000_UUID      953.6G      238.4G      715.2G  25% /scratch[MDT:0]
-lustre-OST0000_UUID       35.2T       23.1T       12.1T  66% /scratch[OST:0]
-lustre-OST0001_UUID       35.2T       22.8T       12.4T  65% /scratch[OST:1]
-lustre-OST0002_UUID       35.2T       23.4T       11.8T  67% /scratch[OST:2]
-lustre-OST0003_UUID       35.2T       23.0T       12.2T  65% /scratch[OST:3]
+scratch-MDT0000_UUID     953.6G      238.4G      715.2G  25% /scratch[MDT:0]
+scratch-OST0000_UUID     300.0T      201.0T       99.0T  67% /scratch[OST:0]
+scratch-OST0001_UUID     300.0T      198.0T      102.0T  66% /scratch[OST:1]
+scratch-OST0002_UUID     300.0T      204.0T       96.0T  68% /scratch[OST:2]
+scratch-OST0003_UUID     300.0T      201.0T       99.0T  67% /scratch[OST:3]
 
-filesystem_summary:      140.8T       92.3T       48.5T  66% /scratch
+filesystem_summary:        1.2P      804.0T      396.0T  67% /scratch
 `);
         } else {
           return this
             .createSuccess(`UUID                       1K-blocks        Used   Available Use% Mounted on
-lustre-MDT0000_UUID     1000341504   250006016   750335488  25% /scratch[MDT:0]
-lustre-OST0000_UUID    36903628800 24235335680 12668293120  66% /scratch[OST:0]
-lustre-OST0001_UUID    36903628800 23901798400 13001830400  65% /scratch[OST:1]
-lustre-OST0002_UUID    36903628800 24537989120 12365639680  67% /scratch[OST:2]
-lustre-OST0003_UUID    36903628800 24134615040 12769013760  65% /scratch[OST:3]
+scratch-MDT0000_UUID    1000341504   250006016   750335488  25% /scratch[MDT:0]
+scratch-OST0000_UUID  314572800000 210827059200 103745740800  67% /scratch[OST:0]
+scratch-OST0001_UUID  314572800000 207693004800 106879795200  66% /scratch[OST:1]
+scratch-OST0002_UUID  314572800000 213961113600 100611686400  68% /scratch[OST:2]
+scratch-OST0003_UUID  314572800000 210827059200 103745740800  67% /scratch[OST:3]
 
-filesystem_summary:   147614515200 96809738240 50804776960  66% /scratch
+filesystem_summary:  1258291200000 843308236800 414982963200  67% /scratch
 `);
         }
       }
@@ -251,11 +276,11 @@ filesystem_summary:   147614515200 96809738240 50804776960  66% /scratch
         const target = parsed.positionalArgs[1] || "servers";
 
         if (target === "servers") {
-          return this.createSuccess(`Check: lustre-MDT0000 on /scratch
-Check: lustre-OST0000 on /scratch
-Check: lustre-OST0001 on /scratch
-Check: lustre-OST0002 on /scratch
-Check: lustre-OST0003 on /scratch
+          return this.createSuccess(`Check: scratch-MDT0000 on /scratch
+Check: scratch-OST0000 on /scratch
+Check: scratch-OST0001 on /scratch
+Check: scratch-OST0002 on /scratch
+Check: scratch-OST0003 on /scratch
 
 All Lustre servers are responding
 `);
