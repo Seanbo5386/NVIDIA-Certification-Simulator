@@ -1,15 +1,11 @@
-import type {
-  Scenario,
-  FaultInjectionConfig,
-  NarrativeScenario,
-} from "@/types/scenarios";
+import type { Scenario, FaultInjectionConfig } from "@/types/scenarios";
 import type { ScenarioContext } from "@/store/scenarioContext";
 import { useSimulationStore } from "@/store/simulationStore";
 import { narrativeToScenario } from "./narrativeAdapter";
+import { parseNarrativeScenariosFile } from "./runtimeValidation";
 import narrativeData from "../data/narrativeScenarios.json";
 
-const narrativeScenarios =
-  narrativeData.scenarios as unknown as NarrativeScenario[];
+const narrativeScenarios = parseNarrativeScenariosFile(narrativeData);
 
 // Cache for loaded scenarios
 let scenarioCache: Map<string, Scenario> | null = null;

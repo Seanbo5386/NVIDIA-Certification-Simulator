@@ -1,4 +1,5 @@
 import type { CommandDefinition, CommandCategory } from "./types";
+import { parseCommandDefinition } from "@/utils/runtimeValidation";
 
 // Import command definition JSON files from data/output using Vite's lazy glob import
 // Excludes relationships/ (reference-only, no runtime consumers) and schema.json
@@ -47,14 +48,15 @@ export class CommandDefinitionLoader {
             !path.includes("schema.json") &&
             !path.includes("state_domains.json"),
         )
-        .map(async ([, importFn]) => {
+        .map(async ([path, importFn]) => {
           const module = await (
             importFn as () => Promise<{ default?: CommandDefinition }>
           )();
-          return (
+          const definition =
             (module as { default?: CommandDefinition }).default ||
-            (module as unknown as CommandDefinition)
-          );
+            (module as { default?: unknown }).default ||
+            module;
+          return parseCommandDefinition(definition, path);
         }),
     );
 
