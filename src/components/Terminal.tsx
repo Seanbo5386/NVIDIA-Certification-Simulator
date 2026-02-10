@@ -38,12 +38,7 @@ import { TERMINAL_OPTIONS, WELCOME_MESSAGE } from "@/constants/terminalConfig";
 import { handleKeyboardInput } from "@/utils/terminalKeyboardHandler";
 import { useLabFeedback } from "@/hooks/useLabFeedback";
 import { HintManager } from "@/utils/hintManager";
-import { getCommandMetadata } from "@/utils/commandMetadata";
-import {
-  formatCommandHelp,
-  formatCommandList,
-  getDidYouMeanMessage,
-} from "@/utils/commandSuggestions";
+import { getDidYouMeanMessage } from "@/utils/commandSuggestions";
 import { applyPipeFilters, hasPipes } from "@/utils/pipeHandler";
 
 // Helper function to format practice exercises
@@ -105,6 +100,8 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
   const [, setCurrentCommand] = useState("");
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const commandHistoryRef = useRef<string[]>([]);
+  const historyIndexRef = useRef(-1);
   const [isTerminalReady, setIsTerminalReady] = useState(false);
   const [shellState, setShellState] = useState<ShellState>({
     mode: "bash",
@@ -279,22 +276,51 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
     const commandRouter = new CommandRouter();
     commandRouterRef.current = commandRouter;
 
+    const handleHistoryChange = (index: number) => {
+      setHistoryIndex(index);
+      historyIndexRef.current = index;
+    };
+
+    const appendCommandToHistory = (cmdLine: string) => {
+      setCommandHistory((prev) => {
+        const nextHistory = [...prev, cmdLine];
+        commandHistoryRef.current = nextHistory;
+        return nextHistory;
+      });
+
+      handleHistoryChange(-1);
+    };
+
     commandRouter.register("help", async (cmdLine) => {
       const args = cmdLine.trim().split(/\s+/).slice(1);
-      if (args.length > 0) {
-        const commandName = args[0];
-        const metadata = getCommandMetadata(commandName);
-        if (metadata) {
-          return { output: formatCommandHelp(metadata), exitCode: 0 };
+      try {
+        const {
+          getCommandDefinitionRegistry,
+          formatCommandHelp,
+          formatCommandList,
+        } = await import("@/cli");
+        const registry = await getCommandDefinitionRegistry();
+
+        if (args.length > 0) {
+          const commandName = args[0];
+          const def = registry.getDefinition(commandName);
+          if (def) {
+            return { output: formatCommandHelp(def), exitCode: 0 };
+          }
+
+          return {
+            output: `\x1b[33mNo help available for '\x1b[36m${commandName}\x1b[33m'.\x1b[0m\n\nType \x1b[36mhelp\x1b[0m to see all available commands.`,
+            exitCode: 1,
+          };
         }
 
+        return { output: formatCommandList(registry.getAllDefinitions()), exitCode: 0 };
+      } catch (error) {
         return {
-          output: `\x1b[33mNo help available for '\x1b[36m${commandName}\x1b[33m'.\x1b[0m\n\nType \x1b[36mhelp\x1b[0m to see all available commands.`,
+          output: `Error loading command information: ${error instanceof Error ? error.message : "Unknown error"}`,
           exitCode: 1,
         };
       }
-
-      return { output: formatCommandList(), exitCode: 0 };
     });
 
     commandRouter.register("explain", async (cmdLine) => {
@@ -308,18 +334,28 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
       }
 
       const commandName = args[0];
-      const metadata = getCommandMetadata(commandName);
+      try {
+        const { getCommandDefinitionRegistry, formatCommandHelp } =
+          await import("@/cli");
+        const registry = await getCommandDefinitionRegistry();
+        const def = registry.getDefinition(commandName);
 
-      if (metadata) {
-        return { output: formatCommandHelp(metadata), exitCode: 0 };
-      }
+        if (def) {
+          return { output: formatCommandHelp(def), exitCode: 0 };
+        }
 
-      let output = `\x1b[33mNo information available for '\x1b[36m${commandName}\x1b[33m'.\x1b[0m`;
-      const suggestion = getDidYouMeanMessage(commandName);
-      if (suggestion) {
-        output += "\n\n" + suggestion;
+        let output = `\x1b[33mNo information available for '\x1b[36m${commandName}\x1b[33m'.\x1b[0m`;
+        const suggestion = getDidYouMeanMessage(commandName);
+        if (suggestion) {
+          output += "\n\n" + suggestion;
+        }
+        return { output, exitCode: 1 };
+      } catch (error) {
+        return {
+          output: `Error loading command information: ${error instanceof Error ? error.message : "Unknown error"}`,
+          exitCode: 1,
+        };
       }
-      return { output, exitCode: 1 };
     });
 
     commandRouter.register("explain-json", async (cmdLine) => {
@@ -727,7 +763,7 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
       }
 
       // Add to history
-      setCommandHistory((prev) => [...prev, cmdLine]);
+      appendCommandToHistory(cmdLine);
       currentContext.current.history.push(cmdLine);
 
       // Parse command
@@ -890,12 +926,12 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
     term.onData((data) => {
       const result = handleKeyboardInput(data, {
         term,
-        commandHistory,
-        historyIndex,
+        commandHistory: commandHistoryRef.current,
+        historyIndex: historyIndexRef.current,
         currentLine,
         currentNode: currentContext.current.currentNode,
         onExecute: executeCommand,
-        onHistoryChange: setHistoryIndex,
+        onHistoryChange: handleHistoryChange,
         onLineChange: setCurrentCommand,
         onPrompt: prompt,
       });
@@ -903,7 +939,7 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
       if (result) {
         currentLine = result.currentLine;
         setCurrentCommand(result.currentLine);
-        setHistoryIndex(result.historyIndex);
+        handleHistoryChange(result.historyIndex);
       }
     });
 
