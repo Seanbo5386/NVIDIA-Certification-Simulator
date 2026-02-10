@@ -142,10 +142,12 @@ export function formatCommandList(definitions: CommandDefinition[]): string {
   const categories = new Map<string, CommandDefinition[]>();
 
   for (const def of definitions) {
-    if (!categories.has(def.category)) {
-      categories.set(def.category, []);
+    const commands = categories.get(def.category);
+    if (commands) {
+      commands.push(def);
+    } else {
+      categories.set(def.category, [def]);
     }
-    categories.get(def.category)?.push(def);
   }
 
   const lines: string[] = [];
