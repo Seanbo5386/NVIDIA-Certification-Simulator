@@ -275,7 +275,7 @@ export function About() {
             <p>
               This project was built in partnership with{" "}
               <a
-                href="https://claude.ai/claude-code"
+                href="https://www.anthropic.com/claude-code"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-nvidia-green font-medium hover:text-green-400 transition-colors underline"

@@ -179,7 +179,7 @@ const examDomains = [
 const officialResources = [
   {
     title: "NCP-AII Certification Page",
-    url: "https://www.nvidia.com/en-us/training/certification/",
+    url: "https://www.nvidia.com/en-us/learn/certification/",
     description:
       "Official certification overview, registration, and exam details",
     icon: Award,

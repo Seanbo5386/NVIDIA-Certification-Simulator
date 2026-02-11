@@ -721,7 +721,7 @@ const ExamGuideContent: React.FC = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <ResourceLink
             title="NCP-AII Certification Page"
-            url="https://www.nvidia.com/en-us/training/certification/"
+            url="https://www.nvidia.com/en-us/learn/certification/"
             description="Official certification overview, registration, and exam details"
             icon={<Award className="w-4 h-4" />}
           />

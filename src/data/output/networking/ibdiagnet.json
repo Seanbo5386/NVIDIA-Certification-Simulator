@@ -5,7 +5,7 @@
   "synopsis": "ibdiagnet [options]",
   "version_documented": "OFED/ibdiags 5.0+",
   "source_urls": [
-    "https://docs.nvidia.com/networking/display/ibdiagnet/ibdiagnet"
+    "https://docs.nvidia.com/networking/display/ibdiagnetusermanualv280"
   ],
   "installation": {
     "package": "ibutils2",

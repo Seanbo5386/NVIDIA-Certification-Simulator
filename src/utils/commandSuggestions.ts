@@ -36,7 +36,8 @@ const ERROR_EXPLANATIONS: ErrorExplanation[] = [
     pattern: /MST driver not loaded/i,
     explanation: "Mellanox Software Tools (MST) driver is not initialized.",
     suggestion: 'Run "mst start" before using mlx* or InfiniBand commands.',
-    docLink: "https://docs.nvidia.com/networking/display/MFTv4230/MST+Commands",
+    docLink:
+      "https://docs.nvidia.com/networking/display/mft/mstconfig+commands",
   },
   {
     pattern: /invalid option|unrecognized option/i,
@@ -52,7 +53,7 @@ const ERROR_EXPLANATIONS: ErrorExplanation[] = [
     pattern: /GPU.*error|XID.*error/i,
     explanation: "A GPU hardware or driver error was detected.",
     suggestion: "Check dmesg and nvidia-smi -q for detailed error information.",
-    docLink: "https://docs.nvidia.com/datacenter/tesla/xid-errors/",
+    docLink: "https://docs.nvidia.com/deploy/xid-errors/index.html",
   },
   {
     pattern: /ECC.*error/i,
