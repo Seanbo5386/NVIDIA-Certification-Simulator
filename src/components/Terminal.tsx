@@ -211,43 +211,85 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
   useEffect(() => {
     if (!terminalRef.current) return;
 
+    let disposed = false;
+    const container = terminalRef.current;
+
     const term = new XTerm(TERMINAL_OPTIONS);
 
     const fitAddon = new FitAddon();
     const webLinksAddon = new WebLinksAddon();
     term.loadAddon(fitAddon);
     term.loadAddon(webLinksAddon);
-    term.open(terminalRef.current);
 
     // Safe fit function that checks container dimensions first
     const safeFit = () => {
-      if (terminalRef.current) {
-        const { clientWidth, clientHeight } = terminalRef.current;
-        // Only fit if container has valid dimensions
-        if (clientWidth > 0 && clientHeight > 0) {
-          try {
-            fitAddon.fit();
-          } catch (e) {
-            // Ignore fit errors during layout transitions
-          }
+      if (disposed || !terminalRef.current) return;
+      const { clientWidth, clientHeight } = terminalRef.current;
+      if (clientWidth > 0 && clientHeight > 0) {
+        try {
+          fitAddon.fit();
+        } catch (e) {
+          // Ignore fit errors during layout transitions
         }
       }
     };
 
-    // Fit terminal to container size (delayed to allow layout to settle)
-    requestAnimationFrame(safeFit);
-
-    // Handle container resize
+    // ResizeObserver for container resize — created early so cleanup always works
     const resizeObserver = new ResizeObserver(() => {
       safeFit();
     });
-    resizeObserver.observe(terminalRef.current);
 
-    xtermRef.current = term;
-    setIsTerminalReady(true);
+    // Suppress harmless xterm.js viewport errors during React StrictMode's
+    // mount→dispose→remount cycle. The disposed terminal's pending RAF
+    // accesses _renderService.dimensions which is already cleaned up.
+    const handleXtermError = (event: ErrorEvent) => {
+      if (
+        disposed &&
+        event.filename?.includes("xterm") &&
+        event.message?.includes("dimensions")
+      ) {
+        event.preventDefault();
+      }
+    };
+    window.addEventListener("error", handleXtermError);
 
-    // Display welcome message
-    term.write(WELCOME_MESSAGE);
+    // Opens the terminal once the container has non-zero dimensions.
+    // xterm's Viewport._innerRefresh accesses _renderService.dimensions
+    // immediately after open(), which throws if the container has zero size.
+    const openAndInit = () => {
+      if (disposed) return;
+      term.open(container);
+
+      // Delay writes and resize-observer until xterm's renderer has
+      // initialized dimensions (needs one animation frame after open)
+      requestAnimationFrame(() => {
+        if (disposed) return;
+        safeFit();
+        resizeObserver.observe(container);
+        xtermRef.current = term;
+        setIsTerminalReady(true);
+        term.write(WELCOME_MESSAGE);
+        prompt();
+        term.onData((data) => {
+          const result = handleKeyboardInput(data, {
+            term,
+            commandHistory,
+            historyIndex,
+            currentLine,
+            currentNode: currentContext.current.currentNode,
+            onExecute: executeCommand,
+            onHistoryChange: setHistoryIndex,
+            onLineChange: setCurrentCommand,
+            onPrompt: prompt,
+          });
+          if (result) {
+            currentLine = result.currentLine;
+            setCurrentCommand(result.currentLine);
+            setHistoryIndex(result.historyIndex);
+          }
+        });
+      });
+    };
 
     const prompt = () => {
       if (shellState.mode === "nvsm") {
@@ -263,8 +305,6 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
         term.write(`\x1b[1;32mroot@${node}\x1b[0m:\x1b[1;34m~\x1b[0m# `);
       }
     };
-
-    prompt();
 
     // Helper function to render progress bar
     const renderProgressBar = (progress: number): string => {
@@ -778,30 +818,35 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
     // Store executeCommand ref for external access (auto-SSH on node selection)
     executeCommandRef.current = executeCommand;
 
-    term.onData((data) => {
-      const result = handleKeyboardInput(data, {
-        term,
-        commandHistory,
-        historyIndex,
-        currentLine,
-        currentNode: currentContext.current.currentNode,
-        onExecute: executeCommand,
-        onHistoryChange: setHistoryIndex,
-        onLineChange: setCurrentCommand,
-        onPrompt: prompt,
+    // Defer term.open() until container has non-zero dimensions to prevent
+    // xterm Viewport._innerRefresh from accessing uninitialized _renderService.dimensions
+    let initObserver: ResizeObserver | null = null;
+    const { clientWidth, clientHeight } = container;
+    if (clientWidth > 0 && clientHeight > 0) {
+      openAndInit();
+    } else {
+      initObserver = new ResizeObserver((entries) => {
+        const rect = entries[0]?.contentRect;
+        if (rect && rect.width > 0 && rect.height > 0) {
+          initObserver!.disconnect();
+          initObserver = null;
+          openAndInit();
+        }
       });
-
-      if (result) {
-        currentLine = result.currentLine;
-        setCurrentCommand(result.currentLine);
-        setHistoryIndex(result.historyIndex);
-      }
-    });
+      initObserver.observe(container);
+    }
 
     return () => {
+      disposed = true;
+      initObserver?.disconnect();
       resizeObserver.disconnect();
       term.dispose();
       setIsTerminalReady(false);
+      // Delay removal so the handler can suppress errors from xterm's pending RAFs
+      setTimeout(
+        () => window.removeEventListener("error", handleXtermError),
+        100,
+      );
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Terminal initialization runs once on mount
