@@ -6,12 +6,10 @@ import { ExamWorkspace } from "./components/ExamWorkspace";
 import { WelcomeScreen } from "./components/WelcomeScreen";
 import { Documentation } from "./components/Documentation";
 import { StudyDashboard } from "./components/StudyDashboard";
-import { LearningPaths } from "./components/LearningPaths";
 import { SpacedReviewDrill } from "./components/SpacedReviewDrill";
 import { TierUnlockNotificationContainer } from "./components/TierUnlockNotification";
 import { ExamGauntlet } from "./components/ExamGauntlet";
 import { FreeMode } from "./components/FreeMode";
-import { getTotalPathStats } from "./utils/learningPathEngine";
 import { useSimulationStore } from "./store/simulationStore";
 import { useLearningProgressStore } from "./store/learningProgressStore";
 import { useMetricsSimulation } from "./hooks/useMetricsSimulation";
@@ -26,7 +24,10 @@ import {
   RotateCcw,
   Download,
   Upload,
+  HelpCircle,
 } from "lucide-react";
+import { SpotlightTour } from "./components/SpotlightTour";
+import { TOUR_STEPS, type TourId } from "./data/tourSteps";
 
 type View = "simulator" | "labs" | "reference";
 
@@ -38,14 +39,10 @@ function App() {
     () => localStorage.getItem("ncp-aii-welcome-dismissed") !== "true",
   );
   const [showStudyDashboard, setShowStudyDashboard] = useState(false);
-  const [showLearningPaths, setShowLearningPaths] = useState(false);
   const [showSpacedReviewDrill, setShowSpacedReviewDrill] = useState(false);
   const [showExamGauntlet, setShowExamGauntlet] = useState(false);
   const [showFreeMode, setShowFreeMode] = useState(false);
-  const [learningProgress, setLearningProgress] = useState({
-    completed: 0,
-    total: 0,
-  });
+  const [activeTour, setActiveTour] = useState<TourId | null>(null);
 
   // Get due reviews count from learning progress store
   const dueReviews = useLearningProgressStore((state) => state.getDueReviews());
@@ -64,13 +61,26 @@ function App() {
   // Activate metrics simulation when running
   useMetricsSimulation(isRunning);
 
-  // Load learning progress on mount and when modal closes
+  // One-time cleanup of deprecated learning path localStorage keys
   useEffect(() => {
-    const savedLessons = localStorage.getItem("ncp-aii-completed-lessons");
-    const completed = savedLessons ? JSON.parse(savedLessons).length : 0;
-    const stats = getTotalPathStats();
-    setLearningProgress({ completed, total: stats.totalLessons });
-  }, [showLearningPaths]); // Refresh when modal closes
+    localStorage.removeItem("ncp-aii-completed-lessons");
+    localStorage.removeItem("ncp-aii-completed-modules");
+    localStorage.removeItem("ncp-aii-lesson-progress");
+  }, []);
+
+  // Start tour for the current tab (called by Tour button)
+  const handleStartTour = useCallback(() => {
+    const tourIdMap: Record<View, TourId> = {
+      simulator: "simulator",
+      labs: "labs",
+      reference: "docs",
+    };
+    setActiveTour(tourIdMap[currentView]);
+  }, [currentView]);
+
+  const handleTourComplete = useCallback(() => {
+    setActiveTour(null);
+  }, []);
 
   const handleExport = () => {
     const data = exportCluster();
@@ -123,12 +133,8 @@ function App() {
 
   // Handler for tier unlock notification "Try Now" button
   const handleNavigateToTier = useCallback(
-    (familyId: string, _tier: number) => {
-      // Navigate to Labs view and open Learning Paths
+    (_familyId: string, _tier: number) => {
       setCurrentView("labs");
-      setShowLearningPaths(true);
-      // Could be enhanced to navigate to specific family/tier content
-      console.log(`Navigating to ${familyId} tier ${_tier}`);
     },
     [],
   );
@@ -166,7 +172,10 @@ function App() {
 
           <div className="flex items-center gap-4">
             {/* Simulation controls */}
-            <div className="flex items-center gap-2 bg-gray-800 rounded-lg p-2">
+            <div
+              data-tour="sim-controls"
+              className="flex items-center gap-2 bg-gray-800 rounded-lg p-2"
+            >
               <button
                 onClick={isRunning ? stopSimulation : startSimulation}
                 className={`p-2 rounded transition-colors ${
@@ -206,6 +215,17 @@ function App() {
               </button>
             </div>
 
+            {/* Tour button */}
+            <button
+              onClick={handleStartTour}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-600 hover:border-nvidia-green text-gray-400 hover:text-nvidia-green text-sm transition-colors"
+              title="Take a guided tour of this tab"
+              data-testid="tour-help-btn"
+            >
+              <HelpCircle className="w-4 h-4" />
+              <span>Tour</span>
+            </button>
+
             <div className="text-right">
               <div className="text-sm font-medium text-nvidia-green">
                 {cluster.name}
@@ -244,6 +264,7 @@ function App() {
           <button
             role="tab"
             id="tab-labs"
+            data-tour="tab-labs"
             aria-selected={currentView === "labs"}
             aria-controls="panel-labs"
             data-testid="nav-labs"
@@ -275,6 +296,7 @@ function App() {
           <button
             role="tab"
             id="tab-reference"
+            data-tour="tab-docs"
             aria-selected={currentView === "reference"}
             aria-controls="panel-reference"
             onClick={() => setCurrentView("reference")}
@@ -305,11 +327,9 @@ function App() {
           <LabsAndScenariosView
             onStartScenario={handleStartScenario}
             onBeginExam={handleBeginExam}
-            onOpenLearningPaths={() => setShowLearningPaths(true)}
             onOpenStudyDashboard={() => setShowStudyDashboard(true)}
             onOpenExamGauntlet={() => setShowExamGauntlet(true)}
             onOpenFreeMode={() => setShowFreeMode(true)}
-            learningProgress={learningProgress}
           />
         )}
 
@@ -339,6 +359,14 @@ function App() {
       {showExamWorkspace && (
         <ExamWorkspace onClose={() => setShowExamWorkspace(false)} />
       )}
+      {/* Spotlight Tour */}
+      {activeTour && !showWelcome && (
+        <SpotlightTour
+          steps={TOUR_STEPS[activeTour]}
+          onComplete={handleTourComplete}
+        />
+      )}
+
       {/* Welcome Splash Screen */}
       {showWelcome && (
         <WelcomeScreen
@@ -360,22 +388,6 @@ function App() {
                 if (mode === "full-practice" || mode === "quick-quiz") {
                   setShowExamWorkspace(true);
                 }
-              }}
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Learning Paths Modal */}
-      {showLearningPaths && (
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center p-4">
-          <div className="w-full max-w-6xl max-h-[90vh] overflow-auto">
-            <LearningPaths
-              onClose={() => setShowLearningPaths(false)}
-              onExecuteCommand={async (cmd) => {
-                // Placeholder for command execution
-                // Full terminal integration requires exposing Terminal's executeCommand
-                return `Command executed: ${cmd}\n(Full terminal integration pending)`;
               }}
             />
           </div>

@@ -1,13 +1,18 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Dashboard } from './Dashboard';
-import { Terminal } from './Terminal';
-import { GripVertical, PanelLeftClose, PanelRightClose, Maximize2 } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Dashboard } from "./Dashboard";
+import { Terminal } from "./Terminal";
+import {
+  GripVertical,
+  PanelLeftClose,
+  PanelRightClose,
+  Maximize2,
+} from "lucide-react";
 
 interface SimulatorViewProps {
   className?: string;
 }
 
-const STORAGE_KEY = 'simulator-split-ratio';
+const STORAGE_KEY = "simulator-split-ratio";
 const DEFAULT_RATIO = 50;
 const MIN_PANEL_WIDTH = 20;
 const MOBILE_BREAKPOINT = 768;
@@ -25,14 +30,20 @@ const HANDLE_WIDTH = 28;
  * - Persisted split ratio
  * - Responsive mobile layout (tabbed)
  */
-export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) => {
+export const SimulatorView: React.FC<SimulatorViewProps> = ({
+  className = "",
+}) => {
   // Load persisted ratio from localStorage
   const getInitialRatio = () => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = Number(saved);
-        if (!isNaN(parsed) && parsed >= MIN_PANEL_WIDTH && parsed <= 100 - MIN_PANEL_WIDTH) {
+        if (
+          !isNaN(parsed) &&
+          parsed >= MIN_PANEL_WIDTH &&
+          parsed <= 100 - MIN_PANEL_WIDTH
+        ) {
           return parsed;
         }
       }
@@ -57,8 +68,8 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
     };
 
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   // Track container width
@@ -88,11 +99,14 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
     }
   }, [splitRatio]);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  }, []);
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent | React.TouchEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(true);
+    },
+    [],
+  );
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -105,7 +119,10 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
       const newRatio = ((e.clientX - rect.left) / rect.width) * 100;
 
       // Clamp the ratio between MIN_PANEL_WIDTH and (100 - MIN_PANEL_WIDTH)
-      const clampedRatio = Math.max(MIN_PANEL_WIDTH, Math.min(100 - MIN_PANEL_WIDTH, newRatio));
+      const clampedRatio = Math.max(
+        MIN_PANEL_WIDTH,
+        Math.min(100 - MIN_PANEL_WIDTH, newRatio),
+      );
       setSplitRatio(clampedRatio);
     };
 
@@ -116,7 +133,10 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
       const rect = container.getBoundingClientRect();
       const newRatio = ((e.touches[0].clientX - rect.left) / rect.width) * 100;
 
-      const clampedRatio = Math.max(MIN_PANEL_WIDTH, Math.min(100 - MIN_PANEL_WIDTH, newRatio));
+      const clampedRatio = Math.max(
+        MIN_PANEL_WIDTH,
+        Math.min(100 - MIN_PANEL_WIDTH, newRatio),
+      );
       setSplitRatio(clampedRatio);
     };
 
@@ -125,17 +145,17 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
     };
 
     if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.addEventListener('touchmove', handleTouchMove);
-      document.addEventListener('touchend', handleMouseUp);
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.addEventListener("touchmove", handleTouchMove);
+      document.addEventListener("touchend", handleMouseUp);
     }
 
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleMouseUp);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleMouseUp);
     };
   }, [isDragging]);
 
@@ -143,7 +163,7 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl+\ to reset split ratio
-      if (e.ctrlKey && e.key === '\\') {
+      if (e.ctrlKey && e.key === "\\") {
         e.preventDefault();
         setSplitRatio(DEFAULT_RATIO);
         setLeftCollapsed(false);
@@ -151,8 +171,8 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const toggleLeftPanel = () => {
@@ -178,21 +198,27 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
         {/* Mobile Tab Bar */}
         <div className="flex bg-gray-800 border-b border-gray-700">
           <button
-            onClick={() => { setLeftCollapsed(false); setRightCollapsed(true); }}
+            onClick={() => {
+              setLeftCollapsed(false);
+              setRightCollapsed(true);
+            }}
             className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               !leftCollapsed && rightCollapsed
-                ? 'bg-gray-900 text-nvidia-green border-b-2 border-nvidia-green'
-                : 'text-gray-400 hover:text-gray-200'
+                ? "bg-gray-900 text-nvidia-green border-b-2 border-nvidia-green"
+                : "text-gray-400 hover:text-gray-200"
             }`}
           >
             Dashboard
           </button>
           <button
-            onClick={() => { setLeftCollapsed(true); setRightCollapsed(false); }}
+            onClick={() => {
+              setLeftCollapsed(true);
+              setRightCollapsed(false);
+            }}
             className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
               leftCollapsed && !rightCollapsed
-                ? 'bg-gray-900 text-nvidia-green border-b-2 border-nvidia-green'
-                : 'text-gray-400 hover:text-gray-200'
+                ? "bg-gray-900 text-nvidia-green border-b-2 border-nvidia-green"
+                : "text-gray-400 hover:text-gray-200"
             }`}
           >
             Terminal
@@ -241,8 +267,8 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
   return (
     <div
       ref={containerRef}
-      className={`relative h-full w-full overflow-hidden ${isDragging ? 'select-none cursor-col-resize' : ''} ${className}`}
-      style={{ minWidth: '400px' }}
+      className={`relative h-full w-full overflow-hidden ${isDragging ? "select-none cursor-col-resize" : ""} ${className}`}
+      style={{ minWidth: "400px" }}
     >
       {/* Show loading state until container is measured */}
       {containerWidth === 0 ? (
@@ -261,10 +287,11 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
         <>
           {/* Left Panel - Dashboard */}
           <div
+            data-tour="dashboard-panel"
             className="absolute top-0 bottom-0 left-0 overflow-hidden bg-gray-900"
             style={{
               width: leftWidth,
-              transition: isDragging ? 'none' : 'width 0.15s ease-out'
+              transition: isDragging ? "none" : "width 0.15s ease-out",
             }}
           >
             {!leftCollapsed && leftWidth > 0 && (
@@ -280,21 +307,24 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
             style={{
               left: leftWidth,
               width: HANDLE_WIDTH,
-              transition: isDragging ? 'none' : 'left 0.15s ease-out'
+              transition: isDragging ? "none" : "left 0.15s ease-out",
             }}
           >
             {/* Collapse Left Button */}
             <button
               onClick={toggleLeftPanel}
               className="py-2 w-full hover:bg-gray-700 transition-colors flex justify-center"
-              title={leftCollapsed ? 'Show Dashboard' : 'Hide Dashboard'}
+              title={leftCollapsed ? "Show Dashboard" : "Hide Dashboard"}
             >
-              <PanelLeftClose className={`w-4 h-4 text-gray-400 hover:text-nvidia-green transition-transform ${leftCollapsed ? 'rotate-180' : ''}`} />
+              <PanelLeftClose
+                className={`w-4 h-4 text-gray-400 hover:text-nvidia-green transition-transform ${leftCollapsed ? "rotate-180" : ""}`}
+              />
             </button>
 
             {/* Draggable Handle */}
             <div
-              className={`flex-1 w-full cursor-col-resize flex items-center justify-center hover:bg-nvidia-green/20 active:bg-nvidia-green/30 transition-colors touch-none ${isDragging ? 'bg-nvidia-green/30' : ''}`}
+              data-tour="split-handle"
+              className={`flex-1 w-full cursor-col-resize flex items-center justify-center hover:bg-nvidia-green/20 active:bg-nvidia-green/30 transition-colors touch-none ${isDragging ? "bg-nvidia-green/30" : ""}`}
               onMouseDown={handleMouseDown}
               onTouchStart={handleMouseDown}
               role="separator"
@@ -302,7 +332,9 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
               aria-label="Resize panels"
               tabIndex={0}
             >
-              <GripVertical className={`w-4 h-4 pointer-events-none ${isDragging ? 'text-nvidia-green' : 'text-gray-500'}`} />
+              <GripVertical
+                className={`w-4 h-4 pointer-events-none ${isDragging ? "text-nvidia-green" : "text-gray-500"}`}
+              />
             </div>
 
             {/* Reset Button */}
@@ -318,18 +350,21 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({ className = '' }) 
             <button
               onClick={toggleRightPanel}
               className="py-2 w-full hover:bg-gray-700 transition-colors flex justify-center"
-              title={rightCollapsed ? 'Show Terminal' : 'Hide Terminal'}
+              title={rightCollapsed ? "Show Terminal" : "Hide Terminal"}
             >
-              <PanelRightClose className={`w-4 h-4 text-gray-400 hover:text-nvidia-green transition-transform ${rightCollapsed ? 'rotate-180' : ''}`} />
+              <PanelRightClose
+                className={`w-4 h-4 text-gray-400 hover:text-nvidia-green transition-transform ${rightCollapsed ? "rotate-180" : ""}`}
+              />
             </button>
           </div>
 
           {/* Right Panel - Terminal */}
           <div
+            data-tour="terminal-panel"
             className="absolute top-0 bottom-0 right-0 overflow-hidden bg-gray-900"
             style={{
               width: rightWidth,
-              transition: isDragging ? 'none' : 'width 0.15s ease-out'
+              transition: isDragging ? "none" : "width 0.15s ease-out",
             }}
           >
             {!rightCollapsed && rightWidth > 0 && (

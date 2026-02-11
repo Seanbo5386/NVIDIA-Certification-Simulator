@@ -58,18 +58,23 @@ export const Documentation: React.FC = () => {
       </div>
 
       {/* Tabs - responsive with flex-wrap */}
-      <div className="flex flex-wrap border-b border-gray-700 bg-gray-900/50">
+      <div
+        data-tour="doc-sub-tabs"
+        className="flex flex-wrap border-b border-gray-700 bg-gray-900/50"
+      >
         <TabButton
           active={activeTab === "architecture"}
           onClick={() => setActiveTab("architecture")}
           icon={<Server className="w-4 h-4" />}
           label="Architecture"
+          dataTour="doc-architecture"
         />
         <TabButton
           active={activeTab === "commands"}
           onClick={() => setActiveTab("commands")}
           icon={<Terminal className="w-4 h-4" />}
           label="Commands"
+          dataTour="doc-commands"
         />
         <TabButton
           active={activeTab === "troubleshooting"}
@@ -88,6 +93,7 @@ export const Documentation: React.FC = () => {
           onClick={() => setActiveTab("exam")}
           icon={<GraduationCap className="w-4 h-4" />}
           label="Exam Guide"
+          dataTour="doc-exam"
         />
       </div>
 
@@ -1870,9 +1876,11 @@ const TabButton: React.FC<{
   onClick: () => void;
   icon: React.ReactNode;
   label: string;
-}> = ({ active, onClick, icon, label }) => (
+  dataTour?: string;
+}> = ({ active, onClick, icon, label, dataTour }) => (
   <button
     onClick={onClick}
+    {...(dataTour ? { "data-tour": dataTour } : {})}
     className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all border-b-2 whitespace-nowrap ${
       active
         ? "border-nvidia-green text-nvidia-green bg-gray-800"
