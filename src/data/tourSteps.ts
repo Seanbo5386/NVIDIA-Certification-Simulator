@@ -92,13 +92,6 @@ export const LABS_TOUR_STEPS: TourStep[] = [
       "Test your knowledge with a full 35-question practice exam that mirrors the real NCP-AII format, complete with a 90-minute timer.",
     placement: "left",
   },
-  {
-    selector: '[data-testid="free-mode-card"]',
-    title: "Free Mode",
-    description:
-      "Complete 3 missions to unlock Free Mode \u2014 an open sandbox where you can inject faults manually and experiment with the cluster however you want.",
-    placement: "left",
-  },
 ];
 
 export const DOCS_TOUR_STEPS: TourStep[] = [

@@ -9,7 +9,6 @@ import { StudyDashboard } from "./components/StudyDashboard";
 import { SpacedReviewDrill } from "./components/SpacedReviewDrill";
 import { TierUnlockNotificationContainer } from "./components/TierUnlockNotification";
 import { ExamGauntlet } from "./components/ExamGauntlet";
-import { FreeMode } from "./components/FreeMode";
 import { useSimulationStore } from "./store/simulationStore";
 import { useLearningProgressStore } from "./store/learningProgressStore";
 import { useMetricsSimulation } from "./hooks/useMetricsSimulation";
@@ -38,7 +37,6 @@ function App() {
   const [showStudyDashboard, setShowStudyDashboard] = useState(false);
   const [showSpacedReviewDrill, setShowSpacedReviewDrill] = useState(false);
   const [showExamGauntlet, setShowExamGauntlet] = useState(false);
-  const [showFreeMode, setShowFreeMode] = useState(false);
   const [activeTour, setActiveTour] = useState<TourId | null>(null);
 
   // Get due reviews count from learning progress store
@@ -273,7 +271,6 @@ function App() {
             onBeginExam={handleBeginExam}
             onOpenStudyDashboard={() => setShowStudyDashboard(true)}
             onOpenExamGauntlet={() => setShowExamGauntlet(true)}
-            onOpenFreeMode={() => setShowFreeMode(true)}
           />
         )}
 
@@ -352,9 +349,6 @@ function App() {
       {showExamGauntlet && (
         <ExamGauntlet onExit={() => setShowExamGauntlet(false)} />
       )}
-
-      {/* Free Mode */}
-      {showFreeMode && <FreeMode onClose={() => setShowFreeMode(false)} />}
 
       {/* Tier Unlock Notifications */}
       <TierUnlockNotificationContainer

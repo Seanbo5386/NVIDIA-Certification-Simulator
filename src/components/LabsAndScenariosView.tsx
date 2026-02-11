@@ -1,14 +1,6 @@
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { FaultInjection } from "./FaultInjection";
-import {
-  Trophy,
-  TrendingUp,
-  Clock,
-  Crosshair,
-  FlaskConical,
-  Lock,
-} from "lucide-react";
-import { useSimulationStore } from "../store/simulationStore";
+import { Trophy, TrendingUp, Clock, Crosshair } from "lucide-react";
 import { getAllScenarios, getScenarioMetadata } from "../utils/scenarioLoader";
 
 interface LabsAndScenariosViewProps {
@@ -16,7 +8,6 @@ interface LabsAndScenariosViewProps {
   onBeginExam: () => void;
   onOpenStudyDashboard: () => void;
   onOpenExamGauntlet: () => void;
-  onOpenFreeMode: () => void;
 }
 
 const DOMAIN_INFO: Record<
@@ -48,15 +39,7 @@ export function LabsAndScenariosView({
   onBeginExam,
   onOpenStudyDashboard,
   onOpenExamGauntlet,
-  onOpenFreeMode,
 }: LabsAndScenariosViewProps) {
-  const scenarioProgress = useSimulationStore((s) => s.scenarioProgress);
-  const completedCount = useMemo(
-    () => Object.values(scenarioProgress).filter((p) => p.completed).length,
-    [scenarioProgress],
-  );
-  const freeModeUnlocked = completedCount >= 3;
-
   const [domainScenarios, setDomainScenarios] = useState<
     Record<
       string,
@@ -120,11 +103,8 @@ export function LabsAndScenariosView({
   return (
     <div data-testid="labs-list" className="p-6 h-full overflow-auto">
       <div className="max-w-6xl mx-auto">
-        {/* Fault Injection System */}
-        <FaultInjection />
-
         {/* Narrative Missions */}
-        <div className="mt-8">
+        <div>
           {loadingScenarios && (
             <div className="text-gray-400 text-sm mb-4">
               Loading scenarios...
@@ -266,39 +246,12 @@ export function LabsAndScenariosView({
                 View Progress
               </button>
             </div>
-
-            {/* Free Mode */}
-            <div
-              data-testid="free-mode-card"
-              className={`bg-gray-800 rounded-lg p-6 border ${freeModeUnlocked ? "border-teal-600" : "border-gray-700 opacity-75"}`}
-            >
-              <div className="text-sm text-teal-400 font-semibold mb-2 flex items-center gap-2">
-                {freeModeUnlocked ? (
-                  <FlaskConical className="w-4 h-4" />
-                ) : (
-                  <Lock className="w-4 h-4" />
-                )}
-                Sandbox
-              </div>
-              <h3 className="text-lg font-bold mb-3">Free Mode</h3>
-              <p className="text-sm text-gray-300 mb-4">
-                {freeModeUnlocked
-                  ? "Open sandbox with manual fault injection. Explore commands and scenarios without guided steps."
-                  : `Complete ${3 - completedCount} more mission${3 - completedCount !== 1 ? "s" : ""} to unlock Free Mode.`}
-              </p>
-              <button
-                onClick={onOpenFreeMode}
-                disabled={!freeModeUnlocked}
-                className={`mt-4 w-full py-2 rounded-lg font-medium transition-colors ${
-                  freeModeUnlocked
-                    ? "bg-teal-600 text-white hover:bg-teal-700"
-                    : "bg-gray-700 text-gray-500 cursor-not-allowed"
-                }`}
-              >
-                {freeModeUnlocked ? "Enter Free Mode" : "Locked"}
-              </button>
-            </div>
           </div>
+        </div>
+
+        {/* Fault Injection System */}
+        <div className="mt-8">
+          <FaultInjection />
         </div>
       </div>
     </div>

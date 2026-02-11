@@ -23,8 +23,8 @@ describe("tourSteps", () => {
     validateSteps(SIMULATOR_TOUR_STEPS);
   });
 
-  it("LABS_TOUR_STEPS has 5 steps with valid structure", () => {
-    expect(LABS_TOUR_STEPS).toHaveLength(5);
+  it("LABS_TOUR_STEPS has 4 steps with valid structure", () => {
+    expect(LABS_TOUR_STEPS).toHaveLength(4);
     validateSteps(LABS_TOUR_STEPS);
   });
 

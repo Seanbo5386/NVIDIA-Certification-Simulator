@@ -25,12 +25,6 @@ vi.mock("lucide-react", () => ({
   Crosshair: (props: Record<string, unknown>) => (
     <svg data-testid="icon-Crosshair" {...props} />
   ),
-  FlaskConical: (props: Record<string, unknown>) => (
-    <svg data-testid="icon-FlaskConical" {...props} />
-  ),
-  Lock: (props: Record<string, unknown>) => (
-    <svg data-testid="icon-Lock" {...props} />
-  ),
 }));
 
 // Mock FaultInjection to isolate LabsAndScenariosView testing
@@ -96,21 +90,6 @@ vi.mock("@/utils/scenarioLoader", () => ({
     Promise.resolve(mockMetadata[id] || null),
 }));
 
-// Mock simulationStore - default: no completed scenarios
-let mockScenarioProgress: Record<
-  string,
-  { completed: boolean; [key: string]: unknown }
-> = {};
-
-vi.mock("@/store/simulationStore", () => ({
-  useSimulationStore: vi.fn((selector?: (state: unknown) => unknown) => {
-    const state = {
-      scenarioProgress: mockScenarioProgress,
-    };
-    return selector ? selector(state) : state;
-  }),
-}));
-
 // ============================================================================
 // Import component under test AFTER mocks are set up
 // ============================================================================
@@ -126,7 +105,6 @@ function defaultProps() {
     onBeginExam: vi.fn(),
     onOpenStudyDashboard: vi.fn(),
     onOpenExamGauntlet: vi.fn(),
-    onOpenFreeMode: vi.fn(),
   };
 }
 
@@ -137,7 +115,6 @@ function defaultProps() {
 describe("LabsAndScenariosView", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockScenarioProgress = {};
   });
 
   // --------------------------------------------------------------------------
@@ -303,78 +280,6 @@ describe("LabsAndScenariosView", () => {
   });
 
   // --------------------------------------------------------------------------
-  // 13. Free Mode card: locked when < 3 scenarios completed
-  // --------------------------------------------------------------------------
-
-  it("shows Free Mode as locked when fewer than 3 scenarios completed", () => {
-    mockScenarioProgress = {
-      "domain1-midnight-deployment": {
-        completed: true,
-        scenarioId: "domain1-midnight-deployment",
-      },
-      "domain2-nvlink-mystery": {
-        completed: true,
-        scenarioId: "domain2-nvlink-mystery",
-      },
-    };
-    const props = defaultProps();
-    render(<LabsAndScenariosView {...props} />);
-    const freeModeCard = screen.getByTestId("free-mode-card");
-    const lockButton = within(freeModeCard).getByRole("button", {
-      name: /locked/i,
-    });
-    expect(lockButton).toBeDisabled();
-  });
-
-  // --------------------------------------------------------------------------
-  // 14. Free Mode card: unlocked when >= 3 scenarios completed
-  // --------------------------------------------------------------------------
-
-  it("shows Free Mode as unlocked when 3 or more scenarios completed", () => {
-    mockScenarioProgress = {
-      "domain1-midnight-deployment": {
-        completed: true,
-        scenarioId: "domain1-midnight-deployment",
-      },
-      "domain2-nvlink-mystery": {
-        completed: true,
-        scenarioId: "domain2-nvlink-mystery",
-      },
-      "domain3-slurm-setup": {
-        completed: true,
-        scenarioId: "domain3-slurm-setup",
-      },
-    };
-    const props = defaultProps();
-    render(<LabsAndScenariosView {...props} />);
-    const freeModeCard = screen.getByTestId("free-mode-card");
-    const enterButton = within(freeModeCard).getByRole("button", {
-      name: /enter free mode/i,
-    });
-    expect(enterButton).not.toBeDisabled();
-  });
-
-  // --------------------------------------------------------------------------
-  // 15. Free Mode button calls onOpenFreeMode when unlocked
-  // --------------------------------------------------------------------------
-
-  it("calls onOpenFreeMode when clicking Enter Free Mode button", () => {
-    mockScenarioProgress = {
-      a: { completed: true, scenarioId: "a" },
-      b: { completed: true, scenarioId: "b" },
-      c: { completed: true, scenarioId: "c" },
-    };
-    const props = defaultProps();
-    render(<LabsAndScenariosView {...props} />);
-    const freeModeCard = screen.getByTestId("free-mode-card");
-    const enterButton = within(freeModeCard).getByRole("button", {
-      name: /enter free mode/i,
-    });
-    fireEvent.click(enterButton);
-    expect(props.onOpenFreeMode).toHaveBeenCalledTimes(1);
-  });
-
-  // --------------------------------------------------------------------------
   // 16. Begin Exam button calls onBeginExam
   // --------------------------------------------------------------------------
 
@@ -410,22 +315,6 @@ describe("LabsAndScenariosView", () => {
       // Domain 5
       expect(screen.getByText("The XID Investigation")).toBeInTheDocument();
     });
-  });
-
-  // --------------------------------------------------------------------------
-  // 19. Free Mode locked text shows remaining missions count
-  // --------------------------------------------------------------------------
-
-  it("shows correct remaining missions count when Free Mode is locked", () => {
-    mockScenarioProgress = {
-      a: { completed: true, scenarioId: "a" },
-    };
-    const props = defaultProps();
-    render(<LabsAndScenariosView {...props} />);
-    // 1 completed, need 3, so 2 remaining
-    expect(
-      screen.getByText(/complete 2 more missions to unlock free mode/i),
-    ).toBeInTheDocument();
   });
 
   // --------------------------------------------------------------------------
