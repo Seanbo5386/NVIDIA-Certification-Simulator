@@ -5,9 +5,15 @@
  * Changes are tracked and can optionally be merged back to the main state.
  */
 
-import type { ClusterConfig, GPU, DGXNode as Node, HealthStatus, XIDError } from '@/types/hardware';
-import { useSimulationStore } from './simulationStore';
-import { logger } from '@/utils/logger';
+import type {
+  ClusterConfig,
+  GPU,
+  DGXNode as Node,
+  HealthStatus,
+  XIDError,
+} from "@/types/hardware";
+import { useSimulationStore } from "./simulationStore";
+import { logger } from "@/utils/logger";
 
 /**
  * Base interface for all state changes
@@ -24,12 +30,15 @@ interface StateChangeBase {
  * Discriminated union type for state changes with properly typed data
  */
 export type StateChange =
-  | (StateChangeBase & { type: 'gpu-update'; data: Partial<GPU> })
-  | (StateChangeBase & { type: 'node-update'; data: Partial<Node> })
-  | (StateChangeBase & { type: 'node-health'; data: { health: HealthStatus } })
-  | (StateChangeBase & { type: 'xid-error'; data: XIDError })
-  | (StateChangeBase & { type: 'slurm-state'; data: { state: 'idle' | 'alloc' | 'drain' | 'down'; reason?: string } })
-  | (StateChangeBase & { type: 'mig-mode'; data: { enabled: boolean } });
+  | (StateChangeBase & { type: "gpu-update"; data: Partial<GPU> })
+  | (StateChangeBase & { type: "node-update"; data: Partial<Node> })
+  | (StateChangeBase & { type: "node-health"; data: { health: HealthStatus } })
+  | (StateChangeBase & { type: "xid-error"; data: XIDError })
+  | (StateChangeBase & {
+      type: "slurm-state";
+      data: { state: "idle" | "alloc" | "drain" | "down"; reason?: string };
+    })
+  | (StateChangeBase & { type: "mig-mode"; data: { enabled: boolean } });
 
 export class ScenarioContext {
   private scenarioId: string;
@@ -60,7 +69,7 @@ export class ScenarioContext {
    * Get a specific node from the isolated state
    */
   getNode(nodeId: string): Node | undefined {
-    return this.isolatedCluster.nodes.find(n => n.id === nodeId);
+    return this.isolatedCluster.nodes.find((n) => n.id === nodeId);
   }
 
   /**
@@ -74,9 +83,14 @@ export class ScenarioContext {
   /**
    * Update a GPU in the isolated state
    */
-  updateGPU(nodeId: string, gpuId: number, updates: Partial<GPU>, command?: string): void {
+  updateGPU(
+    nodeId: string,
+    gpuId: number,
+    updates: Partial<GPU>,
+    command?: string,
+  ): void {
     if (this.readonly) {
-      logger.warn('Cannot update GPU in readonly context');
+      logger.warn("Cannot update GPU in readonly context");
       return;
     }
 
@@ -97,22 +111,26 @@ export class ScenarioContext {
 
     // Track mutation
     this.mutations.push({
-      type: 'gpu-update',
+      type: "gpu-update",
       timestamp: Date.now(),
       nodeId,
       gpuId,
       data: updates,
       command,
-      description: `Updated GPU ${gpuId} on ${nodeId}`
+      description: `Updated GPU ${gpuId} on ${nodeId}`,
     });
   }
 
   /**
    * Update node health status in isolated state
    */
-  updateNodeHealth(nodeId: string, health: HealthStatus, command?: string): void {
+  updateNodeHealth(
+    nodeId: string,
+    health: HealthStatus,
+    command?: string,
+  ): void {
     if (this.readonly) {
-      logger.warn('Cannot update node health in readonly context');
+      logger.warn("Cannot update node health in readonly context");
       return;
     }
 
@@ -125,21 +143,26 @@ export class ScenarioContext {
     node.healthStatus = health;
 
     this.mutations.push({
-      type: 'node-health',
+      type: "node-health",
       timestamp: Date.now(),
       nodeId,
       data: { health },
       command,
-      description: `Set ${nodeId} health to ${health}`
+      description: `Set ${nodeId} health to ${health}`,
     });
   }
 
   /**
    * Add XID error to GPU in isolated state
    */
-  addXIDError(nodeId: string, gpuId: number, error: XIDError, command?: string): void {
+  addXIDError(
+    nodeId: string,
+    gpuId: number,
+    error: XIDError,
+    command?: string,
+  ): void {
     if (this.readonly) {
-      logger.warn('Cannot add XID error in readonly context');
+      logger.warn("Cannot add XID error in readonly context");
       return;
     }
 
@@ -155,22 +178,27 @@ export class ScenarioContext {
     gpu.xidErrors.push(error);
 
     this.mutations.push({
-      type: 'xid-error',
+      type: "xid-error",
       timestamp: Date.now(),
       nodeId,
       gpuId,
       data: error,
       command,
-      description: `Added XID ${error.code} to GPU ${gpuId}`
+      description: `Added XID ${error.code} to GPU ${gpuId}`,
     });
   }
 
   /**
    * Set MIG mode for GPU in isolated state
    */
-  setMIGMode(nodeId: string, gpuId: number, enabled: boolean, command?: string): void {
+  setMIGMode(
+    nodeId: string,
+    gpuId: number,
+    enabled: boolean,
+    command?: string,
+  ): void {
     if (this.readonly) {
-      logger.warn('Cannot set MIG mode in readonly context');
+      logger.warn("Cannot set MIG mode in readonly context");
       return;
     }
 
@@ -184,26 +212,31 @@ export class ScenarioContext {
     if (enabled && !gpu.migInstances) {
       gpu.migInstances = [];
     } else if (!enabled) {
-      gpu.migInstances = [];  // Empty array instead of undefined
+      gpu.migInstances = []; // Empty array instead of undefined
     }
 
     this.mutations.push({
-      type: 'mig-mode',
+      type: "mig-mode",
       timestamp: Date.now(),
       nodeId,
       gpuId,
       data: { enabled },
       command,
-      description: `Set MIG mode to ${enabled} for GPU ${gpuId}`
+      description: `Set MIG mode to ${enabled} for GPU ${gpuId}`,
     });
   }
 
   /**
    * Set Slurm state for node in isolated state
    */
-  setSlurmState(nodeId: string, state: 'idle' | 'alloc' | 'drain' | 'down', reason?: string, command?: string): void {
+  setSlurmState(
+    nodeId: string,
+    state: "idle" | "alloc" | "drain" | "down",
+    reason?: string,
+    command?: string,
+  ): void {
     if (this.readonly) {
-      logger.warn('Cannot set Slurm state in readonly context');
+      logger.warn("Cannot set Slurm state in readonly context");
       return;
     }
 
@@ -219,13 +252,72 @@ export class ScenarioContext {
     }
 
     this.mutations.push({
-      type: 'slurm-state',
+      type: "slurm-state",
       timestamp: Date.now(),
       nodeId,
       data: { state, reason },
       command,
-      description: `Set ${nodeId} Slurm state to ${state}`
+      description: `Set ${nodeId} Slurm state to ${state}`,
     });
+  }
+
+  /**
+   * Allocate GPUs for a Slurm job in isolated state
+   */
+  allocateGPUsForJob(
+    nodeId: string,
+    gpuIds: number[],
+    jobId: number,
+    targetUtilization = 85,
+  ): void {
+    if (this.readonly) {
+      logger.warn("Cannot allocate GPUs in readonly context");
+      return;
+    }
+
+    const node = this.getNode(nodeId);
+    if (!node) {
+      logger.error(`Node ${nodeId} not found in scenario context`);
+      return;
+    }
+
+    for (const gpu of node.gpus) {
+      if (gpuIds.includes(gpu.id)) {
+        const updates: Partial<GPU> = {
+          utilization: targetUtilization + (Math.random() * 10 - 5),
+          memoryUsed: Math.floor(gpu.memoryTotal * (0.7 + Math.random() * 0.2)),
+          powerDraw: gpu.powerLimit * (0.75 + Math.random() * 0.15),
+          temperature: 65 + Math.random() * 15,
+          allocatedJobId: jobId,
+        };
+        this.updateGPU(nodeId, gpu.id, updates);
+      }
+    }
+  }
+
+  /**
+   * Deallocate GPUs from a Slurm job in isolated state
+   */
+  deallocateGPUsForJob(jobId: number): void {
+    if (this.readonly) {
+      logger.warn("Cannot deallocate GPUs in readonly context");
+      return;
+    }
+
+    for (const node of this.isolatedCluster.nodes) {
+      for (const gpu of node.gpus) {
+        if (gpu.allocatedJobId === jobId) {
+          const updates: Partial<GPU> = {
+            utilization: Math.random() * 5,
+            memoryUsed: Math.floor(gpu.memoryTotal * 0.01),
+            powerDraw: gpu.powerLimit * 0.15,
+            temperature: 35 + Math.random() * 10,
+            allocatedJobId: undefined,
+          };
+          this.updateGPU(node.id, gpu.id, updates);
+        }
+      }
+    }
   }
 
   /**
@@ -248,42 +340,50 @@ export class ScenarioContext {
    */
   applyToGlobalState(): void {
     if (this.readonly) {
-      logger.warn('Cannot apply changes from readonly context');
+      logger.warn("Cannot apply changes from readonly context");
       return;
     }
 
     const store = useSimulationStore.getState();
 
     // Apply each mutation to the global state
-    this.mutations.forEach(mutation => {
+    this.mutations.forEach((mutation) => {
       switch (mutation.type) {
-        case 'gpu-update':
+        case "gpu-update":
           if (mutation.nodeId !== undefined && mutation.gpuId !== undefined) {
             store.updateGPU(mutation.nodeId, mutation.gpuId, mutation.data);
           }
           break;
 
-        case 'node-health':
+        case "node-health":
           if (mutation.nodeId) {
             store.updateNodeHealth(mutation.nodeId, mutation.data.health);
           }
           break;
 
-        case 'xid-error':
+        case "xid-error":
           if (mutation.nodeId !== undefined && mutation.gpuId !== undefined) {
             store.addXIDError(mutation.nodeId, mutation.gpuId, mutation.data);
           }
           break;
 
-        case 'mig-mode':
+        case "mig-mode":
           if (mutation.nodeId !== undefined && mutation.gpuId !== undefined) {
-            store.setMIGMode(mutation.nodeId, mutation.gpuId, mutation.data.enabled);
+            store.setMIGMode(
+              mutation.nodeId,
+              mutation.gpuId,
+              mutation.data.enabled,
+            );
           }
           break;
 
-        case 'slurm-state':
+        case "slurm-state":
           if (mutation.nodeId) {
-            store.setSlurmState(mutation.nodeId, mutation.data.state, mutation.data.reason);
+            store.setSlurmState(
+              mutation.nodeId,
+              mutation.data.state,
+              mutation.data.reason,
+            );
           }
           break;
 
@@ -292,7 +392,9 @@ export class ScenarioContext {
       }
     });
 
-    logger.debug(`Applied ${this.mutations.length} mutations from scenario ${this.scenarioId} to global state`);
+    logger.debug(
+      `Applied ${this.mutations.length} mutations from scenario ${this.scenarioId} to global state`,
+    );
   }
 
   /**
@@ -300,7 +402,7 @@ export class ScenarioContext {
    */
   reset(): void {
     if (this.readonly) {
-      logger.warn('Cannot reset readonly context');
+      logger.warn("Cannot reset readonly context");
       return;
     }
 
@@ -335,13 +437,17 @@ export class ScenarioContext {
    * Export context state as JSON
    */
   export(): string {
-    return JSON.stringify({
-      scenarioId: this.scenarioId,
-      cluster: this.isolatedCluster,
-      mutations: this.mutations,
-      startTime: this.startTime,
-      runtime: this.getRuntimeMs()
-    }, null, 2);
+    return JSON.stringify(
+      {
+        scenarioId: this.scenarioId,
+        cluster: this.isolatedCluster,
+        mutations: this.mutations,
+        startTime: this.startTime,
+        runtime: this.getRuntimeMs(),
+      },
+      null,
+      2,
+    );
   }
 
   /**
@@ -378,7 +484,10 @@ export class ScenarioContextManager {
   /**
    * Create a new scenario context
    */
-  createContext(scenarioId: string, baseCluster?: ClusterConfig): ScenarioContext {
+  createContext(
+    scenarioId: string,
+    baseCluster?: ClusterConfig,
+  ): ScenarioContext {
     const context = new ScenarioContext(scenarioId, baseCluster);
     this.contexts.set(scenarioId, context);
     logger.debug(`Created scenario context: ${scenarioId}`);
@@ -395,7 +504,10 @@ export class ScenarioContextManager {
   /**
    * Get or create a scenario context
    */
-  getOrCreateContext(scenarioId: string, baseCluster?: ClusterConfig): ScenarioContext {
+  getOrCreateContext(
+    scenarioId: string,
+    baseCluster?: ClusterConfig,
+  ): ScenarioContext {
     let context = this.contexts.get(scenarioId);
     if (!context) {
       context = this.createContext(scenarioId, baseCluster);
@@ -408,7 +520,7 @@ export class ScenarioContextManager {
    */
   setActiveContext(scenarioId: string | null): void {
     this.activeContextId = scenarioId;
-    logger.debug(`Active scenario context: ${scenarioId || 'none'}`);
+    logger.debug(`Active scenario context: ${scenarioId || "none"}`);
   }
 
   /**
@@ -437,7 +549,7 @@ export class ScenarioContextManager {
   clearAll(): void {
     this.contexts.clear();
     this.activeContextId = null;
-    logger.debug('Cleared all scenario contexts');
+    logger.debug("Cleared all scenario contexts");
   }
 
   /**

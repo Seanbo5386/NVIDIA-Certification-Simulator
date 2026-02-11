@@ -562,7 +562,7 @@ export const COMMAND_METADATA: Record<string, CommandMetadata> = {
     whenToUse:
       "Use hint when you're stuck on a lab step and need guidance. Hints become available based on your progress and will guide you progressively from gentle nudges to specific instructions.",
 
-    relatedCommands: ["help", "explain"],
+    relatedCommands: ["help"],
 
     commonMistakes: [],
   },
@@ -1314,7 +1314,7 @@ export const COMMAND_METADATA: Record<string, CommandMetadata> = {
     category: "general",
     shortDescription: "Display available commands",
     longDescription:
-      'The help command shows all available commands organized by category. Use "help [command]" to see detailed help for a specific command, or "explain [command]" for comprehensive documentation with examples.',
+      'The help command shows all available commands organized by category. Use "help [command]" to see detailed help for a specific command with examples and documentation.',
     syntax: "help [command]",
     difficulty: "beginner",
     domains: ["domain1", "domain2", "domain3", "domain4", "domain5"],
@@ -1333,7 +1333,7 @@ export const COMMAND_METADATA: Record<string, CommandMetadata> = {
     whenToUse:
       "Use help when you need to discover available commands, remember command syntax, or get quick reference information.",
 
-    relatedCommands: ["explain", "hint"],
+    relatedCommands: ["hint"],
 
     commonMistakes: [],
   },
@@ -1371,7 +1371,7 @@ export const COMMAND_METADATA: Record<string, CommandMetadata> = {
     whenToUse:
       "Use practice when you want to learn or test your knowledge of Linux and HPC commands with hints and expected answers.",
 
-    relatedCommands: ["help", "explain"],
+    relatedCommands: ["help"],
 
     commonMistakes: [],
   },

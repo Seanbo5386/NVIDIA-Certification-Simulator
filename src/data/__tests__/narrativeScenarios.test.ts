@@ -3,7 +3,7 @@ import scenariosData from "../narrativeScenarios.json";
 
 interface NarrativeScenario {
   id: string;
-  domain: 1 | 2 | 3 | 4 | 5;
+  domain: 0 | 1 | 2 | 3 | 4 | 5;
   title: string;
   difficulty: string;
   narrative: {
@@ -26,6 +26,7 @@ interface AutoFault {
 
 interface NarrativeStep {
   id: string;
+  type?: string;
   situation: string;
   task: string;
   expectedCommands?: string[];
@@ -42,6 +43,9 @@ interface NarrativeStep {
     explanation: string;
   };
   autoFaults?: AutoFault[];
+  conceptContent?: string;
+  tips?: string[];
+  observeCommand?: string;
 }
 
 const scenarios = scenariosData.scenarios as NarrativeScenario[];
@@ -53,7 +57,12 @@ const validFamilyIds = [
   "cluster-tools",
   "container-tools",
   "diagnostics",
+  "linux-basics",
 ];
+
+// Separate domain 0 (Linux basics) from exam domains (1-5)
+const examScenarios = scenarios.filter((s) => s.domain >= 1);
+const domain0Scenarios = scenarios.filter((s) => s.domain === 0);
 
 describe("narrativeScenarios.json", () => {
   it("should have scenarios array", () => {
@@ -61,15 +70,23 @@ describe("narrativeScenarios.json", () => {
     expect(Array.isArray(scenarios)).toBe(true);
   });
 
-  it("should have 30 narrative scenarios", () => {
-    expect(scenarios.length).toBe(30);
+  it("should have 32 total narrative scenarios", () => {
+    expect(scenarios.length).toBe(32);
   });
 
-  it("should cover all 5 domains", () => {
+  it("should have 30 exam-domain scenarios (domains 1-5)", () => {
+    expect(examScenarios.length).toBe(30);
+  });
+
+  it("should have 2 foundational scenarios (domain 0)", () => {
+    expect(domain0Scenarios.length).toBe(2);
+  });
+
+  it("should cover all 6 domains (0-5)", () => {
     const domains = new Set(scenarios.map((s) => s.domain));
-    expect(domains.size).toBe(5);
-    [1, 2, 3, 4, 5].forEach((d) =>
-      expect(domains.has(d as 1 | 2 | 3 | 4 | 5)).toBe(true),
+    expect(domains.size).toBe(6);
+    [0, 1, 2, 3, 4, 5].forEach((d) =>
+      expect(domains.has(d as 0 | 1 | 2 | 3 | 4 | 5)).toBe(true),
     );
   });
 
@@ -101,8 +118,8 @@ describe("narrativeScenarios.json", () => {
   });
 
   describe("scenario structure", () => {
-    it("each scenario should have required narrative fields", () => {
-      scenarios.forEach((s) => {
+    it("exam scenarios should have required narrative fields with strict constraints", () => {
+      examScenarios.forEach((s) => {
         expect(s).toHaveProperty("id");
         expect(s).toHaveProperty("domain");
         expect(s).toHaveProperty("title");
@@ -120,6 +137,20 @@ describe("narrativeScenarios.json", () => {
       });
     });
 
+    it("domain 0 scenarios should have required narrative fields", () => {
+      domain0Scenarios.forEach((s) => {
+        expect(s).toHaveProperty("id");
+        expect(s.domain).toBe(0);
+        expect(s).toHaveProperty("narrative");
+        expect(s.narrative).toHaveProperty("hook");
+        expect(s.narrative).toHaveProperty("setting");
+        expect(s.narrative).toHaveProperty("resolution");
+        expect(s).toHaveProperty("commandFamilies");
+        expect(s.commandFamilies.length).toBeGreaterThanOrEqual(1);
+        expect(s.steps.length).toBeGreaterThanOrEqual(8);
+      });
+    });
+
     it("each scenario should have unique ID", () => {
       const ids = scenarios.map((s) => s.id);
       const uniqueIds = new Set(ids);
@@ -128,7 +159,7 @@ describe("narrativeScenarios.json", () => {
 
     it("scenario IDs should follow domain-based pattern", () => {
       scenarios.forEach((s) => {
-        expect(s.id).toMatch(/^domain[1-5]-[\w-]+$/);
+        expect(s.id).toMatch(/^domain[0-5]-[\w-]+$/);
         // ID domain number should match domain field
         const idDomain = parseInt(s.id.match(/^domain(\d)/)?.[1] || "0");
         expect(idDomain).toBe(s.domain);
@@ -153,7 +184,11 @@ describe("narrativeScenarios.json", () => {
           expect(step).toHaveProperty("task");
           expect(step).toHaveProperty("hints");
           expect(step).toHaveProperty("validation");
-          expect(step.hints.length).toBeGreaterThanOrEqual(1);
+          // Command steps require hints; concept/observe may have empty hints
+          const stepType = step.type || "command";
+          if (stepType === "command") {
+            expect(step.hints.length).toBeGreaterThanOrEqual(1);
+          }
         });
       });
     });
@@ -241,7 +276,8 @@ describe("narrativeScenarios.json", () => {
       scenarios.forEach((s) => {
         s.steps.forEach((step) => {
           expect(step.situation.length).toBeGreaterThan(10);
-          expect(step.task.length).toBeGreaterThan(10);
+          // Concept/observe step titles can be short (e.g. "cat in Action")
+          expect(step.task.length).toBeGreaterThan(5);
         });
       });
     });
@@ -325,8 +361,8 @@ describe("narrativeScenarios.json", () => {
   });
 
   describe("scenario coverage and completeness", () => {
-    it("should have all 30 scenarios present with at least 2 steps each", () => {
-      expect(scenarios.length).toBe(30);
+    it("should have all 32 scenarios present with at least 2 steps each", () => {
+      expect(scenarios.length).toBe(32);
       scenarios.forEach((s) => {
         expect(s.steps.length).toBeGreaterThanOrEqual(2);
       });
@@ -346,6 +382,7 @@ describe("narrativeScenarios.json", () => {
         "state",
         "multi-command",
         "quiz",
+        "none",
       ];
       scenarios.forEach((s) => {
         s.steps.forEach((step) => {

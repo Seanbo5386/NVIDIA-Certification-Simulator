@@ -90,6 +90,13 @@ describe("BenchmarkSimulator", () => {
           },
         ],
       },
+      updateGPU: vi.fn(),
+      addXIDError: vi.fn(),
+      updateNodeHealth: vi.fn(),
+      setMIGMode: vi.fn(),
+      setSlurmState: vi.fn(),
+      allocateGPUsForJob: vi.fn(),
+      deallocateGPUsForJob: vi.fn(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
   });

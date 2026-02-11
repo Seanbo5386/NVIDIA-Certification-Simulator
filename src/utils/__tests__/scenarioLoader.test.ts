@@ -192,7 +192,7 @@ describe("scenarioLoader", () => {
       expect(typeof result).toBe("object");
       // Each key should follow the "domainN" pattern
       for (const key of Object.keys(result)) {
-        expect(key).toMatch(/^domain[1-5]$/);
+        expect(key).toMatch(/^domain[0-5]$/);
       }
     });
 

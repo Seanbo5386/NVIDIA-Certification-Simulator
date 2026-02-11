@@ -115,9 +115,13 @@ export interface Hint {
 
 export interface ScenarioStep {
   id: string;
+  stepType?: NarrativeStepType;
   title: string;
   description: string;
   objectives: string[];
+  conceptContent?: string;
+  tips?: string[];
+  observeCommand?: string;
 
   // Expected commands user should run (for validation)
   expectedCommands?: string[];
@@ -167,7 +171,7 @@ export interface ScenarioStep {
 export interface Scenario {
   id: string;
   title: string;
-  domain: "domain1" | "domain2" | "domain3" | "domain4" | "domain5";
+  domain: ScenarioDomainId;
   difficulty: "beginner" | "intermediate" | "advanced";
   description: string;
   learningObjectives: string[];
@@ -211,7 +215,7 @@ export interface Scenario {
 
 export interface Lab {
   id: string;
-  domain: "domain1" | "domain2" | "domain3" | "domain4" | "domain5";
+  domain: ScenarioDomainId;
   title: string;
   description: string;
   scenarios: Scenario[];
@@ -424,8 +428,10 @@ export type DomainId =
   | "domain4"
   | "domain5";
 
+export type ScenarioDomainId = "domain0" | DomainId;
+
 export interface DomainInfo {
-  id: DomainId;
+  id: ScenarioDomainId;
   title: string;
   description: string;
   weight: number; // Exam weight percentage
@@ -434,9 +440,11 @@ export interface DomainInfo {
 
 // ─── Narrative Scenario Types ───────────────────────────────────
 
+export type NarrativeStepType = "command" | "concept" | "observe";
+
 export interface NarrativeScenario {
   id: string;
-  domain: 1 | 2 | 3 | 4 | 5;
+  domain: 0 | 1 | 2 | 3 | 4 | 5;
   title: string;
   difficulty: "beginner" | "intermediate" | "advanced";
   narrative: {
@@ -453,17 +461,21 @@ export interface NarrativeScenario {
 
 export interface NarrativeStep {
   id: string;
+  type?: NarrativeStepType;
   situation: string;
   task: string;
   expectedCommands: string[];
   hints: string[];
   validation: {
-    type: "command" | "output" | "state";
+    type: "command" | "output" | "state" | "none";
     command?: string;
     pattern?: string;
   };
   quiz?: NarrativeQuiz;
   autoFaults?: FaultInjectionConfig[];
+  conceptContent?: string;
+  tips?: string[];
+  observeCommand?: string;
 }
 
 export interface NarrativeQuiz {
@@ -477,7 +489,14 @@ export interface NarrativeScenariosFile {
   scenarios: NarrativeScenario[];
 }
 
-export const DOMAINS: Record<DomainId, DomainInfo> = {
+export const DOMAINS: Record<ScenarioDomainId, DomainInfo> = {
+  domain0: {
+    id: "domain0",
+    title: "Foundational Skills",
+    description: "Linux terminal basics for datacenter work",
+    weight: 0,
+    color: "#76B900",
+  },
   domain1: {
     id: "domain1",
     title: "Domain 1: Platform Bring-Up",

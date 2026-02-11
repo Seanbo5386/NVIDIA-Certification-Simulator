@@ -35,6 +35,15 @@ function getMutator(): StateMutator {
         activeContext.setMIGMode(nodeId, gpuId, enabled),
       setSlurmState: (nodeId, state, reason) =>
         activeContext.setSlurmState(nodeId, state, reason),
+      allocateGPUsForJob: (nodeId, gpuIds, jobId, targetUtilization) =>
+        activeContext.allocateGPUsForJob(
+          nodeId,
+          gpuIds,
+          jobId,
+          targetUtilization,
+        ),
+      deallocateGPUsForJob: (jobId) =>
+        activeContext.deallocateGPUsForJob(jobId),
     };
   }
   const store = useSimulationStore.getState();
@@ -49,6 +58,9 @@ function getMutator(): StateMutator {
       store.setMIGMode(nodeId, gpuId, enabled),
     setSlurmState: (nodeId, state, reason) =>
       store.setSlurmState(nodeId, state, reason),
+    allocateGPUsForJob: (nodeId, gpuIds, jobId, targetUtilization) =>
+      store.allocateGPUsForJob(nodeId, gpuIds, jobId, targetUtilization),
+    deallocateGPUsForJob: (jobId) => store.deallocateGPUsForJob(jobId),
   };
 }
 

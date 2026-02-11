@@ -1,10 +1,10 @@
-// src/cli/__tests__/explainCommand.test.ts
+// src/cli/__tests__/helpCommand.test.ts
 import { describe, it, expect, beforeAll } from "vitest";
-import { generateExplainOutput } from "../explainCommand";
+import { generateHelpOutput } from "../helpCommand";
 import { CommandDefinitionRegistry } from "../CommandDefinitionRegistry";
 import type { CommandMetadata } from "../../utils/commandMetadata";
 
-describe("explainCommand", () => {
+describe("helpCommand", () => {
   let registry: CommandDefinitionRegistry;
 
   beforeAll(async () => {
@@ -12,30 +12,30 @@ describe("explainCommand", () => {
     await registry.initialize();
   });
 
-  it("should explain nvidia-smi with rich details", async () => {
-    const output = await generateExplainOutput("nvidia-smi", registry);
+  it("should show help for nvidia-smi with rich details", async () => {
+    const output = await generateHelpOutput("nvidia-smi", registry);
 
     expect(output).toContain("nvidia-smi");
     expect(output).toContain("NVIDIA");
     expect(output).toContain("Examples:");
   });
 
-  it("should explain nvidia-smi -q flag", async () => {
-    const output = await generateExplainOutput("nvidia-smi -q", registry);
+  it("should show help for nvidia-smi -q flag", async () => {
+    const output = await generateHelpOutput("nvidia-smi -q", registry);
 
     expect(output).toContain("-q");
     expect(output).toContain("query");
   });
 
-  it("should explain squeue with Slurm details", async () => {
-    const output = await generateExplainOutput("squeue", registry);
+  it("should show help for squeue with Slurm details", async () => {
+    const output = await generateHelpOutput("squeue", registry);
 
     expect(output).toContain("squeue");
     expect(output).toContain("Slurm");
   });
 
   it("should show error messages section when available", async () => {
-    const output = await generateExplainOutput("nvidia-smi", registry, {
+    const output = await generateHelpOutput("nvidia-smi", registry, {
       includeErrors: true,
     });
 
@@ -43,20 +43,20 @@ describe("explainCommand", () => {
   });
 
   it("should handle unknown commands gracefully", async () => {
-    const output = await generateExplainOutput("nonexistent", registry);
+    const output = await generateHelpOutput("nonexistent", registry);
 
     expect(output).toContain("not found");
   });
 
   it("should show subcommands when available", async () => {
-    const output = await generateExplainOutput("nvidia-smi", registry);
+    const output = await generateHelpOutput("nvidia-smi", registry);
 
     expect(output).toContain("Subcommands:");
     expect(output).toContain("topo"); // First subcommand shown
   });
 
   it("should show related commands when available", async () => {
-    const output = await generateExplainOutput("nvidia-smi", registry);
+    const output = await generateHelpOutput("nvidia-smi", registry);
 
     expect(output).toContain("Related Commands:");
   });
@@ -80,7 +80,7 @@ describe("explainCommand", () => {
     };
 
     it("should include Learning Aids section when metadata provided", async () => {
-      const output = await generateExplainOutput(
+      const output = await generateHelpOutput(
         "nvidia-smi",
         registry,
         {},
@@ -95,7 +95,7 @@ describe("explainCommand", () => {
     });
 
     it("should show common mistakes with markers", async () => {
-      const output = await generateExplainOutput(
+      const output = await generateHelpOutput(
         "nvidia-smi",
         registry,
         {},
@@ -108,7 +108,7 @@ describe("explainCommand", () => {
     });
 
     it("should show difficulty level", async () => {
-      const output = await generateExplainOutput(
+      const output = await generateHelpOutput(
         "nvidia-smi",
         registry,
         {},
@@ -120,7 +120,7 @@ describe("explainCommand", () => {
     });
 
     it("should show exam domains", async () => {
-      const output = await generateExplainOutput(
+      const output = await generateHelpOutput(
         "nvidia-smi",
         registry,
         {},
@@ -133,19 +133,14 @@ describe("explainCommand", () => {
     });
 
     it("should not show Learning Aids section when metadata is null", async () => {
-      const output = await generateExplainOutput(
-        "nvidia-smi",
-        registry,
-        {},
-        null,
-      );
+      const output = await generateHelpOutput("nvidia-smi", registry, {}, null);
 
       expect(output).not.toContain("Learning Aids");
       expect(output).not.toContain("When to Use:");
     });
 
     it("should not show Learning Aids when metadata is undefined", async () => {
-      const output = await generateExplainOutput("nvidia-smi", registry, {});
+      const output = await generateHelpOutput("nvidia-smi", registry, {});
 
       expect(output).not.toContain("Learning Aids");
     });
@@ -155,7 +150,7 @@ describe("explainCommand", () => {
         ...mockLearningMetadata,
         commonMistakes: [],
       };
-      const output = await generateExplainOutput(
+      const output = await generateHelpOutput(
         "nvidia-smi",
         registry,
         {},
@@ -172,7 +167,7 @@ describe("explainCommand", () => {
         ...mockLearningMetadata,
         difficulty: "intermediate",
       };
-      const output = await generateExplainOutput(
+      const output = await generateHelpOutput(
         "nvidia-smi",
         registry,
         {},
@@ -187,7 +182,7 @@ describe("explainCommand", () => {
         ...mockLearningMetadata,
         difficulty: "advanced",
       };
-      const output = await generateExplainOutput(
+      const output = await generateHelpOutput(
         "nvidia-smi",
         registry,
         {},

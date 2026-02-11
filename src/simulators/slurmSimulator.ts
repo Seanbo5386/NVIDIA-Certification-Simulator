@@ -4,7 +4,6 @@ import {
   BaseSimulator,
   type SimulatorMetadata,
 } from "@/simulators/BaseSimulator";
-import { useSimulationStore } from "@/store/simulationStore";
 import type { DGXNode } from "@/types/hardware";
 
 interface SlurmJob {
@@ -936,10 +935,7 @@ export class SlurmSimulator extends BaseSimulator {
   }
 
   // sbatch - Submit batch job
-  executeSbatch(
-    parsed: ParsedCommand,
-    _context: CommandContext,
-  ): CommandResult {
+  executeSbatch(parsed: ParsedCommand, context: CommandContext): CommandResult {
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       return (
@@ -1086,9 +1082,9 @@ export class SlurmSimulator extends BaseSimulator {
         const currentJob = this.jobs.find((j) => j.jobId === jobId);
         if (!currentJob || currentJob.state !== "PENDING") return;
 
-        const state = useSimulationStore.getState();
-        if (!state?.cluster?.nodes) return;
-        const nodes = state.cluster.nodes;
+        const cluster = this.resolveCluster(context);
+        if (!cluster?.nodes) return;
+        const nodes = cluster.nodes;
         const availableNode = nodes.find((n) => n.slurmState === "idle");
 
         if (availableNode) {
@@ -1097,10 +1093,11 @@ export class SlurmSimulator extends BaseSimulator {
           currentJob.startTime = new Date();
           currentJob.reasonPending = undefined;
 
-          // Allocate GPUs with utilization update (cross-tool sync)
+          // Allocate GPUs with utilization update (cross-tool sync via StateMutator)
+          const mutator = this.resolveMutator(context);
           const gpuIds = availableNode.gpus.slice(0, gpuCount).map((g) => g.id);
-          state.allocateGPUsForJob(availableNode.id, gpuIds, jobId, 85);
-          state.setSlurmState(availableNode.id, "alloc");
+          mutator.allocateGPUsForJob(availableNode.id, gpuIds, jobId, 85);
+          mutator.setSlurmState(availableNode.id, "alloc");
         } else {
           currentJob.reasonPending = "Resources";
         }
@@ -1172,7 +1169,7 @@ export class SlurmSimulator extends BaseSimulator {
   // scancel - Cancel job
   executeScancel(
     parsed: ParsedCommand,
-    _context: CommandContext,
+    context: CommandContext,
   ): CommandResult {
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
@@ -1206,10 +1203,10 @@ export class SlurmSimulator extends BaseSimulator {
     const job = this.jobs[jobIdx];
 
     if (job.state === "RUNNING" && job.nodelist !== "(Resources)") {
-      const state = useSimulationStore.getState();
-      // Deallocate GPUs (cross-tool sync - resets utilization)
-      state.deallocateGPUsForJob(job.jobId);
-      state.setSlurmState(job.nodelist, "idle");
+      // Deallocate GPUs (cross-tool sync via StateMutator)
+      const mutator = this.resolveMutator(context);
+      mutator.deallocateGPUsForJob(job.jobId);
+      mutator.setSlurmState(job.nodelist, "idle");
     }
 
     this.jobs.splice(jobIdx, 1);

@@ -83,7 +83,6 @@ const COMMAND_LIST = [
   "",
   "\x1b[1mLearning Tools:\x1b[0m",
   "  \x1b[36mhelp [command]\x1b[0m  - Show all commands or detailed help for a specific command",
-  "  \x1b[36mexplain <command>\x1b[0m - Get detailed explanation with examples",
   "  \x1b[36mhint\x1b[0m            - Get a hint for the current lab step",
   "  \x1b[36mclear\x1b[0m           - Clear terminal",
 ].join("\n");
@@ -97,16 +96,18 @@ export const WELCOME_MESSAGE = `\x1b[1;32m╔═══════════�
 ║   NCP-AII Training Environment v1.0                                       ║
 ╚═══════════════════════════════════════════════════════════════════════════╝\x1b[0m
 
-\x1b[1;33m🎓 Learning Features:\x1b[0m
-  • Type \x1b[1;36mexplain <command>\x1b[0m for detailed help with examples
-  • Type \x1b[1;36mhint\x1b[0m during labs for intelligent guidance
+  This terminal simulates a real NVIDIA DGX cluster environment.
+  Practice the commands you'll need for the \x1b[1mNCP-AII certification exam\x1b[0m.
 
-\x1b[1mLearning Tools:\x1b[0m
-  \x1b[36mhelp\x1b[0m            - Show all available commands
-  \x1b[36mhelp <command>\x1b[0m  - Detailed help for a specific command
-  \x1b[36mexplain <cmd>\x1b[0m   - Get explanation with examples
-  \x1b[36mhint\x1b[0m            - Get a hint for the current lab step
-  \x1b[36mclear\x1b[0m           - Clear terminal
+\x1b[1;33mTry these to get started:\x1b[0m
+  \x1b[36mnvidia-smi\x1b[0m           Check GPU status — the most common DGX command
+  \x1b[36mibstat\x1b[0m               View InfiniBand network adapter status
+  \x1b[36msinfo\x1b[0m                See Slurm cluster node and partition info
+
+\x1b[1;33mNeed help?\x1b[0m
+  \x1b[36mhelp\x1b[0m                 Browse all 60+ available commands by category
+  \x1b[36mhelp <command>\x1b[0m       Detailed docs, examples, and common errors
+  \x1b[36mhint\x1b[0m                 Get guidance during lab scenarios
 `;
 
 /**

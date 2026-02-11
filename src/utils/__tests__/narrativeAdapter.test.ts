@@ -129,4 +129,46 @@ describe("narrativeStepToScenarioStep", () => {
     expect(result.narrativeQuiz).toBeDefined();
     expect(result.narrativeQuiz!.question).toBe("What does SEL stand for?");
   });
+
+  it("should produce empty validationRules for concept steps", () => {
+    const conceptStep: NarrativeStep = {
+      ...mockNarrativeStep,
+      type: "concept",
+      expectedCommands: [],
+      hints: [],
+      validation: { type: "none" },
+      conceptContent: "Concept explanation here.",
+      tips: ["Tip 1"],
+    };
+    const result = narrativeStepToScenarioStep(conceptStep);
+    expect(result.validationRules).toEqual([]);
+    expect(result.stepType).toBe("concept");
+    expect(result.conceptContent).toBe("Concept explanation here.");
+    expect(result.tips).toEqual(["Tip 1"]);
+    expect(result.objectives).toEqual(["Read and understand the concept"]);
+  });
+
+  it("should produce empty validationRules for observe steps", () => {
+    const observeStep: NarrativeStep = {
+      ...mockNarrativeStep,
+      type: "observe",
+      expectedCommands: [],
+      hints: [],
+      validation: { type: "none" },
+      observeCommand: "nvidia-smi -q",
+    };
+    const result = narrativeStepToScenarioStep(observeStep);
+    expect(result.validationRules).toEqual([]);
+    expect(result.stepType).toBe("observe");
+    expect(result.observeCommand).toBe("nvidia-smi -q");
+  });
+
+  it("should handle validation.type === 'none' and return empty rules", () => {
+    const noneStep: NarrativeStep = {
+      ...mockNarrativeStep,
+      validation: { type: "none" },
+    };
+    const result = narrativeStepToScenarioStep(noneStep);
+    expect(result.validationRules).toEqual([]);
+  });
 });

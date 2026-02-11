@@ -27,9 +27,9 @@ export {
 } from "./CommandDefinitionRegistry";
 export type { ValidationResult } from "./CommandDefinitionRegistry";
 
-// Explain Command
-export { generateExplainOutput } from "./explainCommand";
-export type { ExplainOptions } from "./explainCommand";
+// Help Command
+export { generateHelpOutput } from "./helpCommand";
+export type { HelpOptions } from "./helpCommand";
 
 // Exercise Generator
 export { CommandExerciseGenerator } from "./CommandExerciseGenerator";

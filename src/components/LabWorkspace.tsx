@@ -250,6 +250,10 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
   const legacyAvailableHints = currentStep.hints || [];
   const isStepCompleted = currentStepProgress?.completed || false;
   const isNarrative = !!activeScenario.narrative;
+  const currentStepType = currentStep?.stepType || "command";
+  const isConceptStep = currentStepType === "concept";
+  const isObserveStep = currentStepType === "observe";
+  const isCommandStep = currentStepType === "command";
   const totalQuizzes = activeScenario.steps.filter(
     (s) => s.narrativeQuiz,
   ).length;
@@ -442,6 +446,16 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                     <h3 className="text-lg font-bold text-white">
                       {currentStep.title}
                     </h3>
+                    {isConceptStep && (
+                      <span className="px-2 py-0.5 rounded text-xs font-semibold bg-purple-600 text-white">
+                        CONCEPT
+                      </span>
+                    )}
+                    {isObserveStep && (
+                      <span className="px-2 py-0.5 rounded text-xs font-semibold bg-blue-600 text-white">
+                        OBSERVE
+                      </span>
+                    )}
                   </div>
                   {/* View in Visualization button */}
                   {visualizationContext && (
@@ -467,22 +481,90 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
 
                 {isNarrative ? (
                   <>
+                    {/* CONTEXT box for all narrative step types */}
                     <div className="bg-gray-800/50 border-l-4 border-indigo-500 p-4 mb-4 rounded-r-lg">
                       <p className="text-sm text-indigo-300 font-semibold mb-1">
-                        SITUATION
+                        {isConceptStep || isObserveStep
+                          ? "CONTEXT"
+                          : "SITUATION"}
                       </p>
                       <p className="text-gray-300 leading-relaxed">
                         {currentStep.description}
                       </p>
                     </div>
-                    <div className="bg-nvidia-green/10 border-l-4 border-nvidia-green p-4 mb-4 rounded-r-lg">
-                      <p className="text-sm text-nvidia-green font-semibold mb-1">
-                        YOUR TASK
-                      </p>
-                      <p className="text-gray-200 leading-relaxed">
-                        {currentStep.objectives[0]}
-                      </p>
-                    </div>
+
+                    {/* Concept step: rich content + tips */}
+                    {isConceptStep && currentStep.conceptContent && (
+                      <div className="bg-gray-800 rounded-lg p-4 mb-4 border border-purple-700/50">
+                        <div className="text-gray-200 leading-relaxed whitespace-pre-line text-sm">
+                          {currentStep.conceptContent}
+                        </div>
+                      </div>
+                    )}
+                    {isConceptStep &&
+                      currentStep.tips &&
+                      currentStep.tips.length > 0 && (
+                        <div className="bg-gray-800/50 border-l-4 border-green-500 p-4 mb-4 rounded-r-lg">
+                          <p className="text-sm text-green-400 font-semibold mb-2">
+                            TIPS
+                          </p>
+                          <ul className="space-y-1">
+                            {currentStep.tips.map((tip, idx) => (
+                              <li
+                                key={idx}
+                                className="text-sm text-gray-300 flex items-start gap-2"
+                              >
+                                <Lightbulb className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
+                                <span>{tip}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                    {/* Observe step: show command to review */}
+                    {isObserveStep && currentStep.observeCommand && (
+                      <div className="bg-gray-800 rounded-lg p-4 mb-4 border border-blue-700/50">
+                        <p className="text-sm text-blue-300 font-semibold mb-2">
+                          COMMAND OUTPUT
+                        </p>
+                        <div className="font-mono text-sm bg-black rounded px-3 py-2 text-green-400 mb-3">
+                          $ {currentStep.observeCommand}
+                        </div>
+                        <p className="text-xs text-gray-400">
+                          Review the output above and click Continue when ready.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Continue button for concept/observe steps */}
+                    {(isConceptStep || isObserveStep) && !isStepCompleted && (
+                      <button
+                        data-testid="concept-continue-btn"
+                        onClick={() =>
+                          completeScenarioStep(
+                            activeScenario.id,
+                            currentStep.id,
+                          )
+                        }
+                        className="w-full px-4 py-3 rounded font-semibold bg-green-600 hover:bg-green-700 text-white transition-colors flex items-center justify-center gap-2 mb-4"
+                      >
+                        Continue
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    )}
+
+                    {/* YOUR TASK box only for command steps */}
+                    {isCommandStep && (
+                      <div className="bg-nvidia-green/10 border-l-4 border-nvidia-green p-4 mb-4 rounded-r-lg">
+                        <p className="text-sm text-nvidia-green font-semibold mb-1">
+                          YOUR TASK
+                        </p>
+                        <p className="text-gray-200 leading-relaxed">
+                          {currentStep.objectives[0]}
+                        </p>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <p className="text-gray-300 mb-4 leading-relaxed">
@@ -490,42 +572,46 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                   </p>
                 )}
 
-                {/* Objectives */}
-                <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                  <h4 className="text-sm font-semibold text-green-400 mb-2">
-                    OBJECTIVES
-                  </h4>
-                  <ul className="space-y-2">
-                    {currentStep.objectives.map((objective, idx) => {
-                      // Check if this objective has a corresponding validation rule
-                      const ruleResult = currentValidation?.ruleResults?.[idx];
-                      const isPassed = ruleResult?.passed || false;
+                {/* Objectives (command steps only) */}
+                {isCommandStep && (
+                  <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                    <h4 className="text-sm font-semibold text-green-400 mb-2">
+                      OBJECTIVES
+                    </h4>
+                    <ul className="space-y-2">
+                      {currentStep.objectives.map((objective, idx) => {
+                        // Check if this objective has a corresponding validation rule
+                        const ruleResult =
+                          currentValidation?.ruleResults?.[idx];
+                        const isPassed = ruleResult?.passed || false;
 
-                      return (
-                        <li
-                          key={idx}
-                          className="text-sm text-gray-300 flex items-start gap-2"
-                        >
-                          {isPassed ? (
-                            <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                          ) : (
-                            <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
-                          )}
-                          <span
-                            className={
-                              isPassed ? "text-gray-400 line-through" : ""
-                            }
+                        return (
+                          <li
+                            key={idx}
+                            className="text-sm text-gray-300 flex items-start gap-2"
                           >
-                            {objective}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
+                            {isPassed ? (
+                              <Check className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                            )}
+                            <span
+                              className={
+                                isPassed ? "text-gray-400 line-through" : ""
+                              }
+                            >
+                              {objective}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
 
-                {/* Validation Progress Indicator */}
-                {validationConfig.enabled &&
+                {/* Validation Progress Indicator (command steps only) */}
+                {isCommandStep &&
+                  validationConfig.enabled &&
                   currentValidation &&
                   !isStepCompleted && (
                     <div className="bg-gray-800 rounded-lg p-4 mb-4 border-l-4 border-blue-500">
@@ -594,8 +680,9 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                     </div>
                   )}
 
-                {/* Expected Commands with Progress Tracking */}
-                {currentStep.expectedCommands &&
+                {/* Expected Commands with Progress Tracking (command steps only) */}
+                {isCommandStep &&
+                  currentStep.expectedCommands &&
                   currentStep.expectedCommands.length > 0 && (
                     <div className="bg-gray-800 rounded-lg p-4 mb-4">
                       <h4 className="text-sm font-semibold text-blue-400 mb-2">
@@ -649,10 +736,10 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                     </div>
                   )}
 
-                {/* Inline Quiz (narrative scenarios) */}
+                {/* Inline Quiz (narrative scenarios) — show immediately for concept/observe */}
                 {isNarrative &&
                   currentStep.narrativeQuiz &&
-                  isStepCompleted && (
+                  (isStepCompleted || isConceptStep || isObserveStep) && (
                     <div className="mb-4">
                       <InlineQuiz
                         quiz={currentStep.narrativeQuiz}
@@ -666,151 +753,153 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                     </div>
                   )}
 
-                {/* Hints - Enhanced System */}
-                {(hintEvaluation?.totalCount || 0) > 0 ? (
-                  <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-semibold text-yellow-400 flex items-center gap-2">
-                        <Lightbulb className="w-4 h-4" />
-                        HINTS ({hintEvaluation?.revealedCount}/
-                        {hintEvaluation?.totalCount})
-                      </h4>
-                      {hintEvaluation?.nextHint && (
-                        <button
-                          onClick={revealNextHint}
-                          className="text-xs bg-yellow-500 text-black hover:bg-yellow-400 px-3 py-1 rounded transition-colors font-medium"
-                        >
-                          💡 Get Hint
-                        </button>
-                      )}
-                    </div>
+                {/* Hints - Enhanced System (command steps only) */}
+                {isCommandStep &&
+                  ((hintEvaluation?.totalCount || 0) > 0 ? (
+                    <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-semibold text-yellow-400 flex items-center gap-2">
+                          <Lightbulb className="w-4 h-4" />
+                          HINTS ({hintEvaluation?.revealedCount}/
+                          {hintEvaluation?.totalCount})
+                        </h4>
+                        {hintEvaluation?.nextHint && (
+                          <button
+                            onClick={revealNextHint}
+                            className="text-xs bg-yellow-500 text-black hover:bg-yellow-400 px-3 py-1 rounded transition-colors font-medium"
+                          >
+                            Get Hint
+                          </button>
+                        )}
+                      </div>
 
-                    {/* Revealed Hints */}
-                    {(hintEvaluation?.revealedCount || 0) > 0 && (
-                      <div className="space-y-3 mt-3">
-                        {hintEvaluation?.allHints
-                          .filter((hint) =>
-                            currentStepProgress?.revealedHintIds.includes(
-                              hint.id,
-                            ),
-                          )
-                          .map((hint, idx) => {
-                            const levelEmoji =
-                              hint.level === 1
-                                ? "💡"
-                                : hint.level === 2
-                                  ? "🔍"
-                                  : "🎯";
-                            return (
-                              <div
-                                key={hint.id}
-                                className="bg-gray-900 rounded-lg p-3 border border-yellow-500/30"
-                              >
-                                <div className="flex items-start gap-2">
-                                  <span className="text-yellow-400 text-lg">
-                                    {levelEmoji}
-                                  </span>
-                                  <div className="flex-1">
-                                    <div className="text-xs text-gray-400 mb-1">
-                                      Hint {idx + 1} - Level {hint.level}
+                      {/* Revealed Hints */}
+                      {(hintEvaluation?.revealedCount || 0) > 0 && (
+                        <div className="space-y-3 mt-3">
+                          {hintEvaluation?.allHints
+                            .filter((hint) =>
+                              currentStepProgress?.revealedHintIds.includes(
+                                hint.id,
+                              ),
+                            )
+                            .map((hint, idx) => {
+                              const levelEmoji =
+                                hint.level === 1
+                                  ? "L1"
+                                  : hint.level === 2
+                                    ? "L2"
+                                    : "L3";
+                              return (
+                                <div
+                                  key={hint.id}
+                                  className="bg-gray-900 rounded-lg p-3 border border-yellow-500/30"
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-yellow-400 text-xs font-bold">
+                                      {levelEmoji}
+                                    </span>
+                                    <div className="flex-1">
+                                      <div className="text-xs text-gray-400 mb-1">
+                                        Hint {idx + 1} - Level {hint.level}
+                                      </div>
+                                      <p className="text-sm text-gray-200">
+                                        {hint.message}
+                                      </p>
                                     </div>
-                                    <p className="text-sm text-gray-200">
-                                      {hint.message}
-                                    </p>
                                   </div>
                                 </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    )}
-
-                    {/* Hint Status Message */}
-                    {(hintEvaluation?.revealedCount || 0) === 0 && (
-                      <div className="mt-3 text-sm text-gray-400 flex items-start gap-2">
-                        <HelpCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                        <div>
-                          <p className="mb-2">
-                            Hints will unlock as you work through this step:
-                          </p>
-                          <ul className="text-xs text-gray-500 space-y-1 ml-4">
-                            <li>• After spending time on the step</li>
-                            <li>• After failed validation attempts</li>
-                            <li>• Based on commands you try</li>
-                          </ul>
-                          <p className="mt-2 text-yellow-400">
-                            💡 Tip: Type{" "}
-                            <span className="font-mono bg-black px-1 rounded">
-                              hint
-                            </span>{" "}
-                            in the terminal anytime!
-                          </p>
+                              );
+                            })}
                         </div>
+                      )}
+
+                      {/* Hint Status Message */}
+                      {(hintEvaluation?.revealedCount || 0) === 0 && (
+                        <div className="mt-3 text-sm text-gray-400 flex items-start gap-2">
+                          <HelpCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="mb-2">
+                              Hints will unlock as you work through this step:
+                            </p>
+                            <ul className="text-xs text-gray-500 space-y-1 ml-4">
+                              <li>- After spending time on the step</li>
+                              <li>- After failed validation attempts</li>
+                              <li>- Based on commands you try</li>
+                            </ul>
+                            <p className="mt-2 text-yellow-400">
+                              Tip: Type{" "}
+                              <span className="font-mono bg-black px-1 rounded">
+                                hint
+                              </span>{" "}
+                              in the terminal anytime!
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* No more hints available */}
+                      {!hintEvaluation?.nextHint &&
+                        (hintEvaluation?.revealedCount || 0) > 0 &&
+                        (hintEvaluation?.revealedCount || 0) <
+                          (hintEvaluation?.totalCount || 0) && (
+                          <p className="text-xs text-gray-500 mt-3">
+                            More hints will unlock as you continue working on
+                            this step.
+                          </p>
+                        )}
+
+                      {/* All hints revealed */}
+                      {(hintEvaluation?.revealedCount || 0) ===
+                        (hintEvaluation?.totalCount || 0) &&
+                        (hintEvaluation?.totalCount || 0) > 0 && (
+                          <p className="text-xs text-green-400 mt-3">
+                            All hints revealed! You've got this!
+                          </p>
+                        )}
+                    </div>
+                  ) : legacyAvailableHints.length > 0 ? (
+                    // Legacy Hints Fallback (for scenarios without enhanced hints)
+                    <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-semibold text-yellow-400 flex items-center gap-2">
+                          <HelpCircle className="w-4 h-4" />
+                          HINTS ({legacyCurrentHintCount}/
+                          {legacyAvailableHints.length})
+                        </h4>
+                        {legacyCurrentHintCount <
+                          legacyAvailableHints.length && (
+                          <button
+                            onClick={() => revealLegacyHint(currentStep.id)}
+                            className="text-xs text-yellow-400 hover:text-yellow-300 underline"
+                          >
+                            Reveal Next Hint
+                          </button>
+                        )}
                       </div>
-                    )}
-
-                    {/* No more hints available */}
-                    {!hintEvaluation?.nextHint &&
-                      (hintEvaluation?.revealedCount || 0) > 0 &&
-                      (hintEvaluation?.revealedCount || 0) <
-                        (hintEvaluation?.totalCount || 0) && (
-                        <p className="text-xs text-gray-500 mt-3">
-                          ⏳ More hints will unlock as you continue working on
-                          this step.
-                        </p>
+                      {legacyCurrentHintCount > 0 && (
+                        <div className="space-y-2 mt-3">
+                          {legacyAvailableHints
+                            .slice(0, legacyCurrentHintCount)
+                            .map((hint, idx) => (
+                              <div
+                                key={idx}
+                                className="text-sm text-gray-300 flex items-start gap-2"
+                              >
+                                <span className="text-yellow-400 font-bold">
+                                  {idx + 1}.
+                                </span>
+                                <span>{hint}</span>
+                              </div>
+                            ))}
+                        </div>
                       )}
-
-                    {/* All hints revealed */}
-                    {(hintEvaluation?.revealedCount || 0) ===
-                      (hintEvaluation?.totalCount || 0) &&
-                      (hintEvaluation?.totalCount || 0) > 0 && (
-                        <p className="text-xs text-green-400 mt-3">
-                          ✓ All hints revealed! You've got this!
+                      {legacyCurrentHintCount === 0 && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Click "Reveal Next Hint" if you need assistance.
                         </p>
-                      )}
-                  </div>
-                ) : legacyAvailableHints.length > 0 ? (
-                  // Legacy Hints Fallback (for scenarios without enhanced hints)
-                  <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-semibold text-yellow-400 flex items-center gap-2">
-                        <HelpCircle className="w-4 h-4" />
-                        HINTS ({legacyCurrentHintCount}/
-                        {legacyAvailableHints.length})
-                      </h4>
-                      {legacyCurrentHintCount < legacyAvailableHints.length && (
-                        <button
-                          onClick={() => revealLegacyHint(currentStep.id)}
-                          className="text-xs text-yellow-400 hover:text-yellow-300 underline"
-                        >
-                          Reveal Next Hint
-                        </button>
                       )}
                     </div>
-                    {legacyCurrentHintCount > 0 && (
-                      <div className="space-y-2 mt-3">
-                        {legacyAvailableHints
-                          .slice(0, legacyCurrentHintCount)
-                          .map((hint, idx) => (
-                            <div
-                              key={idx}
-                              className="text-sm text-gray-300 flex items-start gap-2"
-                            >
-                              <span className="text-yellow-400 font-bold">
-                                {idx + 1}.
-                              </span>
-                              <span>{hint}</span>
-                            </div>
-                          ))}
-                      </div>
-                    )}
-                    {legacyCurrentHintCount === 0 && (
-                      <p className="text-xs text-gray-500 mt-2">
-                        Click "Reveal Next Hint" if you need assistance.
-                      </p>
-                    )}
-                  </div>
-                ) : null}
+                  ) : null)}
 
                 {/* Estimated Duration */}
                 <div className="flex items-center gap-2 text-sm text-gray-400">
@@ -831,6 +920,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                     const stepProgress = progress?.steps[idx];
                     const isCompleted = stepProgress?.completed;
                     const isCurrent = idx === currentStepIndex;
+                    const sType = step.stepType || "command";
 
                     return (
                       <div
@@ -852,6 +942,10 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                         >
                           {isCompleted ? (
                             <Check className="w-4 h-4" />
+                          ) : sType === "concept" ? (
+                            <BookOpen className="w-3 h-3" />
+                          ) : sType === "observe" ? (
+                            <Eye className="w-3 h-3" />
                           ) : (
                             idx + 1
                           )}
@@ -891,21 +985,23 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                 </ul>
               </div>
 
-              {/* Terminal Instructions */}
-              <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <div className="text-blue-400 text-2xl">→</div>
-                  <div>
-                    <p className="text-sm font-semibold text-blue-300 mb-1">
-                      Use the Terminal
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      Execute the commands shown above in the main terminal (on
-                      the right side of the screen) to complete this step.
-                    </p>
+              {/* Terminal Instructions (command steps only) */}
+              {isCommandStep && (
+                <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="text-blue-400 text-2xl">→</div>
+                    <div>
+                      <p className="text-sm font-semibold text-blue-300 mb-1">
+                        Use the Terminal
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Execute the commands shown above in the main terminal
+                        (on the right side of the screen) to complete this step.
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>

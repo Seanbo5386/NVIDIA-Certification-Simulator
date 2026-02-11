@@ -1,6 +1,396 @@
 {
   "scenarios": [
     {
+      "id": "domain0-linux-navigation",
+      "domain": 0,
+      "title": "Terminal Bootcamp: Getting Around",
+      "narrative": {
+        "hook": "Your first day at the datacenter — you need to learn the terminal before your shift begins.",
+        "setting": "You've just been hired as a junior systems engineer at a GPU cluster facility. Before you can troubleshoot anything, you need to master the Linux terminal. Your mentor has set up a training session on one of the DGX nodes.",
+        "resolution": "You now know how to navigate the Linux filesystem, read files, and find your way around a DGX node. These skills are the foundation for every datacenter task ahead."
+      },
+      "commandFamilies": ["linux-basics"],
+      "estimatedMinutes": 12,
+      "difficulty": "beginner",
+      "tier": 1,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "concept",
+          "situation": "Your mentor starts by explaining the Linux directory structure on the DGX node.",
+          "task": "The Linux Directory Tree",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "Everything in Linux lives under a single root directory /. On a DGX system you'll frequently visit these paths:\n\n/ — Root of the entire filesystem\n/home — User home directories\n/var/log — System and application logs\n/etc — Configuration files\n/dev — Device files (including GPUs)\n/usr/bin — Installed programs like nvidia-smi\n/opt — Optional/third-party software\n\nDatacenter troubleshooting almost always starts with navigating to the right log or config file.",
+          "tips": [
+            "GPU device files appear under /dev/nvidia*",
+            "NVIDIA driver logs land in /var/log"
+          ]
+        },
+        {
+          "id": "step-2",
+          "type": "concept",
+          "situation": "Your mentor asks: 'Do you know where you are right now?'",
+          "task": "Where Am I? (pwd)",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "pwd (print working directory) shows your current location in the filesystem.\n\nWhen you first log into a DGX node you'll typically land in your home directory:\n\n$ pwd\n/home/admin\n\nKnowing where you are is critical before running relative commands like cd .. or ls logs/.",
+          "tips": [
+            "The shell prompt often shows your current directory",
+            "The ~ symbol is shorthand for your home directory"
+          ]
+        },
+        {
+          "id": "step-3",
+          "type": "observe",
+          "situation": "Your mentor says: 'Let me show you what's in the log directory — this is where you'll find GPU driver messages.'",
+          "task": "Listing Files (ls)",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "observeCommand": "ls -la /var/log",
+          "conceptContent": "ls lists directory contents. The -la flags add detail:\n-l long format (permissions, owner, size, date)\n-a show hidden files (starting with .)"
+        },
+        {
+          "id": "step-4",
+          "type": "concept",
+          "situation": "Your mentor explains how to move between directories.",
+          "task": "Changing Directories (cd)",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "cd changes your working directory. There are several ways to specify where to go:\n\ncd /var/log — Absolute path, go directly there\ncd logs — Relative path, enter a subdirectory\ncd .. — Go up one level\ncd ~ — Go to your home directory\ncd - — Go back to previous directory\n\nAbsolute paths start with / and work from anywhere. Relative paths start from your current location.",
+          "tips": [
+            "Tab completion works with cd — press Tab to auto-complete directory names",
+            "cd with no arguments also takes you home"
+          ],
+          "quiz": {
+            "question": "A technician needs to check NVIDIA driver logs. Which path would they navigate to?",
+            "options": ["/var/log", "/home/nvidia", "/dev/gpu", "/usr/bin"],
+            "correctIndex": 0,
+            "explanation": "System and driver logs are stored under /var/log. NVIDIA-specific logs such as kernel messages about GPU drivers appear here."
+          }
+        },
+        {
+          "id": "step-5",
+          "type": "concept",
+          "situation": "Now your mentor teaches you how to read files — critical for checking configs and logs.",
+          "task": "Dumping Files with cat",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "cat (concatenate) outputs the entire contents of a file. It's great for short files like configs:\n\n$ cat /etc/hostname\ndgx-node-01\n\nWhen to use cat:\n- Short config files (/etc/hostname, /etc/hosts)\n- Checking a single setting quickly\n\nWhen NOT to use cat:\n- Large log files (thousands of lines will flood your terminal)\n- Binary files (produces garbage output)\n\nFor large files, use head, tail, or less instead.",
+          "tips": [
+            "cat -n adds line numbers to the output",
+            "You can cat multiple files at once: cat file1 file2"
+          ]
+        },
+        {
+          "id": "step-6",
+          "type": "observe",
+          "situation": "Your mentor demonstrates cat on a real config file.",
+          "task": "cat in Action",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "observeCommand": "cat /etc/hostname"
+        },
+        {
+          "id": "step-7",
+          "type": "concept",
+          "situation": "Your mentor warns: 'Never cat a huge log file. Use head and tail instead.'",
+          "task": "Previewing with head and tail",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "When files are too large for cat, use head or tail to see just part of the file:\n\nhead -20 file — First 20 lines\ntail -20 file — Last 20 lines\ntail -f file — Follow new lines in real-time\n\ntail -f is especially powerful for watching live logs — for example, monitoring GPU errors as a training job runs:\n\n$ tail -f /var/log/syslog\n\nPress Ctrl+C to stop following.",
+          "tips": [
+            "Default is 10 lines if you omit the number",
+            "tail -f is your best friend for live debugging"
+          ]
+        },
+        {
+          "id": "step-8",
+          "type": "observe",
+          "situation": "Your mentor shows you the last lines of the system log.",
+          "task": "tail in Action",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "observeCommand": "tail -20 /var/log/syslog",
+          "quiz": {
+            "question": "You need to watch a log file in real-time as a GPU training job runs. Which command?",
+            "options": [
+              "cat /var/log/syslog",
+              "head -f /var/log/syslog",
+              "tail -f /var/log/syslog",
+              "less /var/log/syslog"
+            ],
+            "correctIndex": 2,
+            "explanation": "tail -f follows a file, showing new lines as they are appended. This is essential for monitoring live GPU training logs."
+          }
+        },
+        {
+          "id": "step-9",
+          "type": "command",
+          "situation": "Your mentor says: 'Now try it yourself. Check which node you're on and look at the system log.'",
+          "task": "Run cat /etc/hostname to check the node name, then tail the syslog.",
+          "expectedCommands": ["cat /etc/hostname"],
+          "hints": [
+            "Type: cat /etc/hostname",
+            "This shows the node's hostname"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "cat",
+            "pattern": "hostname"
+          }
+        },
+        {
+          "id": "step-10",
+          "type": "command",
+          "situation": "Your mentor nods approvingly. 'Good. Now check the system log.'",
+          "task": "Run nvidia-smi to see the GPUs on this training node.",
+          "expectedCommands": ["nvidia-smi"],
+          "hints": ["Type: nvidia-smi", "This shows all GPUs and their status"],
+          "validation": {
+            "type": "command",
+            "command": "nvidia-smi",
+            "pattern": "GPU"
+          }
+        }
+      ]
+    },
+    {
+      "id": "domain0-linux-output",
+      "domain": 0,
+      "title": "Terminal Bootcamp: Output Filtering",
+      "narrative": {
+        "hook": "Your second day — master output filtering to triage a cluster alert.",
+        "setting": "Day two at the datacenter. An alert fired overnight about potential GPU issues across the cluster. Your mentor wants you to use pipes and filtering to quickly triage the situation before escalating.",
+        "resolution": "You can now pipe commands together, filter with grep, and count results with wc. These skills let you quickly triage large outputs from GPU monitoring and cluster management tools."
+      },
+      "commandFamilies": ["linux-basics"],
+      "estimatedMinutes": 13,
+      "difficulty": "beginner",
+      "tier": 1,
+      "steps": [
+        {
+          "id": "step-1",
+          "type": "concept",
+          "situation": "Your mentor explains the most powerful concept in Linux: the pipe operator.",
+          "task": "The Pipe Operator",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "The pipe | takes the output of one command and feeds it as input to the next. This is one of the most powerful ideas in Linux:\n\ncommand1 | command2 | command3\n\nEach command in the pipeline processes the data and passes its output along. For example:\n\nnvidia-smi | grep GPU\n\nThis runs nvidia-smi, then filters its output to show only lines containing 'GPU'.\n\nIn datacenter work you'll use pipes constantly — large outputs from monitoring tools need to be filtered down to the information you actually need.",
+          "tips": [
+            "You can chain as many pipes as you need",
+            "Each command in the pipe runs as a separate process"
+          ]
+        },
+        {
+          "id": "step-2",
+          "type": "command",
+          "situation": "Your mentor says: 'Let's triage that alert. Start by filtering nvidia-smi output.'",
+          "task": "Use a pipe to filter nvidia-smi output to show only GPU lines.",
+          "expectedCommands": ["nvidia-smi | grep GPU"],
+          "hints": [
+            "Try: nvidia-smi | grep GPU",
+            "The pipe | sends nvidia-smi output to grep"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "nvidia-smi",
+            "pattern": "grep"
+          }
+        },
+        {
+          "id": "step-3",
+          "type": "concept",
+          "situation": "Your mentor shows you useful grep flags for more precise filtering.",
+          "task": "grep Flags",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "grep searches for patterns in text. Useful flags:\n\n-i — Case-insensitive search (grep -i error logfile)\n-c — Count matches (grep -c GPU output)\n-v — Invert / exclude matches (grep -v idle nodes)\n-n — Show line numbers (grep -n error logfile)\n\nThese flags combine with pipes for powerful filtering:\n\ndmesg | grep -i nvidia    # Find NVIDIA kernel messages\nsinfo | grep -v down      # Show only non-down nodes",
+          "tips": [
+            "grep supports regular expressions for advanced patterns",
+            "-i is very useful since error messages vary in capitalization"
+          ],
+          "quiz": {
+            "question": "How would you count the number of GPUs showing errors in nvidia-smi output?",
+            "options": [
+              "nvidia-smi > grep error > wc -l",
+              "nvidia-smi | grep -i error | wc -l",
+              "count nvidia-smi errors",
+              "nvidia-smi --count-errors"
+            ],
+            "correctIndex": 1,
+            "explanation": "Pipe nvidia-smi output through grep to filter for error lines, then through wc -l to count them. The -i flag makes the search case-insensitive."
+          }
+        },
+        {
+          "id": "step-4",
+          "type": "command",
+          "situation": "Time to check the cluster. Are there any idle nodes available?",
+          "task": "Use sinfo piped to grep to find idle cluster nodes.",
+          "expectedCommands": ["sinfo | grep idle"],
+          "hints": [
+            "Try: sinfo | grep idle",
+            "sinfo shows all nodes, grep filters to idle ones"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "sinfo",
+            "pattern": "grep"
+          }
+        },
+        {
+          "id": "step-5",
+          "type": "concept",
+          "situation": "Your mentor introduces counting and sorting — essential for triage.",
+          "task": "Counting and Sorting",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "Two more essential pipe companions:\n\nwc (word count) — count lines, words, or characters:\n-l — Lines\n-w — Words\n-c — Characters/bytes\n\nsort — sort lines of output:\n-n — Numeric sort\n-r — Reverse order\n(none) — Alphabetical\n\nCommon pattern: command | grep pattern | wc -l tells you 'how many matches?'",
+          "tips": [
+            "wc -l is the quickest way to count results",
+            "sort -rn gives you largest-first numeric ordering"
+          ]
+        },
+        {
+          "id": "step-6",
+          "type": "command",
+          "situation": "Your mentor asks: 'How many jobs are currently in the queue?'",
+          "task": "Count the number of lines in the job queue output.",
+          "expectedCommands": ["squeue | wc -l"],
+          "hints": [
+            "Try: squeue | wc -l",
+            "Each line represents a queued or running job"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "squeue",
+            "pattern": "wc"
+          }
+        },
+        {
+          "id": "step-7",
+          "type": "concept",
+          "situation": "Your mentor moves on to permissions — you'll need these when scripts won't execute.",
+          "task": "Reading Permissions",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "When you run ls -l, the first column shows permissions:\n\n-rwxr-xr-x 1 root root 12345 Jan 15 09:30 nvidia-smi\n\nBreaking down -rwxr-xr-x:\n- — File type (- = file, d = directory)\nrwx — Owner can read, write, execute\nr-x — Group can read and execute\nr-x — Others can read and execute\n\nThe three permission types:\nr (read) — view file contents or list directory\nw (write) — modify file or add/remove files in directory\nx (execute) — run as a program or enter directory",
+          "tips": [
+            "Most system binaries are owned by root",
+            "Scripts need execute permission to run directly"
+          ]
+        },
+        {
+          "id": "step-8",
+          "type": "observe",
+          "situation": "Your mentor shows you the permissions on nvidia-smi.",
+          "task": "Permissions in Practice",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "observeCommand": "ls -l /usr/bin/nvidia-smi",
+          "conceptContent": "Notice nvidia-smi is owned by root and has execute permission for all users — that's why any user on the system can run it."
+        },
+        {
+          "id": "step-9",
+          "type": "concept",
+          "situation": "Your mentor explains how to fix permission issues.",
+          "task": "Changing Permissions",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "chmod changes file permissions. Two notation styles:\n\nSymbolic:\nchmod +x script.sh — Add execute for everyone\nchmod u+w file — Add write for owner\nchmod go-w file — Remove write for group and others\n\nNumeric (octal):\n7 = rwx (read + write + execute)\n5 = r-x (read + execute)\n4 = r-- (read only)\n0 = --- (no access)\n\nExample: chmod 755 script.sh = owner rwx, group r-x, others r-x\n\nchown changes ownership:\nchown admin:gpu-users /opt/scripts/gpu-check.sh",
+          "tips": [
+            "chmod and chown usually require root privileges",
+            "755 is the standard permission for executable scripts"
+          ],
+          "quiz": {
+            "question": "A script at /opt/scripts/gpu-check.sh won't execute. Permissions show -rw-r--r--. What fixes this?",
+            "options": [
+              "chown root gpu-check.sh",
+              "chmod +x /opt/scripts/gpu-check.sh",
+              "mv gpu-check.sh /usr/bin/",
+              "cat gpu-check.sh | bash"
+            ],
+            "correctIndex": 1,
+            "explanation": "The file lacks execute (x) permission. chmod +x adds execute permission, allowing the script to be run directly."
+          }
+        },
+        {
+          "id": "step-10",
+          "type": "command",
+          "situation": "An alert just fired. Your mentor says: 'Quick, check if any GPUs have errors.'",
+          "task": "Use nvidia-smi to check GPU status.",
+          "expectedCommands": ["nvidia-smi"],
+          "hints": [
+            "Try: nvidia-smi",
+            "Look for any errors or warnings in the output"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "nvidia-smi",
+            "pattern": "GPU"
+          }
+        },
+        {
+          "id": "step-11",
+          "type": "command",
+          "situation": "Your mentor says: 'Check what sensors are reporting for temperatures.'",
+          "task": "Run sensors to see hardware temperature readings.",
+          "expectedCommands": ["sensors"],
+          "hints": [
+            "Type: sensors",
+            "Look for temperature readings across components"
+          ],
+          "validation": {
+            "type": "command",
+            "command": "sensors",
+            "pattern": "temp|Temp"
+          }
+        }
+      ]
+    },
+    {
       "id": "domain1-midnight-deployment",
       "domain": 1,
       "title": "The Midnight Deployment",
@@ -659,6 +1049,34 @@
       "steps": [
         {
           "id": "step-1",
+          "type": "concept",
+          "situation": "Before touching any hardware, your senior engineer briefs you on the BMC — the key to out-of-band management.",
+          "task": "Understanding BMC and IPMI",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "IPMI (Intelligent Platform Management Interface) is a standardized interface for hardware management. The BMC (Baseboard Management Controller) is a specialized processor implementing IPMI.\n\nBMC provides:\n- Out-of-band management (works even when OS is down)\n- Hardware sensor monitoring (temperature, voltage, fan speeds)\n- System event logging (SEL)\n- Remote power control\n- Serial-over-LAN console access\n\nKey ipmitool subcommands:\n- sensor — read hardware sensors\n- sel — System Event Log\n- power — power control\n- chassis — chassis status",
+          "tips": [
+            "BMC works even when the server OS is crashed — that's 'out-of-band'",
+            "Always check the SEL first when integrating new hardware"
+          ]
+        },
+        {
+          "id": "step-2",
+          "type": "observe",
+          "situation": "The first new DGX server has arrived and been racked. Your mentor wants to verify it powered on correctly before proceeding with full integration.",
+          "task": "Observe how your mentor uses the BMC to remotely check the server power status without physically accessing the machine.",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "observeCommand": "ipmitool power status"
+        },
+        {
+          "id": "step-3",
           "situation": "Four new DGX A100 nodes are racked, cabled, and powered on. BMC LEDs show network activity.",
           "task": "Use ipmitool to verify BMC connectivity and check system power state.",
           "expectedCommands": ["ipmitool chassis status"],
@@ -674,7 +1092,7 @@
           }
         },
         {
-          "id": "step-2",
+          "id": "step-4",
           "situation": "BMC responds. System is powered on. Time to verify hardware inventory.",
           "task": "Use dmidecode to verify the system model and memory configuration.",
           "expectedCommands": ["dmidecode -t system", "dmidecode -t memory"],
@@ -701,7 +1119,7 @@
           }
         },
         {
-          "id": "step-3",
+          "id": "step-5",
           "situation": "Hardware matches spec: DGX A100 with 1TB RAM, 8 GPUs expected.",
           "task": "Run nvidia-smi to verify all 8 A100 GPUs are detected.",
           "expectedCommands": ["nvidia-smi"],
@@ -717,7 +1135,7 @@
           }
         },
         {
-          "id": "step-4",
+          "id": "step-6",
           "situation": "All 8 GPUs detected: A100-SXM4-80GB. Time for health validation.",
           "task": "Check GPU topology to verify NVLink connectivity between GPUs.",
           "expectedCommands": ["nvidia-smi topo -m"],
@@ -744,7 +1162,7 @@
           }
         },
         {
-          "id": "step-5",
+          "id": "step-7",
           "situation": "NVLink topology looks correct. Run diagnostics to validate GPU health.",
           "task": "Use dcgmi diag to run a comprehensive health check on all GPUs.",
           "expectedCommands": ["dcgmi diag -r 3"],
@@ -760,7 +1178,7 @@
           }
         },
         {
-          "id": "step-6",
+          "id": "step-8",
           "situation": "All 8 GPUs pass diagnostics. Time to verify thermal performance.",
           "task": "Check system thermal sensors to ensure cooling is adequate.",
           "expectedCommands": ["sensors"],
@@ -776,7 +1194,7 @@
           }
         },
         {
-          "id": "step-7",
+          "id": "step-9",
           "situation": "Thermals look good. Now verify the node can join the Slurm cluster.",
           "task": "Check sinfo to see the current cluster configuration before adding new nodes.",
           "expectedCommands": ["sinfo"],
@@ -792,7 +1210,7 @@
           }
         },
         {
-          "id": "step-8",
+          "id": "step-10",
           "situation": "Current cluster has 8 nodes in 'gpu' partition. New nodes need to be added.",
           "task": "Verify the new node's hostname and IP are configured correctly for Slurm.",
           "expectedCommands": ["hostname"],
@@ -818,7 +1236,7 @@
           }
         },
         {
-          "id": "step-9",
+          "id": "step-11",
           "situation": "Hostname dgx-09 configured correctly. Slurm client configured.",
           "task": "Use scontrol to add the new node to the cluster and verify its state.",
           "expectedCommands": ["scontrol show node dgx-09"],
@@ -834,7 +1252,7 @@
           }
         },
         {
-          "id": "step-10",
+          "id": "step-12",
           "situation": "New nodes added to Slurm. Final validation required.",
           "task": "Use sinfo to verify all 12 nodes (8 original + 4 new) are visible and idle.",
           "expectedCommands": ["sinfo -N -l"],
@@ -1296,6 +1714,38 @@
       "steps": [
         {
           "id": "step-1",
+          "type": "concept",
+          "situation": "Before diagnosing the link issue, your lead engineer gives you a quick primer on InfiniBand in the datacenter.",
+          "task": "InfiniBand and NDR Networking",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "InfiniBand is a high-bandwidth, low-latency network fabric used in GPU clusters for inter-node communication.\n\nDGX H100 uses NDR (Next Data Rate) InfiniBand:\n- 400 Gb/s per port (4x lanes at 100 Gb/s each)\n- Sub-microsecond latency\n- RDMA (Remote Direct Memory Access) for GPU-to-GPU transfers\n\nKey concepts:\n- Link Width: Number of lanes (1x, 4x). Full speed requires 4x.\n- Link Rate: Speed per lane. NDR = 100 Gb/s per lane.\n- HCA: Host Channel Adapter — the InfiniBand NIC in each node.\n- Transceiver: QSFP-DD module that converts electrical signals to optical.\n\nDegraded link width (1x instead of 4x) usually points to a cable or transceiver issue.",
+          "tips": [
+            "ibstat is the first command to check port status and link speed",
+            "NDR at 1x width runs at only 100 Gb/s instead of 400 Gb/s — a 75% bandwidth loss"
+          ]
+        },
+        {
+          "id": "step-2",
+          "type": "concept",
+          "situation": "Before checking port status, your lead engineer explains the two state indicators that InfiniBand ports report and what each combination means.",
+          "task": "Understand the difference between Physical State and Logical State on InfiniBand ports, and learn which combinations indicate healthy vs. problematic links.",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "InfiniBand ports have two state indicators: Physical State and Logical State. Physical State: LinkUp means cable is connected and signal is good. Polling means the port is trying to establish a link. Disabled means the port is administratively disabled. Logical State: Active means the port is fully operational. Init means the Subnet Manager hasn't configured it yet. Down means the port is not functional. On DGX systems, each GPU has an associated IB port — always check both states when diagnosing connectivity issues.",
+          "tips": [
+            "ibstat shows both physical and logical state",
+            "An Init port often means the Subnet Manager is not running or hasn't reached this port"
+          ]
+        },
+        {
+          "id": "step-3",
           "situation": "The new DGX H100 node has been racked and cabled. The network team says two InfiniBand ports are showing reduced bandwidth.",
           "task": "Start by checking the InfiniBand HCA port status to see which ports are active and their link rates.",
           "expectedCommands": ["ibstat"],
@@ -1311,7 +1761,7 @@
           }
         },
         {
-          "id": "step-2",
+          "id": "step-4",
           "situation": "ibstat shows ports 1 and 2 are Active but at only 100 Gb/s instead of 400 Gb/s. The ports are training at reduced width (1x instead of 4x).",
           "task": "Check the fabric-wide link information to see how these ports appear to the rest of the network.",
           "expectedCommands": ["iblinkinfo"],
@@ -1338,7 +1788,7 @@
           }
         },
         {
-          "id": "step-3",
+          "id": "step-5",
           "situation": "iblinkinfo confirms two links on the new node are at 1x width. All other nodes are at 4x. The problem is isolated to this node's ports.",
           "task": "Use mlxcables to inspect the transceiver module information on the affected ports.",
           "expectedCommands": ["mlxcables"],
@@ -1354,7 +1804,7 @@
           }
         },
         {
-          "id": "step-4",
+          "id": "step-6",
           "situation": "mlxcables shows the QSFP-DD transceivers are installed, but one reports elevated temperature and the other shows a 'high bit error rate' flag.",
           "task": "Run mlxlink to check the physical signal quality and eye diagram metrics on the degraded port.",
           "expectedCommands": ["mlxlink -d mlx5_0 -p 1 -c"],
@@ -1381,7 +1831,7 @@
           }
         },
         {
-          "id": "step-5",
+          "id": "step-7",
           "situation": "mlxlink shows the eye height is critically low on lanes 2 and 3, indicating poor signal quality on those fiber strands.",
           "task": "Check the PCIe connectivity to make sure the HCA itself is healthy and properly seated.",
           "expectedCommands": ["lspci | grep Mellanox"],
@@ -1397,7 +1847,7 @@
           }
         },
         {
-          "id": "step-6",
+          "id": "step-8",
           "situation": "lspci confirms the ConnectX-7 HCA is properly seated at PCIe Gen5 x16. The HCA hardware is fine — the problem is definitely in the optics or cabling.",
           "task": "Check the BMC sensors to see if the node's ambient temperature could be affecting the transceivers.",
           "expectedCommands": ["sensors"],
@@ -1413,7 +1863,7 @@
           }
         },
         {
-          "id": "step-7",
+          "id": "step-9",
           "situation": "Temperatures are within normal range. The issue is isolated to the transceiver optics. The fiber connectors likely got contaminated during installation.",
           "task": "After cleaning the fiber connectors and reseating the transceivers, verify the ports have come up at full speed.",
           "expectedCommands": ["ibstat"],
@@ -1429,7 +1879,7 @@
           }
         },
         {
-          "id": "step-8",
+          "id": "step-10",
           "situation": "Both ports now show 400 Gb/s at full 4x width. The fiber cleaning resolved the issue.",
           "task": "Run a final iblinkinfo to confirm the node is fully integrated into the fabric at full bandwidth.",
           "expectedCommands": ["iblinkinfo"],
@@ -1690,6 +2140,38 @@
       "steps": [
         {
           "id": "step-1",
+          "type": "concept",
+          "situation": "Before configuring anything, the cluster admin gives the new research team a quick overview of how Slurm manages GPU resources.",
+          "task": "Understanding Slurm and GPU Scheduling",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "Slurm (Simple Linux Utility for Resource Management) is the workload manager used on DGX clusters. It handles job scheduling, resource allocation, and node management.\n\nKey components:\n- slurmctld: Central controller daemon\n- slurmd: Node daemon (runs on each compute node)\n- slurmdbd: Database daemon for job accounting\n\nKey concepts:\n- Partition: Group of nodes (like a job queue)\n- GRES: Generic Resources — how Slurm tracks GPUs\n- Job: A user workload submitted with sbatch or srun\n- Allocation: Reserved resources (nodes, GPUs, memory) for a job\n\nSlurm uses GRES (Generic Resources) to manage GPU allocation. Each node declares its GPUs as gres/gpu:8, and users request GPUs with --gres=gpu:N.",
+          "tips": [
+            "sinfo shows partition and node status at a glance",
+            "GRES configuration lives in gres.conf on each compute node"
+          ]
+        },
+        {
+          "id": "step-2",
+          "type": "concept",
+          "situation": "Before verifying the configuration, the cluster admin digs deeper into how the three Slurm daemons work together to manage the cluster.",
+          "task": "Learn the Slurm daemon architecture and understand how slurmctld, slurmd, and slurmdbd coordinate to handle job scheduling and GPU resource management.",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "Slurm uses three main daemons: slurmctld (central controller on the management node), slurmd (runs on every compute node), and slurmdbd (database daemon for job accounting). The controller handles job scheduling, resource allocation, and node state management. Key concepts: a Partition groups nodes like a queue, GRES (Generic Resources) manages GPUs, and GresTypes=gpu enables GPU-aware scheduling. Understanding this architecture helps you verify each component is properly configured.",
+          "tips": [
+            "slurmctld must be running for any Slurm commands to work",
+            "GPU scheduling requires GRES configuration in slurm.conf"
+          ]
+        },
+        {
+          "id": "step-3",
           "situation": "Fresh 12-node DGX A100 cluster with Slurm installed but not configured for GPUs.",
           "task": "Check the current Slurm configuration to understand what's already set up.",
           "expectedCommands": ["scontrol show config"],
@@ -1705,7 +2187,7 @@
           }
         },
         {
-          "id": "step-2",
+          "id": "step-4",
           "situation": "Basic Slurm is running but no GPU resources (GRES) are configured.",
           "task": "First verify GPU inventory on a compute node using nvidia-smi.",
           "expectedCommands": ["nvidia-smi"],
@@ -1732,7 +2214,7 @@
           }
         },
         {
-          "id": "step-3",
+          "id": "step-5",
           "situation": "Each node has 8 A100-80GB GPUs. Need to configure Slurm to recognize them.",
           "task": "Check if dcgmi is running to provide GPU telemetry for Slurm.",
           "expectedCommands": ["dcgmi discovery -l"],
@@ -1748,7 +2230,7 @@
           }
         },
         {
-          "id": "step-4",
+          "id": "step-6",
           "situation": "DCGM is running and sees all GPUs. Slurm config files need editing.",
           "task": "Check current node information in Slurm to see feature configuration.",
           "expectedCommands": ["scontrol show node"],
@@ -1775,7 +2257,7 @@
           }
         },
         {
-          "id": "step-5",
+          "id": "step-7",
           "situation": "Nodes show Gres=gpu:8 after config update. Time to test job submission.",
           "task": "Check sinfo to verify the GPU partition is available with correct resources.",
           "expectedCommands": ["sinfo -N -l"],
@@ -1791,7 +2273,7 @@
           }
         },
         {
-          "id": "step-6",
+          "id": "step-8",
           "situation": "GPU partition shows 96 total GPUs (12 nodes x 8 GPUs). Ready for testing.",
           "task": "Check squeue to see current job activity on the cluster.",
           "expectedCommands": ["squeue"],
@@ -1807,7 +2289,7 @@
           }
         },
         {
-          "id": "step-7",
+          "id": "step-9",
           "situation": "Queue is empty. Need to configure container support for AI workloads.",
           "task": "Verify Docker/Enroot is available for containerized workloads.",
           "expectedCommands": ["docker --version", "enroot version"],
@@ -1822,7 +2304,7 @@
           }
         },
         {
-          "id": "step-8",
+          "id": "step-10",
           "situation": "Enroot is installed for HPC containers. Test GPU visibility in containers.",
           "task": "Use docker to verify GPUs are visible inside containers.",
           "expectedCommands": [
@@ -1851,7 +2333,7 @@
           }
         },
         {
-          "id": "step-9",
+          "id": "step-11",
           "situation": "Container GPU access works. Run a final validation test.",
           "task": "Use dcgmi diag to run a quick health check before declaring cluster ready.",
           "expectedCommands": ["dcgmi diag -r 1"],
@@ -1867,7 +2349,7 @@
           }
         },
         {
-          "id": "step-10",
+          "id": "step-12",
           "situation": "All systems validated. Document cluster readiness.",
           "task": "Final sinfo check to confirm cluster is ready for production workloads.",
           "expectedCommands": ["sinfo -N -l"],
@@ -2396,7 +2878,10 @@
               "gpuId": 3,
               "type": "ecc-error",
               "severity": "critical",
-              "parameters": { "singleBit": 150, "doubleBit": 8 }
+              "parameters": {
+                "singleBit": 150,
+                "doubleBit": 8
+              }
             }
           ]
         },
@@ -2558,6 +3043,22 @@
       "steps": [
         {
           "id": "step-1",
+          "type": "concept",
+          "situation": "A machine-learning researcher reports that multi-node training jobs are running 3x slower than expected. The cluster was recently deployed and acceptance testing passed.",
+          "task": "Before diving into diagnostics, understand the key bandwidth layers in a DGX cluster and how each can become a bottleneck.",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "A DGX cluster has multiple bandwidth layers that can become bottlenecks: NVLink (600 GB/s per GPU on DGX A100) connects GPUs within a node via NVSwitch. InfiniBand (200 Gb/s per port, 8 ports = 1.6 Tb/s per node) connects nodes across the fabric. PCIe Gen4 (32 GB/s per x16 slot) connects GPUs to the host CPU. Each layer has different bandwidth, latency, and failure modes. Performance issues often stem from a single weak link in this chain. Systematic diagnosis starts with checking each layer.",
+          "tips": [
+            "NVLink is 12x faster than PCIe for GPU-to-GPU transfers",
+            "InfiniBand uses RDMA for low-latency cross-node communication"
+          ]
+        },
+        {
+          "id": "step-2",
           "situation": "NCCL all-reduce test shows 120 GB/s instead of expected 240 GB/s across nodes.",
           "task": "Verify GPU health is not the bottleneck using nvidia-smi.",
           "expectedCommands": ["nvidia-smi"],
@@ -2573,7 +3074,7 @@
           }
         },
         {
-          "id": "step-2",
+          "id": "step-3",
           "situation": "GPUs look healthy. Intra-node NVLink bandwidth tests pass. Issue is inter-node.",
           "task": "Check InfiniBand port status on the first node.",
           "expectedCommands": ["ibstat"],
@@ -2600,7 +3101,7 @@
           }
         },
         {
-          "id": "step-3",
+          "id": "step-4",
           "situation": "ibstat shows all ports at 4x HDR (200 Gb/s) on node 1. Check other nodes.",
           "task": "Use iblinkinfo to see the entire fabric topology and link states.",
           "expectedCommands": ["iblinkinfo"],
@@ -2616,7 +3117,7 @@
           }
         },
         {
-          "id": "step-4",
+          "id": "step-5",
           "situation": "iblinkinfo shows dgx-07 port 2 is running at 1x width instead of 4x!",
           "task": "SSH to dgx-07 and check detailed port status for the degraded port.",
           "expectedCommands": ["ssh dgx-07", "ibstat"],
@@ -2644,7 +3145,7 @@
           }
         },
         {
-          "id": "step-5",
+          "id": "step-6",
           "situation": "Port 2 on dgx-07 shows physical state 'LinkUp' but width 1x. Cable suspect.",
           "task": "Check InfiniBand error counters for this port.",
           "expectedCommands": ["perfquery"],
@@ -2660,7 +3161,7 @@
           }
         },
         {
-          "id": "step-6",
+          "id": "step-7",
           "situation": "perfquery shows elevated symbol error count on this port. Cable issue confirmed.",
           "task": "Run full fabric diagnostic to check for any other issues.",
           "expectedCommands": ["ibdiagnet"],
@@ -2676,7 +3177,7 @@
           }
         },
         {
-          "id": "step-7",
+          "id": "step-8",
           "situation": "ibdiagnet confirms single cable issue on dgx-07 port 2. No other issues found.",
           "task": "Check which jobs are using dgx-07 before scheduling cable replacement.",
           "expectedCommands": ["squeue -w dgx-07"],
@@ -2703,7 +3204,7 @@
           }
         },
         {
-          "id": "step-8",
+          "id": "step-9",
           "situation": "Jobs on dgx-07 completed. Ready to drain for cable replacement.",
           "task": "Drain dgx-07 for cable maintenance.",
           "expectedCommands": [
@@ -2721,7 +3222,7 @@
           }
         },
         {
-          "id": "step-9",
+          "id": "step-10",
           "situation": "Node drained. Cable replaced. Verify link comes up at full width.",
           "task": "Check ibstat to verify the link is now at full 4x width.",
           "expectedCommands": ["ibstat"],
@@ -2737,7 +3238,7 @@
           }
         },
         {
-          "id": "step-10",
+          "id": "step-11",
           "situation": "Link now at 4x HDR. Resume node and verify bandwidth.",
           "task": "Resume the node in Slurm after successful cable replacement.",
           "expectedCommands": ["scontrol update nodename=dgx-07 state=resume"],
@@ -3424,6 +3925,22 @@
       "steps": [
         {
           "id": "step-1",
+          "type": "concept",
+          "situation": "The overnight batch of training jobs all failed with out-of-memory errors on a node that previously handled them fine.",
+          "task": "Before investigating, understand how GPU memory works and what causes OOM failures on NVIDIA datacenter GPUs.",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "Each NVIDIA A100 GPU has 80 GB of HBM2e memory. GPU memory is divided into: framebuffer (FB) for tensor data and model weights, reserved memory for the driver and ECC overhead (~5-6%), and BAR1 memory for CPU-side mapping. Common causes of out-of-memory errors: leaked GPU contexts from previous jobs, memory fragmentation, increased batch sizes, model size changes, or actual hardware ECC issues reducing usable memory. The nvidia-smi command shows current memory usage, while nvidia-smi pmon shows per-process memory consumption.",
+          "tips": [
+            "GPU memory does not have swap — when it is full, allocations fail immediately",
+            "Always check for orphaned GPU processes from previous jobs with nvidia-smi pmon"
+          ]
+        },
+        {
+          "id": "step-2",
           "situation": "Users report 'CUDA out of memory' when allocating 40GB on GPUs showing 70GB free.",
           "task": "Check nvidia-smi to see current GPU memory state.",
           "expectedCommands": ["nvidia-smi"],
@@ -3439,7 +3956,7 @@
           }
         },
         {
-          "id": "step-2",
+          "id": "step-3",
           "situation": "nvidia-smi shows 10GB used but users can't allocate 40GB contiguous. Fragmentation suspected.",
           "task": "Check what processes are using GPU memory.",
           "expectedCommands": ["nvidia-smi pmon -s m"],
@@ -3459,7 +3976,9 @@
               "gpuId": 0,
               "type": "memory-full",
               "severity": "critical",
-              "parameters": { "memoryUsed": 79000 }
+              "parameters": {
+                "memoryUsed": 79000
+              }
             }
           ],
           "quiz": {
@@ -3475,7 +3994,7 @@
           }
         },
         {
-          "id": "step-3",
+          "id": "step-4",
           "situation": "Several zombie processes holding small GPU memory allocations found.",
           "task": "Check which Slurm jobs these processes belong to.",
           "expectedCommands": ["squeue"],
@@ -3491,7 +4010,7 @@
           }
         },
         {
-          "id": "step-4",
+          "id": "step-5",
           "situation": "Orphan processes from completed jobs that didn't clean up properly.",
           "task": "Check if these are containerized jobs with cleanup issues.",
           "expectedCommands": ["docker ps"],
@@ -3518,7 +4037,7 @@
           }
         },
         {
-          "id": "step-5",
+          "id": "step-6",
           "situation": "Found 3 orphan containers with GPU processes still running.",
           "task": "Check dcgmi for detailed GPU memory state.",
           "expectedCommands": ["dcgmi dmon -e 203,204"],
@@ -3534,7 +4053,7 @@
           }
         },
         {
-          "id": "step-6",
+          "id": "step-7",
           "situation": "DCGM shows fragmented memory allocation pattern. Need to clean up and reset.",
           "task": "Document current state before cleanup.",
           "expectedCommands": ["nvidia-smi"],
@@ -3550,7 +4069,7 @@
           }
         },
         {
-          "id": "step-7",
+          "id": "step-8",
           "situation": "State documented. Time to clean up orphan processes and containers.",
           "task": "Drain the node to prevent new jobs while cleaning up.",
           "expectedCommands": [
@@ -3568,7 +4087,7 @@
           }
         },
         {
-          "id": "step-8",
+          "id": "step-9",
           "situation": "Node drained. Clean up orphan containers.",
           "task": "Remove stopped and orphan containers.",
           "expectedCommands": ["docker container prune -f"],
@@ -3595,7 +4114,7 @@
           }
         },
         {
-          "id": "step-9",
+          "id": "step-10",
           "situation": "Containers removed. Verify GPU memory is cleared.",
           "task": "Check nvidia-smi to confirm memory is freed.",
           "expectedCommands": ["nvidia-smi"],
@@ -3611,7 +4130,7 @@
           }
         },
         {
-          "id": "step-10",
+          "id": "step-11",
           "situation": "Memory cleared. Resume node for production use.",
           "task": "Resume the node in Slurm and verify it's ready for jobs.",
           "expectedCommands": ["scontrol update nodename=dgx-01 state=resume"],
@@ -4218,6 +4737,38 @@
       "steps": [
         {
           "id": "step-1",
+          "type": "concept",
+          "situation": "Before running any commands, your mentor explains the data source behind dmidecode — the primary tool for this verification.",
+          "task": "Understanding DMI/SMBIOS",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "Desktop Management Interface (DMI) and System Management BIOS (SMBIOS) are standards that define data structures in a system's BIOS containing information about hardware components.\n\ndmidecode reads this information in human-readable format and is essential for:\n- Verifying hardware configuration after deployment\n- Checking BIOS/firmware versions\n- Identifying memory modules and specifications\n- Gathering serial numbers for support tickets\n\nCommon DMI Types:\n- Type 0: BIOS Information\n- Type 1: System Information\n- Type 2: Baseboard Information\n- Type 4: Processor Information\n- Type 17: Memory Device",
+          "tips": [
+            "dmidecode requires root privileges on most systems",
+            "The -t flag filters by DMI type — e.g. dmidecode -t memory"
+          ]
+        },
+        {
+          "id": "step-2",
+          "type": "concept",
+          "situation": "Before querying the hardware tables, your mentor explains the data standard that makes hardware introspection possible on any x86 server.",
+          "task": "Learn about the DMI/SMBIOS table types and which type numbers correspond to which hardware components.",
+          "expectedCommands": [],
+          "hints": [],
+          "validation": {
+            "type": "none"
+          },
+          "conceptContent": "Desktop Management Interface (DMI) tables store hardware metadata in the system BIOS. The dmidecode command reads these tables. Key DMI types: Type 0 = BIOS information, Type 1 = System info (manufacturer, serial), Type 2 = Baseboard, Type 4 = Processor, Type 17 = Memory devices, Type 38 = IPMI device. On DGX systems, dmidecode confirms correct hardware identification, BIOS version, and memory configuration.",
+          "tips": [
+            "dmidecode requires root privileges",
+            "Use -t flag to query specific types"
+          ]
+        },
+        {
+          "id": "step-3",
           "situation": "The new compute node has booted for the first time. You need to verify the BIOS firmware version and vendor information.",
           "task": "Use dmidecode to read the BIOS information table and verify the firmware version.",
           "expectedCommands": ["dmidecode -t bios"],
@@ -4244,7 +4795,7 @@
           }
         },
         {
-          "id": "step-2",
+          "id": "step-4",
           "situation": "BIOS version matches the deployment checklist. Now verify the system identity.",
           "task": "Check the system information table to verify manufacturer, model, and serial number.",
           "expectedCommands": ["dmidecode -t system"],
@@ -4260,7 +4811,7 @@
           }
         },
         {
-          "id": "step-3",
+          "id": "step-5",
           "situation": "System identification confirmed. Need to verify the UEFI boot configuration.",
           "task": "Check the EFI boot manager to verify boot order and secure boot status.",
           "expectedCommands": ["efibootmgr -v"],
@@ -4276,7 +4827,7 @@
           }
         },
         {
-          "id": "step-4",
+          "id": "step-6",
           "situation": "Boot configuration verified. Time to check the CPU configuration.",
           "task": "Examine the CPU configuration to verify model, core count, and NUMA topology.",
           "expectedCommands": ["lscpu"],
@@ -4303,7 +4854,7 @@
           }
         },
         {
-          "id": "step-5",
+          "id": "step-7",
           "situation": "CPU and NUMA topology look correct. Verify the PCIe device topology next.",
           "task": "Check the PCIe device tree to see all connected devices including GPUs.",
           "expectedCommands": ["lspci -tv"],
@@ -4319,7 +4870,7 @@
           }
         },
         {
-          "id": "step-6",
+          "id": "step-8",
           "situation": "PCIe topology shows all GPU slots populated. Verify system memory next.",
           "task": "Check the total system memory and verify it matches the deployment specification.",
           "expectedCommands": ["free -h"],
@@ -4335,7 +4886,7 @@
           }
         },
         {
-          "id": "step-7",
+          "id": "step-9",
           "situation": "System memory matches spec. Now verify the running kernel version.",
           "task": "Check the kernel version to ensure it matches the approved version for GPU drivers.",
           "expectedCommands": ["uname -r"],
@@ -4351,7 +4902,7 @@
           }
         },
         {
-          "id": "step-8",
+          "id": "step-10",
           "situation": "Kernel version is correct. Final step: verify the NVIDIA driver installation.",
           "task": "Check the installed NVIDIA driver version to confirm it matches the cluster standard.",
           "expectedCommands": ["cat /proc/driver/nvidia/version"],
@@ -6027,7 +6578,9 @@
               "gpuId": 3,
               "type": "thermal",
               "severity": "warning",
-              "parameters": { "targetTemp": 92 }
+              "parameters": {
+                "targetTemp": 92
+              }
             }
           ],
           "quiz": {

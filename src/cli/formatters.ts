@@ -9,7 +9,7 @@ import type { ValidationResult } from "./CommandDefinitionRegistry";
 
 /**
  * ANSI escape codes for terminal formatting
- * Matches patterns from explainCommand.ts
+ * Matches patterns from helpCommand.ts
  */
 export const ANSI = {
   RESET: "\x1b[0m",

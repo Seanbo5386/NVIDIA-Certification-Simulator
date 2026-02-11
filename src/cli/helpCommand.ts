@@ -2,21 +2,21 @@ import type { CommandDefinitionRegistry } from "./CommandDefinitionRegistry";
 import type { CommandDefinition } from "./types";
 import type { CommandMetadata } from "../utils/commandMetadata";
 
-export interface ExplainOptions {
+export interface HelpOptions {
   includeErrors?: boolean;
   includeExamples?: boolean;
   includePermissions?: boolean;
 }
 
 /**
- * Generate rich explanation output for a command
+ * Generate rich help output for a command.
  * Uses the comprehensive JSON definitions for detailed help,
  * enriched with learning metadata when available.
  */
-export async function generateExplainOutput(
+export async function generateHelpOutput(
   input: string,
   registry: CommandDefinitionRegistry,
-  options: ExplainOptions = {},
+  options: HelpOptions = {},
   learningMetadata?: CommandMetadata | null,
 ): Promise<string> {
   const parts = input.trim().split(/\s+/);
@@ -47,7 +47,7 @@ export async function generateExplainOutput(
 
 function generateCommandExplanation(
   def: CommandDefinition,
-  options: ExplainOptions,
+  options: HelpOptions,
   learningMetadata?: CommandMetadata | null,
 ): string {
   let output = "";
@@ -63,10 +63,10 @@ function generateCommandExplanation(
   output += `\x1b[1mUsage:\x1b[0m\n`;
   output += `  ${def.synopsis}\n\n`;
 
-  // Common usage examples
+  // Usage examples
   if (def.common_usage_patterns && def.common_usage_patterns.length > 0) {
     output += `\x1b[1mExamples:\x1b[0m\n`;
-    for (const pattern of def.common_usage_patterns.slice(0, 5)) {
+    for (const pattern of def.common_usage_patterns) {
       output += `\n  \x1b[36m${pattern.command}\x1b[0m\n`;
       output += `    ${pattern.description}\n`;
       if (pattern.requires_root) {
@@ -76,17 +76,14 @@ function generateCommandExplanation(
     output += "\n";
   }
 
-  // Common flags
+  // Options
   if (def.global_options && def.global_options.length > 0) {
-    output += `\x1b[1mCommon Options:\x1b[0m\n`;
-    for (const opt of def.global_options.slice(0, 8)) {
+    output += `\x1b[1mOptions:\x1b[0m\n`;
+    for (const opt of def.global_options) {
       const shortStr = opt.short ? opt.short.replace(/^-*/, "-") : "";
       const longStr = opt.long ? opt.long.replace(/^-*/, "--") : "";
       const combined = [shortStr, longStr].filter(Boolean).join(", ");
-      output += `  \x1b[36m${combined.padEnd(25)}\x1b[0m ${opt.description.substring(0, 60)}${opt.description.length > 60 ? "..." : ""}\n`;
-    }
-    if (def.global_options.length > 8) {
-      output += `  ... and ${def.global_options.length - 8} more options\n`;
+      output += `  \x1b[36m${combined.padEnd(25)}\x1b[0m ${opt.description}\n`;
     }
     output += "\n";
   }
@@ -94,11 +91,8 @@ function generateCommandExplanation(
   // Subcommands
   if (def.subcommands && def.subcommands.length > 0) {
     output += `\x1b[1mSubcommands:\x1b[0m\n`;
-    for (const sub of def.subcommands.slice(0, 6)) {
-      output += `  \x1b[36m${sub.name.padEnd(15)}\x1b[0m ${sub.description.substring(0, 50)}${sub.description.length > 50 ? "..." : ""}\n`;
-    }
-    if (def.subcommands.length > 6) {
-      output += `  ... and ${def.subcommands.length - 6} more\n`;
+    for (const sub of def.subcommands) {
+      output += `  \x1b[36m${sub.name.padEnd(15)}\x1b[0m ${sub.description}\n`;
     }
     output += "\n";
   }
@@ -110,19 +104,11 @@ function generateCommandExplanation(
     def.error_messages.length > 0
   ) {
     output += `\x1b[1mCommon Errors:\x1b[0m\n`;
-    for (const err of def.error_messages.slice(0, 3)) {
-      const msgPreview =
-        err.message.length > 50
-          ? err.message.substring(0, 50) + "..."
-          : err.message;
-      output += `  \x1b[31m${msgPreview}\x1b[0m\n`;
+    for (const err of def.error_messages) {
+      output += `  \x1b[31m${err.message}\x1b[0m\n`;
       output += `    Meaning: ${err.meaning}\n`;
       if (err.resolution) {
-        const resPreview =
-          err.resolution.length > 80
-            ? err.resolution.substring(0, 80) + "..."
-            : err.resolution;
-        output += `    \x1b[32mFix: ${resPreview}\x1b[0m\n`;
+        output += `    \x1b[32mFix: ${err.resolution}\x1b[0m\n`;
       }
     }
     output += "\n";
@@ -131,7 +117,7 @@ function generateCommandExplanation(
   // Exit codes
   if (def.exit_codes && def.exit_codes.length > 0) {
     output += `\x1b[1mExit Codes:\x1b[0m\n`;
-    for (const ec of def.exit_codes.slice(0, 4)) {
+    for (const ec of def.exit_codes) {
       output += `  \x1b[36m${ec.code.toString().padEnd(5)}\x1b[0m ${ec.meaning}\n`;
     }
     output += "\n";
@@ -140,7 +126,7 @@ function generateCommandExplanation(
   // Related commands
   if (def.interoperability?.related_commands) {
     output += `\x1b[1mRelated Commands:\x1b[0m `;
-    output += def.interoperability.related_commands.slice(0, 5).join(", ");
+    output += def.interoperability.related_commands.join(", ");
     output += "\n\n";
   }
 
@@ -218,12 +204,12 @@ function generateFlagExplanation(
       return (
         `\x1b[31mFlag '${flag}' not found for ${def.command}.\x1b[0m\n` +
         `Did you mean: ${validation.suggestions.join(", ")}?\n` +
-        `Run 'explain ${def.command}' to see all available options.`
+        `Run 'help ${def.command}' to see all available options.`
       );
     }
     return (
       `\x1b[31mFlag '${flag}' not found for ${def.command}.\x1b[0m\n` +
-      `Run 'explain ${def.command}' to see available options.`
+      `Run 'help ${def.command}' to see available options.`
     );
   }
 

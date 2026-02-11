@@ -8,7 +8,7 @@ describe("NarrativeScenario types", () => {
   it("should have valid scenario structure for all scenarios", () => {
     for (const scenario of scenarios) {
       expect(scenario.id).toBeTruthy();
-      expect(scenario.domain).toBeGreaterThanOrEqual(1);
+      expect(scenario.domain).toBeGreaterThanOrEqual(0);
       expect(scenario.domain).toBeLessThanOrEqual(5);
       expect(scenario.title).toBeTruthy();
       expect(scenario.narrative.hook).toBeTruthy();
@@ -26,9 +26,14 @@ describe("NarrativeScenario types", () => {
         expect(step.id).toBeTruthy();
         expect(step.situation).toBeTruthy();
         expect(step.task).toBeTruthy();
-        expect(step.expectedCommands.length).toBeGreaterThan(0);
-        expect(step.hints.length).toBeGreaterThan(0);
-        expect(step.validation.type).toMatch(/^(command|output|state)$/);
+        const stepType = step.type || "command";
+        if (stepType === "command") {
+          expect(step.expectedCommands.length).toBeGreaterThan(0);
+          expect(step.hints.length).toBeGreaterThan(0);
+        }
+        expect(step.validation.type).toMatch(
+          /^(command|output|state|multi-command|quiz|none)$/,
+        );
       }
     }
   });

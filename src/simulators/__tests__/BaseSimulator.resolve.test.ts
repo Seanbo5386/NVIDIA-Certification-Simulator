@@ -6,7 +6,7 @@ import type {
   SimulatorMetadata,
   CommandResult,
 } from "@/types/commands";
-import type { ClusterConfig, DGXNode } from "@/types/hardware";
+import type { ClusterConfig } from "@/types/hardware";
 import { ScenarioContext } from "@/store/scenarioContext";
 
 // Mock the simulation store

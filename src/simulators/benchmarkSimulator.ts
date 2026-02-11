@@ -675,16 +675,20 @@ ${efficiency < 0.8 ? "\n\x1b[33mNote: Efficiency below 80% may indicate:\n  - Su
 
     // Simulate stress test - ramp up utilization and temperature
     const originalState = gpusToTest.map((gpu: GPU) => ({
+      id: gpu.id,
       utilization: gpu.utilization,
       temperature: gpu.temperature,
       powerDraw: gpu.powerDraw,
     }));
 
-    // Set to stress levels
+    // Set to stress levels via StateMutator (routes to ScenarioContext when active)
+    const mutator = this.resolveMutator(context);
     gpusToTest.forEach((gpu: GPU) => {
-      gpu.utilization = 100;
-      gpu.temperature = Math.min(85, gpu.temperature + 30);
-      gpu.powerDraw = gpu.powerLimit * 0.95; // Near power limit
+      mutator.updateGPU(node.id, gpu.id, {
+        utilization: 100,
+        temperature: Math.min(85, gpu.temperature + 30),
+        powerDraw: gpu.powerLimit * 0.95,
+      });
     });
 
     let output = `
@@ -736,12 +740,15 @@ Testing ${gpusToTest.length} GPU(s) for ${duration} seconds
       output += `  Passed: ${gpu.temperature < 85 ? "\x1b[32mYES\x1b[0m" : "\x1b[31mNO\x1b[0m"}\n\n`;
     });
 
-    // Reset GPUs to original state after test
+    // Reset GPUs to original state after test via StateMutator
     setTimeout(() => {
-      gpusToTest.forEach((gpu: GPU, idx: number) => {
-        gpu.utilization = originalState[idx].utilization;
-        gpu.temperature = originalState[idx].temperature;
-        gpu.powerDraw = originalState[idx].powerDraw;
+      const restoreMutator = this.resolveMutator(context);
+      originalState.forEach((saved) => {
+        restoreMutator.updateGPU(node.id, saved.id, {
+          utilization: saved.utilization,
+          temperature: saved.temperature,
+          powerDraw: saved.powerDraw,
+        });
       });
     }, 2000);
 

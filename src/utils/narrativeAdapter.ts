@@ -4,7 +4,7 @@ import type {
   Scenario,
   ScenarioStep,
   ValidationRule,
-  DomainId,
+  ScenarioDomainId,
 } from "../types/scenarios";
 
 /**
@@ -12,7 +12,7 @@ import type {
  * used by the store, LabWorkspace, and progress tracking.
  */
 export function narrativeToScenario(narrative: NarrativeScenario): Scenario {
-  const domainStr = `domain${narrative.domain}` as DomainId;
+  const domainStr = `domain${narrative.domain}` as ScenarioDomainId;
   const avgStepTime = Math.max(
     1,
     Math.round(narrative.estimatedMinutes / narrative.steps.length),
@@ -48,15 +48,26 @@ export function narrativeStepToScenarioStep(
   step: NarrativeStep,
   avgStepTime: number = 3,
 ): ScenarioStep {
+  const stepType = step.type || "command";
+  const isConcept = stepType === "concept";
+  const isObserve = stepType === "observe";
+
   return {
     id: step.id,
+    stepType: step.type,
     title: step.task,
     description: step.situation,
-    objectives: [step.task],
+    objectives: isConcept ? ["Read and understand the concept"] : [step.task],
     expectedCommands: step.expectedCommands,
-    validationRules: convertValidation(step.validation, step.expectedCommands),
+    validationRules:
+      isConcept || isObserve
+        ? []
+        : convertValidation(step.validation, step.expectedCommands),
     hints: step.hints,
     estimatedDuration: avgStepTime,
+    conceptContent: step.conceptContent,
+    tips: step.tips,
+    observeCommand: step.observeCommand,
 
     // Preserve quiz for narrative UI
     narrativeQuiz: step.quiz,
@@ -73,6 +84,10 @@ function convertValidation(
   validation: NarrativeStep["validation"],
   expectedCommands: string[],
 ): ValidationRule[] {
+  if (validation.type === "none") {
+    return [];
+  }
+
   const rules: ValidationRule[] = [];
 
   if (validation.type === "command") {
@@ -112,6 +127,7 @@ function extractLearningObjectives(narrative: NarrativeScenario): string[] {
     "cluster-tools": "Slurm cluster management",
     "container-tools": "Container orchestration with Docker and Enroot",
     diagnostics: "System diagnostics and troubleshooting",
+    "linux-basics": "Essential Linux terminal skills",
   };
 
   const objectives: string[] = [];

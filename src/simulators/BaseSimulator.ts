@@ -46,6 +46,13 @@ export interface StateMutator {
     state: "idle" | "alloc" | "drain" | "down",
     reason?: string,
   ): void;
+  allocateGPUsForJob(
+    nodeId: string,
+    gpuIds: number[],
+    jobId: number,
+    targetUtilization?: number,
+  ): void;
+  deallocateGPUsForJob(jobId: number): void;
 }
 
 /**
@@ -938,6 +945,9 @@ export abstract class BaseSimulator {
           sc.setMIGMode(nodeId, gpuId, enabled),
         setSlurmState: (nodeId, state, reason) =>
           sc.setSlurmState(nodeId, state, reason),
+        allocateGPUsForJob: (nodeId, gpuIds, jobId, targetUtilization) =>
+          sc.allocateGPUsForJob(nodeId, gpuIds, jobId, targetUtilization),
+        deallocateGPUsForJob: (jobId) => sc.deallocateGPUsForJob(jobId),
       };
     }
     const store = useSimulationStore.getState();
@@ -952,6 +962,9 @@ export abstract class BaseSimulator {
         store.setMIGMode(nodeId, gpuId, enabled),
       setSlurmState: (nodeId, state, reason) =>
         store.setSlurmState(nodeId, state, reason),
+      allocateGPUsForJob: (nodeId, gpuIds, jobId, targetUtilization) =>
+        store.allocateGPUsForJob(nodeId, gpuIds, jobId, targetUtilization),
+      deallocateGPUsForJob: (jobId) => store.deallocateGPUsForJob(jobId),
     };
   }
 }

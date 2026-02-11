@@ -25,10 +25,10 @@ describe("CLI Module Exports", () => {
     expect(getCommandDefinitionRegistry).toBeDefined();
   });
 
-  it("should export explainCommand", async () => {
-    const { generateExplainOutput } = await import("../index");
+  it("should export helpCommand", async () => {
+    const { generateHelpOutput } = await import("../index");
 
-    expect(generateExplainOutput).toBeDefined();
+    expect(generateHelpOutput).toBeDefined();
   });
 
   it("should export CommandExerciseGenerator", async () => {

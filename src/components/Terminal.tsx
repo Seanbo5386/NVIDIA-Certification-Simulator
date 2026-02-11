@@ -281,41 +281,17 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
     const router = new CommandRouter();
 
     // Built-in commands
-    router.register("help", (cl) => {
-      const args = cl.trim().split(/\s+/).slice(1);
-      if (args.length > 0) {
-        const metadata = getCommandMetadata(args[0]);
-        if (metadata) {
-          return { output: formatCommandHelp(metadata), exitCode: 0 };
-        }
-        return {
-          output: `\x1b[33mNo help available for '\x1b[36m${args[0]}\x1b[33m'.\x1b[0m\n\nType \x1b[36mhelp\x1b[0m to see all available commands.`,
-          exitCode: 0,
-        };
-      }
-      return { output: formatCommandList(), exitCode: 0 };
-    });
-
-    router.register("explain", async (cl) => {
+    router.register("help", async (cl) => {
       const args = cl.trim().split(/\s+/).slice(1);
       if (args.length === 0) {
-        return {
-          output:
-            `\x1b[33mUsage:\x1b[0m explain <command> [flag|subcommand]\n\n` +
-            `Comprehensive command documentation with learning aids.\n\n` +
-            `\x1b[1mExamples:\x1b[0m\n` +
-            `  \x1b[36mexplain nvidia-smi\x1b[0m          Full command reference\n` +
-            `  \x1b[36mexplain nvidia-smi --query-gpu\x1b[0m  Flag details\n` +
-            `  \x1b[36mexplain dcgmi diag\x1b[0m          Subcommand details\n`,
-          exitCode: 0,
-        };
+        return { output: formatCommandList(), exitCode: 0 };
       }
       try {
-        const { getCommandDefinitionRegistry, generateExplainOutput } =
+        const { getCommandDefinitionRegistry, generateHelpOutput } =
           await import("@/cli");
         const registry = await getCommandDefinitionRegistry();
         const learningMeta = getCommandMetadata(args[0]);
-        const output = await generateExplainOutput(
+        const output = await generateHelpOutput(
           args.join(" "),
           registry,
           {
@@ -331,9 +307,10 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
         if (metadata) {
           return { output: formatCommandHelp(metadata), exitCode: 0 };
         }
-        let output = `\x1b[33mNo information available for '\x1b[36m${args[0]}\x1b[33m'.\x1b[0m`;
+        let output = `\x1b[33mNo help available for '\x1b[36m${args[0]}\x1b[33m'.\x1b[0m`;
         const suggestion = getDidYouMeanMessage(args[0]);
         if (suggestion) output += "\n\n" + suggestion;
+        output += `\n\nType \x1b[36mhelp\x1b[0m to see all available commands.`;
         return { output, exitCode: 0 };
       }
     });
@@ -737,8 +714,7 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
             if (
               command !== "hint" &&
               command !== "clear" &&
-              command !== "help" &&
-              command !== "explain"
+              command !== "help"
             ) {
               recordCommand(activeScenario.id, currentStep.id, cmdLine);
             }

@@ -16,9 +16,6 @@ vi.mock("lucide-react", () => ({
   Trophy: (props: Record<string, unknown>) => (
     <svg data-testid="icon-Trophy" {...props} />
   ),
-  GraduationCap: (props: Record<string, unknown>) => (
-    <svg data-testid="icon-GraduationCap" {...props} />
-  ),
   TrendingUp: (props: Record<string, unknown>) => (
     <svg data-testid="icon-TrendingUp" {...props} />
   ),
@@ -127,11 +124,9 @@ function defaultProps() {
   return {
     onStartScenario: vi.fn(),
     onBeginExam: vi.fn(),
-    onOpenLearningPaths: vi.fn(),
     onOpenStudyDashboard: vi.fn(),
     onOpenExamGauntlet: vi.fn(),
     onOpenFreeMode: vi.fn(),
-    learningProgress: { completed: 3, total: 10 },
   };
 }
 
@@ -173,9 +168,10 @@ describe("LabsAndScenariosView", () => {
   // 3. Domain cards visible
   // --------------------------------------------------------------------------
 
-  it("shows all five domain cards", () => {
+  it("shows all six domain cards", () => {
     const props = defaultProps();
     render(<LabsAndScenariosView {...props} />);
+    expect(screen.getByTestId("domain-0-card")).toBeInTheDocument();
     expect(screen.getByTestId("domain-1-card")).toBeInTheDocument();
     expect(screen.getByTestId("domain-2-card")).toBeInTheDocument();
     expect(screen.getByTestId("domain-3-card")).toBeInTheDocument();
@@ -190,6 +186,7 @@ describe("LabsAndScenariosView", () => {
   it("shows domain names on domain cards", () => {
     const props = defaultProps();
     render(<LabsAndScenariosView {...props} />);
+    expect(screen.getByText("Foundational Skills")).toBeInTheDocument();
     expect(screen.getByText("Systems & Server Bring-Up")).toBeInTheDocument();
     expect(screen.getByText("Physical Layer Management")).toBeInTheDocument();
     expect(screen.getByText("Control Plane Installation")).toBeInTheDocument();
@@ -280,22 +277,7 @@ describe("LabsAndScenariosView", () => {
   });
 
   // --------------------------------------------------------------------------
-  // 10. Learning Paths button present and calls onOpenLearningPaths
-  // --------------------------------------------------------------------------
-
-  it("shows Learning Paths card and calls handler on button click", () => {
-    const props = defaultProps();
-    render(<LabsAndScenariosView {...props} />);
-    expect(screen.getByText("Learning Paths")).toBeInTheDocument();
-    const button = screen.getByRole("button", {
-      name: /continue learning|start learning/i,
-    });
-    fireEvent.click(button);
-    expect(props.onOpenLearningPaths).toHaveBeenCalledTimes(1);
-  });
-
-  // --------------------------------------------------------------------------
-  // 11. Study Dashboard button present and calls onOpenStudyDashboard
+  // 10. Study Dashboard button present and calls onOpenStudyDashboard
   // --------------------------------------------------------------------------
 
   it("shows Study Dashboard card and calls handler on button click", () => {
@@ -393,18 +375,7 @@ describe("LabsAndScenariosView", () => {
   });
 
   // --------------------------------------------------------------------------
-  // 16. Learning progress indicator shows completed/total counts
-  // --------------------------------------------------------------------------
-
-  it("displays learning progress as completed/total lessons", () => {
-    const props = defaultProps();
-    props.learningProgress = { completed: 5, total: 12 };
-    render(<LabsAndScenariosView {...props} />);
-    expect(screen.getByText("5/12 lessons")).toBeInTheDocument();
-  });
-
-  // --------------------------------------------------------------------------
-  // 17. Begin Exam button calls onBeginExam
+  // 16. Begin Exam button calls onBeginExam
   // --------------------------------------------------------------------------
 
   it("shows Begin Practice Exam button and calls onBeginExam when clicked", () => {
@@ -458,29 +429,7 @@ describe("LabsAndScenariosView", () => {
   });
 
   // --------------------------------------------------------------------------
-  // 20. Learning Paths button text changes based on progress
-  // --------------------------------------------------------------------------
-
-  it("shows 'Start Learning' when no lessons completed", () => {
-    const props = defaultProps();
-    props.learningProgress = { completed: 0, total: 10 };
-    render(<LabsAndScenariosView {...props} />);
-    expect(
-      screen.getByRole("button", { name: /start learning/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("shows 'Continue Learning' when some lessons completed", () => {
-    const props = defaultProps();
-    props.learningProgress = { completed: 5, total: 10 };
-    render(<LabsAndScenariosView {...props} />);
-    expect(
-      screen.getByRole("button", { name: /continue learning/i }),
-    ).toBeInTheDocument();
-  });
-
-  // --------------------------------------------------------------------------
-  // 21. Missions header and description present
+  // 17. Missions header and description present
   // --------------------------------------------------------------------------
 
   it("displays the Missions header and description", () => {

@@ -68,15 +68,26 @@ describe("SlurmSimulator CommandDefinitionRegistry Integration", () => {
           },
         ],
       },
+      updateGPU: vi.fn(),
+      addXIDError: vi.fn(),
+      updateNodeHealth: vi.fn(),
+      setMIGMode: vi.fn(),
+      setSlurmState: vi.fn(),
+      allocateGPUsForJob: vi.fn(),
+      deallocateGPUsForJob: vi.fn(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
   });
 
   describe("Registry Initialization", () => {
     it("should have definition registry initialized after construction", async () => {
-      // Wait for async initialization
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      expect(simulator["definitionRegistry"]).not.toBeNull();
+      // Wait for async initialization (lazy-loaded JSON imports may take longer)
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
     });
   });
 
@@ -143,7 +154,12 @@ describe("SlurmSimulator CommandDefinitionRegistry Integration", () => {
 
   describe("Help from JSON definitions", () => {
     it("sinfo --help should return registry-based help", async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for registry
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
 
       const parsed = parse("sinfo --help");
       const result = simulator.executeSinfo(parsed, context);
@@ -155,7 +171,12 @@ describe("SlurmSimulator CommandDefinitionRegistry Integration", () => {
     });
 
     it("squeue --help should return registry-based help", async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
 
       const parsed = parse("squeue --help");
       const result = simulator.executeSqueue(parsed, context);
@@ -166,7 +187,12 @@ describe("SlurmSimulator CommandDefinitionRegistry Integration", () => {
     });
 
     it("scontrol --help should return registry-based help", async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
 
       const parsed = parse("scontrol --help");
       const result = simulator.executeScontrol(parsed, context);
@@ -176,7 +202,12 @@ describe("SlurmSimulator CommandDefinitionRegistry Integration", () => {
     });
 
     it("sbatch --help should return registry-based help", async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
 
       const parsed = parse("sbatch --help");
       const result = simulator.executeSbatch(parsed, context);
@@ -187,7 +218,12 @@ describe("SlurmSimulator CommandDefinitionRegistry Integration", () => {
     });
 
     it("srun --help should return registry-based help", async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
 
       const parsed = parse("srun --help");
       const result = simulator.executeSrun(parsed, context);
@@ -197,7 +233,12 @@ describe("SlurmSimulator CommandDefinitionRegistry Integration", () => {
     });
 
     it("scancel --help should return registry-based help", async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
 
       const parsed = parse("scancel --help");
       const result = simulator.executeScancel(parsed, context);
@@ -207,7 +248,12 @@ describe("SlurmSimulator CommandDefinitionRegistry Integration", () => {
     });
 
     it("sacct --help should return registry-based help", async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
 
       const parsed = parse("sacct --help");
       const result = simulator.executeSacct(parsed, context);

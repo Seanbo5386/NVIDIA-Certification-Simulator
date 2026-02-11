@@ -53,7 +53,9 @@
       "Bash(npm run typecheck:*)",
       "Bash(git stash:*)",
       "Bash(test:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(python3:*)",
+      "Bash(git status:*)"
     ]
   }
 }

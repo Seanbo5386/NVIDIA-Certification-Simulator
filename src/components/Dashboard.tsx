@@ -237,6 +237,13 @@ const NodeSelector: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
+  // Auto-select first node when none is selected
+  useEffect(() => {
+    if (!selectedNode && effectiveCluster.nodes.length > 0) {
+      selectNode(effectiveCluster.nodes[0].id);
+    }
+  }, [selectedNode, effectiveCluster.nodes, selectNode]);
+
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
       const nodeCount = effectiveCluster.nodes.length;

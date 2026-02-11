@@ -56,7 +56,7 @@ type TimeOption = 30 | 60 | 90;
 const TIME_OPTIONS: TimeOption[] = [30, 60, 90];
 const SCENARIO_COUNT = 10;
 
-const DOMAIN_NAMES: Record<DomainId, string> = {
+const DOMAIN_NAMES: Record<string, string> = {
   domain1: "Platform Bring-Up",
   domain2: "Accelerator Configuration",
   domain3: "Base Infrastructure",
@@ -64,7 +64,7 @@ const DOMAIN_NAMES: Record<DomainId, string> = {
   domain5: "Troubleshooting",
 };
 
-const DOMAIN_COLORS: Record<DomainId, string> = {
+const DOMAIN_COLORS: Record<string, string> = {
   domain1: "bg-blue-600",
   domain2: "bg-green-600",
   domain3: "bg-purple-600",
