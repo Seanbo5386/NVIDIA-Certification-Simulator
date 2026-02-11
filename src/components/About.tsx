@@ -6,6 +6,7 @@ import {
   Tag,
   ExternalLink,
   Sparkles,
+  Linkedin,
 } from "lucide-react";
 
 const CHANGELOG = [
@@ -181,6 +182,15 @@ export function About() {
               >
                 <ExternalLink className="w-4 h-4" />
                 GitHub Repository
+              </a>
+              <a
+                href="https://www.linkedin.com/in/sean-m-woods/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-nvidia-green hover:text-green-400 transition-colors"
+              >
+                <Linkedin className="w-4 h-4" />
+                Sean Woods — Creator & Project Lead
               </a>
               <div className="flex items-start gap-2 text-gray-400">
                 <Bug className="w-4 h-4 mt-0.5 shrink-0" />

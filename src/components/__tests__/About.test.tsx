@@ -16,6 +16,7 @@ vi.mock("lucide-react", () => {
     Tag: mk("Tag"),
     ExternalLink: mk("ExternalLink"),
     Sparkles: mk("Sparkles"),
+    Linkedin: mk("Linkedin"),
   };
 });
 
