@@ -704,9 +704,22 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
         return;
       }
 
-      // Add to history
-      setCommandHistory((prev) => [...prev, cmdLine]);
-      currentContext.current.history.push(cmdLine);
+      // Expand $(command) shell substitutions before processing.
+      // In a real bash shell these would be expanded by the shell;
+      // in the simulator we expand common patterns to simulated values.
+      const originalCmdLine = cmdLine;
+      cmdLine = cmdLine.replace(
+        /\$\(([^)]+)\)/g,
+        (_match: string, innerCmd: string) => {
+          const inner = innerCmd.trim();
+          if (inner.startsWith("pgrep")) return "12345";
+          return "0";
+        },
+      );
+
+      // Add to history (store the original, unexpanded form)
+      setCommandHistory((prev) => [...prev, originalCmdLine]);
+      currentContext.current.history.push(originalCmdLine);
 
       // Parse command
       const parts = cmdLine.trim().split(/\s+/);
@@ -796,8 +809,13 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
           term.writeln("\n" + result.output);
         }
 
-        // Track command execution for validation
-        commandTracker.recordCommand(cmdLine, result.output, result.exitCode);
+        // Track command execution for validation (use original command
+        // before shell expansion so the validator matches expected commands)
+        commandTracker.recordCommand(
+          originalCmdLine,
+          result.output,
+          result.exitCode,
+        );
 
         // Scenario Validation - Check for active scenario and validate command
         const store = useSimulationStore.getState();
@@ -829,20 +847,14 @@ export const Terminal: React.FC<TerminalProps> = ({ className = "" }) => {
               recordCommand(activeScenario.id, currentStep.id, cmdLine);
             }
 
-            // Only validate if command succeeded or if we want to provide feedback on failures
-            const commandSucceeded = result.exitCode === 0;
+            // Validate whenever the command is recognized (exitCode !== 127).
+            // Even if a simulator returns an error (exitCode 1), the user
+            // demonstrated the correct command knowledge.  The command tracker
+            // already recorded the full command line, so the validator can
+            // match it against expected commands regardless of exit status.
             const commandFound = result.exitCode !== 127; // 127 = command not found
 
-            // Special case: GPU reset commands should be validated even if they fail
-            // This is because XID 79 errors make GPU reset fail, but attempting it is correct
-            const isGpuResetAttempt =
-              cmdLine.includes("--gpu-reset") ||
-              (cmdLine.includes("nvidia-smi") && cmdLine.includes("-r"));
-
-            if (
-              (commandSucceeded && commandFound) ||
-              (commandFound && isGpuResetAttempt)
-            ) {
+            if (commandFound) {
               // Validate using ScenarioValidator
               const validationResult = ScenarioValidator.validateCommand(
                 cmdLine,

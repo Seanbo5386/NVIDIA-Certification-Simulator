@@ -99,13 +99,29 @@ export class MissionRunner {
    * Type a command into the xterm.js terminal.
    * Clicks the terminal first so it receives focus, then
    * types each character individually (xterm keyboard input).
+   *
+   * Shell substitutions like `$(pgrep hpl)` are expanded to
+   * simple values before typing because xterm.js input handling
+   * can drop special characters (`$`, `(`, `)`) when typed
+   * character-by-character via Playwright.  The Terminal component
+   * performs the same expansion, so the command tracker records
+   * the original unexpanded form for validation matching.
    */
   async executeCommand(cmd: string): Promise<void> {
     const terminal = this.page.locator('[data-testid="terminal"]');
     await terminal.click();
 
+    // Expand $(command) shell substitutions to avoid xterm input issues
+    const resolvedCmd = cmd.replace(
+      /\$\(([^)]+)\)/g,
+      (_match, innerCmd: string) => {
+        if (innerCmd.trim().startsWith("pgrep")) return "12345";
+        return "0";
+      },
+    );
+
     // Type character by character to trigger xterm key handlers
-    for (const char of cmd) {
+    for (const char of resolvedCmd) {
       await this.page.keyboard.type(char, { delay: 10 });
     }
     await this.page.keyboard.press("Enter");
@@ -151,17 +167,15 @@ export class MissionRunner {
    * NarrativeResolution component.
    */
   async assertMissionComplete(): Promise<void> {
-    // The final step should show either:
-    // 1. "Complete Mission" button (before clicking)
-    // 2. "View Mission Summary" button (after completing)
-    // 3. NarrativeResolution text
+    // The NarrativeResolution component shows "Mission Complete"
+    // heading and an "Exit Mission" button.
     const completionLocator = this.page
-      .locator(
-        'button:has-text("Complete Mission"), button:has-text("View Mission Summary"), text="MISSION COMPLETE"',
-      )
-      .first();
+      .getByText("Mission Complete")
+      .or(this.page.locator('button:has-text("Exit Mission")'));
 
-    await expect(completionLocator).toBeVisible({ timeout: UI_TIMEOUT });
+    await expect(completionLocator.first()).toBeVisible({
+      timeout: UI_TIMEOUT,
+    });
   }
 
   // ──────────────────────────────────────────────
@@ -171,30 +185,42 @@ export class MissionRunner {
   /**
    * Run a single step, dispatching to the correct handler
    * based on step type and quiz presence.
+   *
+   * Quiz ordering matters:
+   * - concept/observe WITH quiz: quiz renders immediately alongside
+   *   the Continue button. Answering the quiz calls completeScenarioStep(),
+   *   so we answer the quiz and skip Continue.
+   * - concept/observe WITHOUT quiz: click Continue to complete.
+   * - command WITH quiz: type command → validation passes → quiz appears
+   *   → answer quiz (which calls completeScenarioStep()).
+   * - command WITHOUT quiz: type command → auto-advance after validation.
    */
   async runStep(step: MissionStep): Promise<void> {
+    const hasQuiz = step.hasQuiz && step.quizCorrectIndex !== undefined;
+
     switch (step.type) {
       case "concept":
-        await this.completeConceptStep();
-        break;
       case "observe":
-        await this.completeObserveStep();
+        if (hasQuiz) {
+          // Quiz is visible immediately for concept/observe steps.
+          // Answering it triggers completeScenarioStep(), so skip Continue.
+          await this.answerQuiz(step.quizCorrectIndex!);
+        } else {
+          // No quiz — click Continue to complete the step.
+          await this.completeConceptStep();
+        }
         break;
       case "command": {
-        // Pick the first expectedCommand to type.
-        // If there are no expected commands, fall through
-        // (shouldn't happen for command steps in practice).
-        const cmd = step.expectedCommands[0];
-        if (cmd) {
+        // Execute ALL expected commands — validation requires each one.
+        for (const cmd of step.expectedCommands) {
           await this.executeCommand(cmd);
+        }
+        // For command steps, quiz appears after validation passes.
+        if (hasQuiz) {
+          await this.answerQuiz(step.quizCorrectIndex!);
         }
         break;
       }
-    }
-
-    // Handle quiz if this step has one
-    if (step.hasQuiz && step.quizCorrectIndex !== undefined) {
-      await this.answerQuiz(step.quizCorrectIndex);
     }
 
     // Wait for auto-advance to next step

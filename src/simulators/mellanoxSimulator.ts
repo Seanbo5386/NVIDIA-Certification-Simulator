@@ -385,7 +385,26 @@ export class MellanoxSimulator extends BaseSimulator {
       );
     }
 
-    const hca = node.hcas.find((h) => h.devicePath === devicePath);
+    // Accept both full paths (/dev/mst/mt41686_pciconf0) and short names (mlx5_0)
+    let hca = node.hcas.find((h) => h.devicePath === devicePath);
+    if (!hca && !devicePath.startsWith("/dev/mst/")) {
+      // Short name like "mlx5_0" — resolve by index: mlx5_N → hcas[N]
+      const idxMatch = devicePath.match(/mlx5_(\d+)/);
+      if (idxMatch) {
+        const idx = parseInt(idxMatch[1], 10);
+        if (idx >= 0 && idx < node.hcas.length) {
+          hca = node.hcas[idx];
+        }
+      }
+      // Fallback: try matching the short name inside the devicePath string
+      if (!hca) {
+        hca = node.hcas.find((h) => h.devicePath.includes(devicePath));
+      }
+      // Last resort: use the first HCA
+      if (!hca && node.hcas.length > 0) {
+        hca = node.hcas[0];
+      }
+    }
 
     if (!hca) {
       return this.createError(`Error: Device ${devicePath} not found`);

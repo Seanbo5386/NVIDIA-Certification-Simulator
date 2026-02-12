@@ -158,6 +158,53 @@ export class ContainerSimulator extends BaseSimulator {
 
     const command = parsed.subcommands[0];
 
+    if (command === "info") {
+      const node = this.getNode(context);
+      return this.createSuccess(`Client: Docker Engine - Community
+ Version:           24.0.7
+ Context:           default
+ Debug Mode:        false
+
+Server: Docker Engine - Community
+ Containers: ${this.containers.length}
+  Running: ${this.containers.filter((c) => c.status.startsWith("Up")).length}
+  Paused: 0
+  Stopped: ${this.containers.filter((c) => !c.status.startsWith("Up")).length}
+ Images: ${this.images.length}
+ Server Version: 24.0.7
+ Storage Driver: overlay2
+ Default Runtime: nvidia
+ Runtimes: io.containerd.runc.v2 nvidia runc
+ Operating System: Ubuntu 22.04.3 LTS
+ Architecture: x86_64
+ CPUs: ${node ? 128 : 64}
+ Total Memory: ${node ? "2.0TiB" : "512GiB"}
+ Docker Root Dir: /var/lib/docker
+ NVIDIA Container Runtime: nvidia-container-runtime 3.14.0`);
+    }
+
+    if (command === "container") {
+      const subCmd = parsed.subcommands[1] || parsed.positionalArgs[0];
+      if (subCmd === "prune") {
+        const removed = this.containers.filter(
+          (c) => !c.status.startsWith("Up"),
+        );
+        this.containers = this.containers.filter((c) =>
+          c.status.startsWith("Up"),
+        );
+        let output = "";
+        if (removed.length > 0) {
+          output += "Deleted Containers:\n";
+          removed.forEach((c) => (output += `  ${c.id}\n`));
+        }
+        output += `\nTotal reclaimed space: ${removed.length * 256}MB`;
+        return this.createSuccess(output);
+      }
+      return this.createError(
+        "Usage: docker container <prune|ls|rm> [options]",
+      );
+    }
+
     if (command === "run") {
       // Check for --gpus flag
       const gpuSpec = this.getFlagString(parsed, ["gpus"]);
