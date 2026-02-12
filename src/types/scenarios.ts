@@ -204,6 +204,7 @@ export interface Scenario {
   cumulativeSkills?: string[];
   explanationGateId?: string;
   toolHints?: boolean;
+  skippable?: boolean;
 
   // Narrative scenario metadata (present only for narrative scenarios)
   narrative?: {
@@ -455,6 +456,7 @@ export interface NarrativeScenario {
   commandFamilies: string[];
   estimatedMinutes: number;
   tier?: 1 | 2 | 3;
+  skippable?: boolean;
   faults?: FaultInjectionConfig[];
   steps: NarrativeStep[];
 }

@@ -74,6 +74,7 @@ vi.mock("@/utils/hintManager", () => ({
 }));
 vi.mock("@/utils/commandValidator", () => ({
   commandTracker: { getExecutedCommands: () => [] },
+  validateCommandExecuted: () => false,
 }));
 vi.mock("@/utils/scenarioVisualizationMap", () => ({
   getVisualizationContext: () => null,
@@ -387,6 +388,40 @@ describe("LabWorkspace Step Types", () => {
       "test-scenario",
       "step-1",
     );
+  });
+
+  // --------------------------------------------------------------------------
+  // Quiz bypass prevention — Continue button hidden when quiz exists
+  // --------------------------------------------------------------------------
+
+  it("hides Continue button for concept steps with quiz", () => {
+    currentMockStore = makeMockStore({
+      stepType: "concept",
+      conceptContent: "Concept.",
+      narrativeQuiz: {
+        question: "What is the answer?",
+        options: ["A", "B", "C", "D"],
+        correctIndex: 1,
+        explanation: "B is correct.",
+      },
+    });
+    renderAndBegin();
+
+    // Continue button should NOT render since quiz exists
+    expect(
+      screen.queryByTestId("concept-continue-btn"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows Continue button for concept steps without quiz", () => {
+    currentMockStore = makeMockStore({
+      stepType: "concept",
+      conceptContent: "Concept.",
+    });
+    renderAndBegin();
+
+    // Continue button should render
+    expect(screen.getByTestId("concept-continue-btn")).toBeInTheDocument();
   });
 
   // --------------------------------------------------------------------------

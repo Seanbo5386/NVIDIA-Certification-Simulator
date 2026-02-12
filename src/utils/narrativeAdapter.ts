@@ -33,6 +33,7 @@ export function narrativeToScenario(narrative: NarrativeScenario): Scenario {
     estimatedTime: narrative.estimatedMinutes,
     commandFamilies: narrative.commandFamilies,
     tier: narrative.tier,
+    skippable: narrative.skippable,
     toolHints: narrative.tier === 1,
     tags: [`domain${narrative.domain}`, "narrative"],
 

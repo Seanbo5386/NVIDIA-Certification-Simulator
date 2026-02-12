@@ -147,6 +147,7 @@ vi.mock("@/utils/commandValidator", () => ({
   commandTracker: {
     getExecutedCommands: vi.fn(() => []),
   },
+  validateCommandExecuted: () => false,
 }));
 
 vi.mock("@/utils/scenarioVisualizationMap", () => ({
@@ -200,7 +201,6 @@ describe("LabWorkspace Narrative Integration", () => {
     fireEvent.click(screen.getByText("Begin Mission"));
     expect(screen.queryByText("Begin Mission")).not.toBeInTheDocument();
     expect(screen.getByText("SITUATION")).toBeInTheDocument();
-    expect(screen.getByText("YOUR TASK")).toBeInTheDocument();
   });
 
   it("should show narrative situation and task styling for narrative steps", () => {

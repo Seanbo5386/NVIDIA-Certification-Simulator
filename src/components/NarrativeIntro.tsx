@@ -8,12 +8,16 @@ interface NarrativeIntroProps {
     resolution: string;
   };
   onBegin: () => void;
+  skippable?: boolean;
+  onSkip?: () => void;
 }
 
 export function NarrativeIntro({
   title,
   narrative,
   onBegin,
+  skippable,
+  onSkip,
 }: NarrativeIntroProps) {
   return (
     <div className="flex flex-col items-center justify-center h-full p-8 text-center">
@@ -43,6 +47,15 @@ export function NarrativeIntro({
         >
           Begin Mission
         </button>
+
+        {skippable && onSkip && (
+          <button
+            onClick={onSkip}
+            className="mt-3 text-sm text-gray-400 hover:text-gray-200 underline transition-colors block mx-auto"
+          >
+            I'm familiar with Linux basics — skip this tutorial
+          </button>
+        )}
       </div>
     </div>
   );

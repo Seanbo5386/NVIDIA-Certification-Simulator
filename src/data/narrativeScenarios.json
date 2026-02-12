@@ -13,6 +13,7 @@
       "estimatedMinutes": 12,
       "difficulty": "beginner",
       "tier": 1,
+      "skippable": true,
       "steps": [
         {
           "id": "step-1",
@@ -103,14 +104,14 @@
         {
           "id": "step-6",
           "type": "observe",
-          "situation": "Your mentor demonstrates cat on a real config file.",
+          "situation": "Your mentor demonstrates cat on a network configuration file.",
           "task": "cat in Action",
           "expectedCommands": [],
           "hints": [],
           "validation": {
             "type": "none"
           },
-          "observeCommand": "cat /etc/hostname"
+          "observeCommand": "cat /etc/hosts"
         },
         {
           "id": "step-7",
@@ -155,17 +156,13 @@
         {
           "id": "step-9",
           "type": "command",
-          "situation": "Your mentor says: 'Now try it yourself. Check which node you're on and look at the system log.'",
-          "task": "Run cat /etc/hostname to check the node name, then tail the syslog.",
-          "expectedCommands": ["cat /etc/hostname"],
-          "hints": [
-            "Type: cat /etc/hostname",
-            "This shows the node's hostname"
-          ],
+          "situation": "Your mentor says: 'Now try it yourself. Check the node name and kernel version.'",
+          "task": "Run hostname to verify the node name, then run uname -a to check kernel info.",
+          "expectedCommands": ["hostname", "uname -a"],
+          "hints": ["Type: hostname", "Type: uname -a"],
           "validation": {
             "type": "command",
-            "command": "cat",
-            "pattern": "hostname"
+            "command": "hostname"
           }
         },
         {
@@ -196,6 +193,7 @@
       "estimatedMinutes": 13,
       "difficulty": "beginner",
       "tier": 1,
+      "skippable": true,
       "steps": [
         {
           "id": "step-1",

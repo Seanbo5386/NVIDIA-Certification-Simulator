@@ -58,4 +58,44 @@ describe("NarrativeIntro", () => {
     fireEvent.click(screen.getByRole("button", { name: /begin mission/i }));
     expect(onBegin).toHaveBeenCalledOnce();
   });
+
+  it("should render skip button when skippable is true", () => {
+    const onSkip = vi.fn();
+    render(
+      <NarrativeIntro
+        narrative={mockNarrative}
+        title="The Midnight Deployment"
+        onBegin={vi.fn()}
+        skippable={true}
+        onSkip={onSkip}
+      />,
+    );
+    const skipBtn = screen.getByText(/skip this tutorial/i);
+    expect(skipBtn).toBeInTheDocument();
+    fireEvent.click(skipBtn);
+    expect(onSkip).toHaveBeenCalledOnce();
+  });
+
+  it("should not render skip button when skippable is false", () => {
+    render(
+      <NarrativeIntro
+        narrative={mockNarrative}
+        title="The Midnight Deployment"
+        onBegin={vi.fn()}
+        skippable={false}
+      />,
+    );
+    expect(screen.queryByText(/skip this tutorial/i)).not.toBeInTheDocument();
+  });
+
+  it("should not render skip button when skippable is not provided", () => {
+    render(
+      <NarrativeIntro
+        narrative={mockNarrative}
+        title="The Midnight Deployment"
+        onBegin={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/skip this tutorial/i)).not.toBeInTheDocument();
+  });
 });
