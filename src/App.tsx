@@ -9,6 +9,7 @@ import { About } from "./components/About";
 import { StudyDashboard } from "./components/StudyDashboard";
 import { SpacedReviewDrill } from "./components/SpacedReviewDrill";
 import { TierUnlockNotificationContainer } from "./components/TierUnlockNotification";
+import { FaultToastContainer } from "./components/FaultToast";
 import { ExamGauntlet } from "./components/ExamGauntlet";
 import { useSimulationStore } from "./store/simulationStore";
 import { useLearningProgressStore } from "./store/learningProgressStore";
@@ -309,6 +310,11 @@ function App() {
             <span>NCP-AII Training Environment</span>
           </div>
         </div>
+        <div className="text-center text-[10px] text-gray-600 mt-1">
+          Not affiliated with or endorsed by NVIDIA Corporation. All NVIDIA
+          trademarks are property of NVIDIA Corporation. For educational use
+          only.
+        </div>
       </footer>
 
       {/* Lab Workspace Overlay */}
@@ -374,6 +380,9 @@ function App() {
       <TierUnlockNotificationContainer
         onNavigateToTier={handleNavigateToTier}
       />
+
+      {/* Fault Injection Toast Notifications */}
+      <FaultToastContainer />
     </div>
   );
 }
