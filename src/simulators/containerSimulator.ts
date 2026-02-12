@@ -533,8 +533,12 @@ export class ContainerSimulator extends BaseSimulator {
       );
     }
 
+    if (command === "version") {
+      return this.createSuccess("enroot version 3.4.1+5");
+    }
+
     return this.createError(
-      "Usage: enroot <import|create|list|start> [options]",
+      "Usage: enroot <import|create|list|start|version> [options]",
     );
   }
 

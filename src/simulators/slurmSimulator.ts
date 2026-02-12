@@ -874,13 +874,13 @@ export class SlurmSimulator extends BaseSimulator {
     if (command === "update") {
       // Find NodeName= in positional args or subcommands
       const nodeArg = parsed.positionalArgs.find((a) =>
-        a.startsWith("NodeName="),
+        a.toLowerCase().startsWith("nodename="),
       );
       const stateArg = parsed.positionalArgs.find((a) =>
-        a.startsWith("State="),
+        a.toLowerCase().startsWith("state="),
       );
       const reasonArg = parsed.positionalArgs.find((a) =>
-        a.startsWith("Reason="),
+        a.toLowerCase().startsWith("reason="),
       );
 
       if (!nodeArg) {

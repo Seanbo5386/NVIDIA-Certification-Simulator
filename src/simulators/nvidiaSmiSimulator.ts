@@ -83,8 +83,17 @@ export class NvidiaSmiSimulator extends BaseSimulator {
       usage: "nvidia-smi nvlink [OPTIONS]",
       flags: [
         { long: "status", short: "s", description: "Display NVLink status" },
+        {
+          long: "error-counters",
+          short: "e",
+          description: "Display NVLink error counters",
+        },
       ],
-      examples: ["nvidia-smi nvlink --status", "nvidia-smi nvlink -s"],
+      examples: [
+        "nvidia-smi nvlink --status",
+        "nvidia-smi nvlink -s",
+        "nvidia-smi nvlink -e",
+      ],
     });
 
     this.registerCommand("topo", this.handleTopo.bind(this), {
@@ -1345,6 +1354,16 @@ export class NvidiaSmiSimulator extends BaseSimulator {
       let output = `GPU 0: ${node.gpus[0].name}\n`;
       node.gpus[0].nvlinks.forEach((link) => {
         output += `\tLink ${link.linkId}: ${link.status} (${link.speed} GB/s)\n`;
+      });
+      return this.createSuccess(output);
+    }
+
+    // Error counters (-e flag)
+    if (this.hasAnyFlag(parsed, ["e"])) {
+      let output = `GPU 0: ${node.gpus[0].name}\n`;
+      output += `NVLink Error Counters:\n`;
+      node.gpus[0].nvlinks.forEach((link) => {
+        output += `  Link ${link.linkId}: CRC Errors: ${link.txErrors + link.rxErrors}, Replay Errors: ${link.replayErrors}\n`;
       });
       return this.createSuccess(output);
     }
