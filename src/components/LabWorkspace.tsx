@@ -744,13 +744,13 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                     </div>
                   )}
 
-                {/* Inline Quiz (narrative scenarios) — show for concept/observe
-                    immediately, or for command steps once validation passes */}
+                {/* Inline Quiz (narrative scenarios) — show immediately for
+                    concept/observe without CLI requirements, or after
+                    validation passes for steps requiring CLI input */}
                 {isNarrative &&
                   currentStep.narrativeQuiz &&
                   (isStepCompleted ||
-                    isConceptStep ||
-                    isObserveStep ||
+                    ((isConceptStep || isObserveStep) && !requiresCLIInput) ||
                     currentValidation?.passed) && (
                     <div className="mb-4">
                       <InlineQuiz
