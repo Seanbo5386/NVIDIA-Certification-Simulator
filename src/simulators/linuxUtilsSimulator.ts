@@ -390,6 +390,59 @@ tmpfs                      /dev/shm        tmpfs   defaults,size=64g 0       0`,
   },
   "default-shm-size": "64G"
 }`,
+
+      "/var/log/syslog": `Feb 12 08:15:01 dgx-00 CRON[12345]: (root) CMD (test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily ))
+Feb 12 08:15:03 dgx-00 systemd[1]: Starting Daily apt download activities...
+Feb 12 08:15:05 dgx-00 kernel: [234567.890] NVRM: GPU at 0000:07:00.0 has been initialized
+Feb 12 08:15:05 dgx-00 kernel: [234567.891] NVRM: GPU at 0000:0a:00.0 has been initialized
+Feb 12 08:15:06 dgx-00 nvidia-fabricmanager[1234]: GPU 0 (UUID: GPU-abc12345) registered
+Feb 12 08:15:06 dgx-00 nvidia-fabricmanager[1234]: GPU 1 (UUID: GPU-def67890) registered
+Feb 12 08:15:07 dgx-00 nvidia-fabricmanager[1234]: NVSwitch fabric initialized successfully
+Feb 12 08:15:10 dgx-00 dcgm[5678]: DCGM initialized successfully
+Feb 12 08:15:12 dgx-00 kernel: [234568.100] mlx5_core 0000:e3:00.0: firmware version: 20.38.1002
+Feb 12 08:15:12 dgx-00 kernel: [234568.101] mlx5_core 0000:e3:00.0: ConnectX-7 HCA registered
+Feb 12 08:15:15 dgx-00 slurmd[9012]: slurmd version 23.02.7 started
+Feb 12 08:15:15 dgx-00 slurmd[9012]: Node configuration: CPUs=128 Boards=1 SocketsPerBoard=2
+Feb 12 08:15:16 dgx-00 kernel: [234568.500] nvidia-peermem: module loaded
+Feb 12 08:15:17 dgx-00 containerd[3456]: containerd started
+Feb 12 08:15:18 dgx-00 dockerd[3457]: Docker daemon initialized
+Feb 12 08:15:20 dgx-00 systemd[1]: Started NVIDIA Persistence Daemon.
+Feb 12 08:15:21 dgx-00 nvidia-persistenced[7890]: PID file: /var/run/nvidia-persistenced/nvidia-persistenced.pid
+Feb 12 08:15:22 dgx-00 kernel: [234569.000] ECC: All GPUs reporting 0 errors
+Feb 12 08:15:25 dgx-00 nvsm[4321]: Health check completed: All components OK
+Feb 12 08:15:30 dgx-00 CRON[12346]: (root) CMD (/usr/lib/nvidia/nvsm/nvsm_monitor)`,
+
+      "/var/log/dmesg": `[    0.000000] Linux version 5.15.0-91-generic (buildd@lcy02-amd64-116) (gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0, GNU ld (GNU Binutils for Ubuntu) 2.38)
+[    0.000000] Command line: BOOT_IMAGE=/vmlinuz-5.15.0-91-generic root=UUID=abcd-1234 ro quiet splash
+[    1.234567] ACPI: RSDP 0x00000000000F0490 000024 (v02 NVIDIA)
+[    2.345678] PCI: Using configuration type 1 for base access
+[    5.123456] nvidia: loading out-of-tree module taints kernel.
+[    5.234567] nvidia: module license 'NVIDIA' taints kernel.
+[    5.345678] NVRM: loading NVIDIA UNIX x86_64 Kernel Module  535.129.03
+[    5.456789] nvidia-nvlink: Nvlink Core is being initialized
+[    5.567890] nvidia 0000:07:00.0: enabling device (0000 -> 0003)
+[    5.678901] nvidia 0000:07:00.0: vgaarb: changed VGA decode
+[    6.123456] NVRM: GPU 0000:07:00.0: RmInitAdapter succeeded!
+[    6.234567] NVRM: GPU 0000:0a:00.0: RmInitAdapter succeeded!
+[    6.345678] NVRM: GPU 0000:47:00.0: RmInitAdapter succeeded!
+[    6.456789] NVRM: GPU 0000:4e:00.0: RmInitAdapter succeeded!
+[    6.567890] NVRM: GPU 0000:87:00.0: RmInitAdapter succeeded!
+[    6.678901] NVRM: GPU 0000:90:00.0: RmInitAdapter succeeded!
+[    6.789012] NVRM: GPU 0000:b7:00.0: RmInitAdapter succeeded!
+[    6.890123] NVRM: GPU 0000:bd:00.0: RmInitAdapter succeeded!
+[    7.123456] nvidia-peermem: Mellanox different types of NVIDIA peer memory client registered
+[    7.234567] mlx5_core 0000:e3:00.0: firmware version: 20.38.1002, flow steering mode(DMFS)`,
+
+      "/var/log/kern.log": `Feb 12 08:15:05 dgx-00 kernel: [234567.890] NVRM: GPU at 0000:07:00.0 has been initialized
+Feb 12 08:15:05 dgx-00 kernel: [234567.891] NVRM: GPU at 0000:0a:00.0 has been initialized
+Feb 12 08:15:05 dgx-00 kernel: [234567.892] NVRM: GPU at 0000:47:00.0 has been initialized
+Feb 12 08:15:05 dgx-00 kernel: [234567.893] NVRM: GPU at 0000:4e:00.0 has been initialized
+Feb 12 08:15:12 dgx-00 kernel: [234568.100] mlx5_core 0000:e3:00.0: firmware version: 20.38.1002
+Feb 12 08:15:12 dgx-00 kernel: [234568.101] mlx5_core 0000:e3:00.0: ConnectX-7 HCA registered
+Feb 12 08:15:16 dgx-00 kernel: [234568.500] nvidia-peermem: module loaded
+Feb 12 08:15:22 dgx-00 kernel: [234569.000] ECC: All GPUs reporting 0 errors
+Feb 12 08:15:23 dgx-00 kernel: [234569.100] XID 79 on GPU 0000:07:00.0: GPU has fallen off the bus
+Feb 12 08:15:24 dgx-00 kernel: [234569.200] NVRM: GPU at 0000:07:00.0: GPU is lost`,
     };
 
     return files[resolved];
@@ -587,6 +640,29 @@ tmpfs                      /dev/shm        tmpfs   defaults,size=64g 0       0`,
           "nvidia-uvm",
         ],
       ],
+      "/var/log": [
+        [
+          "-rw-r-----",
+          "1",
+          "syslog",
+          "adm",
+          "234567",
+          "Feb 12 08:15",
+          "syslog",
+        ],
+        [
+          "-rw-r-----",
+          "1",
+          "root",
+          "adm",
+          "123456",
+          "Feb 12 08:15",
+          "kern.log",
+        ],
+        ["-rw-r-----", "1", "root", "adm", "345678", "Feb 12 08:15", "dmesg"],
+        ["-rw-r-----", "1", "root", "adm", "67890", "Feb 12 08:15", "auth.log"],
+        ["-rw-r-----", "1", "root", "adm", "45678", "Feb 12 08:15", "dpkg.log"],
+      ],
     };
 
     const entries = directories[dirPath];
@@ -619,13 +695,26 @@ tmpfs                      /dev/shm        tmpfs   defaults,size=64g 0       0`,
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
-    const filePath = parsed.subcommands[0] || parsed.positionalArgs[0];
+    let filePath = parsed.subcommands[0] || parsed.positionalArgs[0];
+    let numLines = this.getFlagNumber(parsed, ["n"], -1);
+
+    // Check for numeric shorthand: -5 parsed as flag "5" with filename as value
+    if (numLines === -1) {
+      for (const [key, value] of parsed.flags) {
+        if (/^\d+$/.test(key)) {
+          numLines = parseInt(key, 10);
+          if (!filePath && typeof value === "string") {
+            filePath = value;
+          }
+          break;
+        }
+      }
+    }
+    if (numLines === -1) numLines = 10;
 
     if (!filePath) {
       return this.createError("head: missing file operand");
     }
-
-    const numLines = this.getFlagNumber(parsed, ["n"], 10);
 
     const contents = this.getFileContents(filePath, context);
     if (contents === undefined) {
@@ -646,13 +735,27 @@ tmpfs                      /dev/shm        tmpfs   defaults,size=64g 0       0`,
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
-    const filePath = parsed.subcommands[0] || parsed.positionalArgs[0];
+    let filePath = parsed.subcommands[0] || parsed.positionalArgs[0];
+    let numLines = this.getFlagNumber(parsed, ["n"], -1);
+
+    // Check for numeric shorthand: -20 parsed as flag "20" with filename as value
+    if (numLines === -1) {
+      for (const [key, value] of parsed.flags) {
+        if (/^\d+$/.test(key)) {
+          numLines = parseInt(key, 10);
+          // The filename was consumed as the flag value
+          if (!filePath && typeof value === "string") {
+            filePath = value;
+          }
+          break;
+        }
+      }
+    }
+    if (numLines === -1) numLines = 10;
 
     if (!filePath) {
       return this.createError("tail: missing file operand");
     }
-
-    const numLines = this.getFlagNumber(parsed, ["n"], 10);
 
     const contents = this.getFileContents(filePath, context);
     if (contents === undefined) {
