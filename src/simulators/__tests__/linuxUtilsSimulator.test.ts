@@ -268,6 +268,16 @@ describe("LinuxUtilsSimulator", () => {
       const result = simulator.execute(parse("head"), context);
       expect(result.exitCode).not.toBe(0);
     });
+
+    it("should support numeric shorthand -5", () => {
+      const result = simulator.execute(
+        parse("head -5 /etc/slurm/gres.conf"),
+        context,
+      );
+      expect(result.exitCode).toBe(0);
+      const lines = result.output.split("\n");
+      expect(lines.length).toBeLessThanOrEqual(5);
+    });
   });
 
   // ============================================
@@ -291,6 +301,33 @@ describe("LinuxUtilsSimulator", () => {
     it("should error when no file operand given", () => {
       const result = simulator.execute(parse("tail"), context);
       expect(result.exitCode).not.toBe(0);
+    });
+
+    it("should support numeric shorthand -20", () => {
+      const result = simulator.execute(
+        parse("tail -20 /var/log/syslog"),
+        context,
+      );
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain("dgx-00");
+      const lines = result.output.split("\n");
+      expect(lines.length).toBe(20);
+    });
+
+    it("should support -n flag for number of lines", () => {
+      const result = simulator.execute(
+        parse("tail -n 5 /var/log/syslog"),
+        context,
+      );
+      expect(result.exitCode).toBe(0);
+      const lines = result.output.split("\n");
+      expect(lines.length).toBe(5);
+    });
+
+    it("should error with numeric shorthand and no filename", () => {
+      const result = simulator.execute(parse("tail -20"), context);
+      expect(result.exitCode).not.toBe(0);
+      expect(result.output).toContain("missing file operand");
     });
   });
 
@@ -665,6 +702,49 @@ describe("LinuxUtilsSimulator", () => {
     it("should error without arguments", () => {
       const result = simulator.execute(parse("taskset"), context);
       expect(result.exitCode).not.toBe(0);
+    });
+  });
+
+  // ============================================
+  // Virtual filesystem - log files
+  // ============================================
+  describe("Virtual filesystem - log files", () => {
+    it("should display /var/log/syslog", () => {
+      const result = simulator.execute(parse("cat /var/log/syslog"), context);
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain("dgx-00");
+      expect(result.output).toContain("NVRM");
+    });
+
+    it("should display /var/log/dmesg", () => {
+      const result = simulator.execute(parse("cat /var/log/dmesg"), context);
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain("nvidia");
+      expect(result.output).toContain("535.129.03");
+    });
+
+    it("should display /var/log/kern.log", () => {
+      const result = simulator.execute(parse("cat /var/log/kern.log"), context);
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain("XID");
+    });
+
+    it("should list /var/log directory", () => {
+      const result = simulator.execute(parse("ls /var/log"), context);
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain("syslog");
+      expect(result.output).toContain("kern.log");
+      expect(result.output).toContain("dmesg");
+    });
+
+    it("should tail /var/log/syslog with numeric shorthand", () => {
+      const result = simulator.execute(
+        parse("tail -20 /var/log/syslog"),
+        context,
+      );
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain("dgx-00");
+      expect(result.output.split("\n").length).toBe(20);
     });
   });
 

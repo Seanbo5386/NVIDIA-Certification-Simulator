@@ -17,7 +17,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { HintManager } from "@/utils/hintManager";
-import { commandTracker } from "@/utils/commandValidator";
+import { validateCommandExecuted } from "@/utils/commandValidator";
 import { getVisualizationContext } from "@/utils/scenarioVisualizationMap";
 import {
   isTierUnlocked,
@@ -430,6 +430,13 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
               title={activeScenario.title}
               narrative={activeScenario.narrative!}
               onBegin={() => setShowNarrativeIntro(false)}
+              skippable={activeScenario.skippable}
+              onSkip={() => {
+                // Mark all steps as completed and advance to resolution
+                activeScenario.steps.forEach((step) => {
+                  completeScenarioStep(activeScenario.id, step.id);
+                });
+              }}
             />
           ) : progress?.completed && isNarrative ? (
             <NarrativeResolution
@@ -546,6 +553,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                     {/* Continue button for concept/observe steps without CLI requirements */}
                     {(isConceptStep || isObserveStep) &&
                       !requiresCLIInput &&
+                      !currentStep.narrativeQuiz &&
                       !isStepCompleted && (
                         <button
                           data-testid="concept-continue-btn"
@@ -561,18 +569,6 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                           <ChevronRight className="w-4 h-4" />
                         </button>
                       )}
-
-                    {/* YOUR TASK box for steps requiring CLI input */}
-                    {requiresCLIInput && (
-                      <div className="bg-nvidia-green/10 border-l-4 border-nvidia-green p-4 mb-4 rounded-r-lg">
-                        <p className="text-sm text-nvidia-green font-semibold mb-1">
-                          YOUR TASK
-                        </p>
-                        <p className="text-gray-200 leading-relaxed">
-                          {currentStep.objectives[0]}
-                        </p>
-                      </div>
-                    )}
                   </>
                 ) : (
                   <p className="text-gray-300 mb-4 leading-relaxed">
@@ -696,17 +692,19 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                       <h4 className="text-sm font-semibold text-blue-400 mb-2">
                         SUGGESTED COMMANDS (
                         {
-                          commandTracker.getExecutedCommands(
-                            currentStep.expectedCommands,
+                          currentStep.expectedCommands.filter((cmd) =>
+                            (currentStepProgress?.commandsExecuted || []).some(
+                              (exe) => validateCommandExecuted(exe, [cmd]),
+                            ),
                           ).length
                         }
                         /{currentStep.expectedCommands.length})
                       </h4>
                       <div className="space-y-2">
                         {currentStep.expectedCommands.map((cmd, idx) => {
-                          const isExecuted =
-                            commandTracker.getExecutedCommands([cmd]).length >
-                            0;
+                          const isExecuted = (
+                            currentStepProgress?.commandsExecuted || []
+                          ).some((exe) => validateCommandExecuted(exe, [cmd]));
                           return (
                             <div key={idx} className="flex items-start gap-2">
                               {isExecuted ? (
@@ -734,9 +732,11 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                         </div>
                       )}
                       {!isStepCompleted &&
-                        commandTracker.getExecutedCommands(
-                          currentStep.expectedCommands,
-                        ).length > 0 && (
+                        currentStep.expectedCommands.some((cmd) =>
+                          (currentStepProgress?.commandsExecuted || []).some(
+                            (exe) => validateCommandExecuted(exe, [cmd]),
+                          ),
+                        ) && (
                           <div className="mt-3 text-xs text-yellow-400">
                             Try the suggested commands to complete this step.
                           </div>
