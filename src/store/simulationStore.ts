@@ -463,6 +463,10 @@ export const useSimulationStore = create<SimulationState>()(
         import("@/store/scenarioContext").then(({ scenarioContextManager }) => {
           scenarioContextManager.clearAll();
         });
+        // Reset global cluster to healthy state
+        import("@/utils/scenarioLoader").then(({ clearAllFaults }) => {
+          clearAllFaults();
+        });
       },
 
       // Hint actions
