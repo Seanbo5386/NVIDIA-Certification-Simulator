@@ -294,22 +294,30 @@ export const FaultInjection: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h2 className="text-2xl font-bold text-nvidia-green mb-4">
-          Fault Injection Training System
-        </h2>
-        <p className="text-gray-300 mb-6">
-          Inject faults and simulate workloads to practice troubleshooting.
-          Click a node on the Dashboard to select your target.
-        </p>
+      <div className="bg-gray-800 rounded-lg p-4 sm:p-6 border border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-nvidia-green">Sandbox</h2>
+          <span className="text-xs text-gray-500">
+            Select target on Dashboard
+          </span>
+        </div>
 
         {/* Target Node + GPU Selection */}
         <div className="flex items-center gap-4 mb-6 p-3 bg-gray-900/50 rounded-lg border border-gray-700">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-400">Node:</span>
-            <span className="text-nvidia-green font-medium font-mono">
-              {effectiveCluster.nodes.find((n) => n.id === selectedNode)
-                ?.hostname || selectedNode}
+          <div className="flex items-center gap-2 text-sm min-w-0">
+            <span className="text-gray-400 shrink-0">Node:</span>
+            <span
+              className="text-nvidia-green font-medium font-mono truncate"
+              title={
+                effectiveCluster.nodes.find((n) => n.id === selectedNode)
+                  ?.hostname || selectedNode
+              }
+            >
+              <span className="sm:hidden">{selectedNode}</span>
+              <span className="hidden sm:inline">
+                {effectiveCluster.nodes.find((n) => n.id === selectedNode)
+                  ?.hostname || selectedNode}
+              </span>
             </span>
           </div>
           <div className="h-4 w-px bg-gray-700" />
@@ -326,7 +334,7 @@ export const FaultInjection: React.FC = () => {
                 .find((n) => n.id === selectedNode)
                 ?.gpus.map((gpu) => (
                   <option key={gpu.id} value={gpu.id}>
-                    GPU {gpu.id}: {gpu.name}
+                    GPU {gpu.id}
                   </option>
                 ))}
             </select>
