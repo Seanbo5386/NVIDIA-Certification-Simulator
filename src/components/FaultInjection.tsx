@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useSimulationStore } from "@/store/simulationStore";
 import { scenarioContextManager } from "@/store/scenarioContext";
 import type { StateMutator } from "@/simulators/BaseSimulator";
@@ -22,7 +22,6 @@ import {
   AlertOctagon,
   Info,
   ChevronUp,
-  X,
 } from "lucide-react";
 
 const metricsSimulator = new MetricsSimulator();
@@ -74,7 +73,8 @@ function getMutator(): StateMutator {
 }
 
 export const FaultInjection: React.FC = () => {
-  const { cluster } = useSimulationStore();
+  const cluster = useSimulationStore((state) => state.cluster);
+  const storeSelectedNode = useSimulationStore((state) => state.selectedNode);
 
   // Read from active context's cluster when available, otherwise global
   const effectiveCluster = useMemo(() => {
@@ -82,10 +82,22 @@ export const FaultInjection: React.FC = () => {
     return activeContext ? activeContext.getCluster() : cluster;
   }, [cluster]);
 
-  const [selectedNode, setSelectedNode] = useState(
-    effectiveCluster.nodes[0]?.id || "",
+  // Use the store's selected node (shared with Dashboard), fall back to first node.
+  // When a scenario context is active, the effective cluster may have different nodes
+  // than the store's selectedNode, so verify the node exists in the effective cluster.
+  const storeNodeExists = effectiveCluster.nodes.some(
+    (n) => n.id === storeSelectedNode,
   );
+  const selectedNode =
+    storeNodeExists && storeSelectedNode
+      ? storeSelectedNode
+      : effectiveCluster.nodes[0]?.id || "";
   const [selectedGPU, setSelectedGPU] = useState(0);
+
+  // Reset GPU selection when node changes
+  useEffect(() => {
+    setSelectedGPU(0);
+  }, [selectedNode]);
   const [workloadPattern, setWorkloadPattern] = useState<
     "idle" | "training" | "inference" | "stress"
   >("idle");
@@ -94,11 +106,6 @@ export const FaultInjection: React.FC = () => {
   const [showBasicInfo, setShowBasicInfo] = useState(false);
   const [showComplexInfo, setShowComplexInfo] = useState(false);
   const [showWorkloadInfo, setShowWorkloadInfo] = useState(false);
-
-  // Dashboard reminder banner
-  const [showBanner, setShowBanner] = useState(() => {
-    return localStorage.getItem("fi-banner-dismissed") !== "true";
-  });
 
   const handleInjectFault = (
     faultType: "xid" | "ecc" | "thermal" | "nvlink" | "power" | "pcie",
@@ -288,72 +295,32 @@ export const FaultInjection: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        {/* Dashboard Reminder Banner */}
-        {showBanner && (
-          <div className="flex items-start gap-3 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg mb-4">
-            <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-            <div className="flex-1 text-sm text-blue-200">
-              All injected faults and workload changes are reflected in real
-              time on the
-              <span className="font-semibold text-blue-100">
-                {" "}
-                Dashboard
-              </span>{" "}
-              tab. Switch to Dashboard to see GPU health badges, temperature
-              changes, XID error indicators, and more.
-            </div>
-            <button
-              onClick={() => {
-                setShowBanner(false);
-                localStorage.setItem("fi-banner-dismissed", "true");
-              }}
-              className="text-blue-400 hover:text-blue-200 p-1"
-              aria-label="Dismiss banner"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-
         <h2 className="text-2xl font-bold text-nvidia-green mb-4">
           Fault Injection Training System
         </h2>
         <p className="text-gray-300 mb-6">
-          Inject faults and simulate workloads to practice troubleshooting
-          scenarios. This is a safe training environment - all faults are
-          simulated.
+          Inject faults and simulate workloads to practice troubleshooting.
+          Click a node on the Dashboard to select your target.
         </p>
 
-        {/* Node and GPU Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Select Node
-            </label>
-            <select
-              value={selectedNode}
-              onChange={(e) => {
-                setSelectedNode(e.target.value);
-                setSelectedGPU(0);
-              }}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-gray-100 focus:outline-none focus:border-nvidia-green"
-            >
-              {effectiveCluster.nodes.map((node) => (
-                <option key={node.id} value={node.id}>
-                  {node.hostname} ({node.id})
-                </option>
-              ))}
-            </select>
+        {/* Target Node + GPU Selection */}
+        <div className="flex items-center gap-4 mb-6 p-3 bg-gray-900/50 rounded-lg border border-gray-700">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-400">Node:</span>
+            <span className="text-nvidia-green font-medium font-mono">
+              {effectiveCluster.nodes.find((n) => n.id === selectedNode)
+                ?.hostname || selectedNode}
+            </span>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Select GPU
+          <div className="h-4 w-px bg-gray-700" />
+          <div className="flex items-center gap-2 flex-1">
+            <label className="text-sm text-gray-400 whitespace-nowrap">
+              GPU:
             </label>
             <select
               value={selectedGPU}
               onChange={(e) => setSelectedGPU(Number(e.target.value))}
-              className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-gray-100 focus:outline-none focus:border-nvidia-green"
+              className="bg-gray-900 border border-gray-700 rounded px-3 py-1.5 text-sm text-gray-100 focus:outline-none focus:border-nvidia-green"
             >
               {effectiveCluster.nodes
                 .find((n) => n.id === selectedNode)
