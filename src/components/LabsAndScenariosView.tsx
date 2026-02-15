@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import { Trophy, Clock, Crosshair } from "lucide-react";
+import { Clock, Crosshair } from "lucide-react";
 import { getAllScenarios, getScenarioMetadata } from "../utils/scenarioLoader";
 
 interface LabsAndScenariosViewProps {
   onStartScenario: (scenarioId: string) => void;
-  onBeginExam: () => void;
-  onOpenExamGauntlet: () => void;
 }
 
 const DOMAIN_INFO: Record<
@@ -34,8 +32,6 @@ const DIFFICULTY_ORDER: Record<string, number> = {
 
 export function LabsAndScenariosView({
   onStartScenario,
-  onBeginExam,
-  onOpenExamGauntlet,
 }: LabsAndScenariosViewProps) {
   const [domainScenarios, setDomainScenarios] = useState<
     Record<
@@ -179,51 +175,6 @@ export function LabsAndScenariosView({
                 );
               },
             )}
-
-            {/* Practice Exam */}
-            <div
-              data-testid="practice-exam-card"
-              className="bg-gradient-to-br from-nvidia-green to-nvidia-darkgreen rounded-lg p-6 border border-nvidia-green"
-            >
-              <div className="text-sm text-black font-semibold mb-2">
-                Full Exam Simulation
-              </div>
-              <h3 className="text-lg font-bold text-black mb-3">
-                NCP-AII Practice Exam
-              </h3>
-              <p className="text-sm text-gray-900 mb-4">
-                Take a timed mock exam with questions covering all five domains.
-                Get instant feedback and detailed explanations.
-              </p>
-              <button
-                onClick={onBeginExam}
-                className="w-full bg-black text-nvidia-green py-2 rounded-lg font-medium hover:bg-gray-900 transition-colors"
-              >
-                Begin Practice Exam
-              </button>
-            </div>
-
-            {/* Exam Gauntlet */}
-            <div
-              data-testid="exam-gauntlet-card"
-              className="bg-gray-800 rounded-lg p-6 border border-orange-600"
-            >
-              <div className="text-sm text-orange-400 font-semibold mb-2 flex items-center gap-2">
-                <Trophy className="w-4 h-4" />
-                Timed Challenge
-              </div>
-              <h3 className="text-lg font-bold mb-3">Exam Gauntlet</h3>
-              <p className="text-sm text-gray-300 mb-4">
-                Tackle 10 weighted scenarios in a timed exam format. Simulates
-                the real DCA certification experience with domain-based scoring.
-              </p>
-              <button
-                onClick={onOpenExamGauntlet}
-                className="w-full bg-orange-600 text-white py-2 rounded-lg font-medium hover:bg-orange-700 transition-colors"
-              >
-                Start Gauntlet
-              </button>
-            </div>
           </div>
         </div>
       </div>

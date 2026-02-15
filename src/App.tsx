@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { SimulatorView } from "./components/SimulatorView";
 import { LabsAndScenariosView } from "./components/LabsAndScenariosView";
+import { ExamsView } from "./components/ExamsView";
 import { LabWorkspace } from "./components/LabWorkspace";
 import { ExamWorkspace } from "./components/ExamWorkspace";
 import { WelcomeScreen } from "./components/WelcomeScreen";
@@ -11,6 +12,7 @@ import { SpacedReviewDrill } from "./components/SpacedReviewDrill";
 import { TierUnlockNotificationContainer } from "./components/TierUnlockNotification";
 import { FaultToastContainer } from "./components/FaultToast";
 import { ExamGauntlet } from "./components/ExamGauntlet";
+import { WhichToolQuiz } from "./components/WhichToolQuiz";
 import { useSimulationStore } from "./store/simulationStore";
 import { useLearningProgressStore } from "./store/learningProgressStore";
 import { useMetricsSimulation } from "./hooks/useMetricsSimulation";
@@ -19,6 +21,7 @@ import {
   Monitor,
   BookOpen,
   FlaskConical,
+  GraduationCap,
   Play,
   Pause,
   RotateCcw,
@@ -28,7 +31,7 @@ import {
 import { SpotlightTour } from "./components/SpotlightTour";
 import { TOUR_STEPS, type TourId } from "./data/tourSteps";
 
-type View = "simulator" | "labs" | "reference" | "about";
+type View = "simulator" | "labs" | "exams" | "reference" | "about";
 
 function App() {
   const [currentView, setCurrentView] = useState<View>("simulator");
@@ -40,6 +43,8 @@ function App() {
   const [showStudyDashboard, setShowStudyDashboard] = useState(false);
   const [showSpacedReviewDrill, setShowSpacedReviewDrill] = useState(false);
   const [showExamGauntlet, setShowExamGauntlet] = useState(false);
+  const [activeToolQuiz, setActiveToolQuiz] = useState<string | null>(null);
+  const [examMode, setExamMode] = useState<string | undefined>(undefined);
   const [activeTour, setActiveTour] = useState<TourId | null>(null);
 
   // Get due reviews count from learning progress store
@@ -87,9 +92,23 @@ function App() {
     }
   };
 
-  const handleBeginExam = () => {
-    setCurrentView("simulator"); // Switch to simulator view
-    setShowExamWorkspace(true); // Show exam workspace overlay
+  const handleBeginExam = (mode?: string) => {
+    setExamMode(mode);
+    setCurrentView("simulator");
+    setShowExamWorkspace(true);
+  };
+
+  const handleOpenToolQuiz = (familyId: string) => {
+    setActiveToolQuiz(familyId);
+  };
+
+  const handleCloseToolQuiz = (passed?: boolean, score?: number) => {
+    if (activeToolQuiz && passed !== undefined && score !== undefined) {
+      useLearningProgressStore
+        .getState()
+        .completeQuiz(activeToolQuiz, passed, score);
+    }
+    setActiveToolQuiz(null);
   };
 
   // Handler for tier unlock notification "Try Now" button
@@ -244,6 +263,22 @@ function App() {
           </button>
           <button
             role="tab"
+            id="tab-exams"
+            aria-selected={currentView === "exams"}
+            aria-controls="panel-exams"
+            data-testid="nav-exams"
+            onClick={() => setCurrentView("exams")}
+            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+              currentView === "exams"
+                ? "border-nvidia-green text-nvidia-green"
+                : "border-transparent text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            <GraduationCap className="w-4 h-4" />
+            <span className="font-medium">Exams</span>
+          </button>
+          <button
+            role="tab"
             id="tab-reference"
             data-tour="tab-docs"
             aria-selected={currentView === "reference"}
@@ -291,10 +326,14 @@ function App() {
         )}
 
         {currentView === "labs" && (
-          <LabsAndScenariosView
-            onStartScenario={handleStartScenario}
+          <LabsAndScenariosView onStartScenario={handleStartScenario} />
+        )}
+
+        {currentView === "exams" && (
+          <ExamsView
             onBeginExam={handleBeginExam}
             onOpenExamGauntlet={() => setShowExamGauntlet(true)}
+            onOpenToolQuiz={handleOpenToolQuiz}
           />
         )}
 
@@ -338,7 +377,13 @@ function App() {
 
       {/* Exam Workspace Overlay */}
       {showExamWorkspace && (
-        <ExamWorkspace onClose={() => setShowExamWorkspace(false)} />
+        <ExamWorkspace
+          mode={examMode}
+          onClose={() => {
+            setShowExamWorkspace(false);
+            setExamMode(undefined);
+          }}
+        />
       )}
       {/* Spotlight Tour */}
       {activeTour && !showWelcome && (
@@ -388,6 +433,15 @@ function App() {
       {/* Exam Gauntlet Modal */}
       {showExamGauntlet && (
         <ExamGauntlet onExit={() => setShowExamGauntlet(false)} />
+      )}
+
+      {/* Tool Quiz Modal */}
+      {activeToolQuiz && (
+        <WhichToolQuiz
+          familyId={activeToolQuiz}
+          onComplete={(passed, score) => handleCloseToolQuiz(passed, score)}
+          onClose={() => setActiveToolQuiz(null)}
+        />
       )}
 
       {/* Tier Unlock Notifications */}
