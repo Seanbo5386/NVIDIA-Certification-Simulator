@@ -4,7 +4,12 @@ import { render, screen, fireEvent } from "@testing-library/react";
 vi.mock("lucide-react", async () => {
   const actual = await vi.importActual("lucide-react");
   const stub = (props: Record<string, unknown>) => <svg {...props} />;
-  return { ...actual, CheckCircle: stub, HelpCircle: stub, Wrench: stub };
+  return {
+    ...actual,
+    CheckCircle: stub,
+    HelpCircle: stub,
+    Zap: stub,
+  };
 });
 
 import { ToolQuizCard } from "../ToolQuizCard";
@@ -16,13 +21,13 @@ const baseProps = {
   tools: ["nvidia-smi", "nvtop", "dcgmi"],
   description: "Quick check? nvidia-smi. Continuous monitoring? nvtop.",
   onTakeQuiz: vi.fn(),
+  onTakeMasteryQuiz: vi.fn(),
 };
 
 describe("ToolQuizCard", () => {
-  it("renders family name, description, and subtitle", () => {
+  it("renders family name and description", () => {
     render(<ToolQuizCard {...baseProps} />);
     expect(screen.getByText("GPU Monitoring")).toBeInTheDocument();
-    expect(screen.getByText("Tool Selection Quiz")).toBeInTheDocument();
     expect(
       screen.getByText(
         "Quick check? nvidia-smi. Continuous monitoring? nvtop.",
@@ -30,46 +35,106 @@ describe("ToolQuizCard", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders meta pills with tool count and question count", () => {
+  it("renders tool count", () => {
     render(<ToolQuizCard {...baseProps} />);
     expect(screen.getByText("3 tools")).toBeInTheDocument();
-    expect(screen.getByText("4 questions")).toBeInTheDocument();
   });
 
-  it("shows PASSED badge and score when quiz completed and passed", () => {
+  it("renders both quiz rows: Tool Selection and Deep Mastery", () => {
+    render(<ToolQuizCard {...baseProps} />);
+    expect(screen.getByText("Tool Selection")).toBeInTheDocument();
+    expect(screen.getByText("Deep Mastery")).toBeInTheDocument();
+    expect(screen.getByText("4 questions")).toBeInTheDocument();
+    expect(screen.getByText("10 questions")).toBeInTheDocument();
+  });
+
+  it("shows PASSED badge only when both quizzes passed", () => {
+    const { rerender } = render(
+      <ToolQuizCard
+        {...baseProps}
+        quizResult={{ passed: true, score: 3, attempts: 1 }}
+      />,
+    );
+    // Only tool selection passed, not mastery
+    expect(screen.queryByText("PASSED")).not.toBeInTheDocument();
+
+    rerender(
+      <ToolQuizCard
+        {...baseProps}
+        masteryResult={{
+          passed: true,
+          bestScore: 8,
+          totalQuestions: 10,
+          attempts: 1,
+        }}
+      />,
+    );
+    // Only mastery passed, not tool selection
+    expect(screen.queryByText("PASSED")).not.toBeInTheDocument();
+
+    rerender(
+      <ToolQuizCard
+        {...baseProps}
+        quizResult={{ passed: true, score: 4, attempts: 1 }}
+        masteryResult={{
+          passed: true,
+          bestScore: 9,
+          totalQuestions: 10,
+          attempts: 1,
+        }}
+      />,
+    );
+    // Both passed
+    expect(screen.getByText("PASSED")).toBeInTheDocument();
+  });
+
+  it("shows tool selection score when attempted", () => {
     render(
       <ToolQuizCard
         {...baseProps}
         quizResult={{ passed: true, score: 3, attempts: 2 }}
       />,
     );
-    expect(screen.getByText("PASSED")).toBeInTheDocument();
-    expect(screen.getByText("Best: 3/4")).toBeInTheDocument();
-    expect(screen.getByText("(2 attempts)")).toBeInTheDocument();
+    expect(screen.getByText("Best: 3/4 (2 attempts)")).toBeInTheDocument();
   });
 
-  it("does not show PASSED badge when quiz not passed", () => {
+  it("shows mastery score when attempted", () => {
     render(
       <ToolQuizCard
         {...baseProps}
-        quizResult={{ passed: false, score: 1, attempts: 1 }}
+        masteryResult={{
+          passed: false,
+          bestScore: 6,
+          totalQuestions: 10,
+          attempts: 1,
+        }}
       />,
     );
-    expect(screen.queryByText("PASSED")).not.toBeInTheDocument();
-    expect(screen.getByText("Best: 1/4")).toBeInTheDocument();
-    expect(screen.getByText("(1 attempt)")).toBeInTheDocument();
+    expect(screen.getByText("Best: 6/10 (1 attempt)")).toBeInTheDocument();
   });
 
-  it("calls onTakeQuiz(familyId) on button click", () => {
+  it("shows 'Not attempted' for both quizzes when no results", () => {
+    render(<ToolQuizCard {...baseProps} />);
+    const notAttempted = screen.getAllByText("Not attempted");
+    expect(notAttempted).toHaveLength(2);
+  });
+
+  it("calls onTakeQuiz when Tool Selection button clicked", () => {
     const onTakeQuiz = vi.fn();
     render(<ToolQuizCard {...baseProps} onTakeQuiz={onTakeQuiz} />);
-    fireEvent.click(screen.getByRole("button", { name: /take quiz/i }));
+    const buttons = screen.getAllByRole("button", { name: /take quiz/i });
+    fireEvent.click(buttons[0]);
     expect(onTakeQuiz).toHaveBeenCalledWith("gpu-monitoring");
   });
 
-  it("shows 'Not attempted yet' when no quiz result", () => {
-    render(<ToolQuizCard {...baseProps} />);
-    expect(screen.getByText("Not attempted yet")).toBeInTheDocument();
+  it("calls onTakeMasteryQuiz when Deep Mastery button clicked", () => {
+    const onTakeMasteryQuiz = vi.fn();
+    render(
+      <ToolQuizCard {...baseProps} onTakeMasteryQuiz={onTakeMasteryQuiz} />,
+    );
+    const buttons = screen.getAllByRole("button", { name: /take quiz/i });
+    fireEvent.click(buttons[1]);
+    expect(onTakeMasteryQuiz).toHaveBeenCalledWith("gpu-monitoring");
   });
 
   it("renders card with neutral border styling", () => {

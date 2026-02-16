@@ -20,15 +20,20 @@ export interface ExamsViewProps {
   onBeginExam: (mode?: string) => void;
   onOpenExamGauntlet: () => void;
   onOpenToolQuiz: (familyId: string) => void;
+  onOpenMasteryQuiz: (familyId: string) => void;
 }
 
 export function ExamsView({
   onBeginExam,
   onOpenExamGauntlet,
   onOpenToolQuiz,
+  onOpenMasteryQuiz,
 }: ExamsViewProps) {
   const examAttempts = useLearningStore((s) => s.examAttempts);
   const familyQuizScores = useLearningProgressStore((s) => s.familyQuizScores);
+  const masteryQuizScores = useLearningProgressStore(
+    (s) => s.masteryQuizScores,
+  );
 
   const families = (commandFamiliesData as { families: CommandFamily[] })
     .families;
@@ -79,8 +84,8 @@ export function ExamsView({
             Tool Mastery Quizzes
           </h2>
           <p className="text-sm text-gray-400 mb-4">
-            Build confidence with specific command families before tackling
-            comprehensive exams.
+            Test your knowledge of specific command families — from tool
+            selection to deep mastery of flags, output, and troubleshooting.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {families.map((family) => (
@@ -92,7 +97,9 @@ export function ExamsView({
                 tools={family.tools.map((t) => t.name)}
                 description={family.quickRule}
                 quizResult={familyQuizScores[family.id]}
+                masteryResult={masteryQuizScores[family.id]}
                 onTakeQuiz={onOpenToolQuiz}
+                onTakeMasteryQuiz={onOpenMasteryQuiz}
               />
             ))}
           </div>

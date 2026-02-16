@@ -27,9 +27,14 @@ vi.mock("../../store/learningStore", () => ({
 vi.mock("../../store/learningProgressStore", () => ({
   useLearningProgressStore: vi.fn(
     (
-      selector?: (s: { familyQuizScores: Record<string, unknown> }) => unknown,
+      selector?: (s: {
+        familyQuizScores: Record<string, unknown>;
+        masteryQuizScores: Record<string, unknown>;
+      }) => unknown,
     ) =>
-      selector ? selector({ familyQuizScores: {} }) : { familyQuizScores: {} },
+      selector
+        ? selector({ familyQuizScores: {}, masteryQuizScores: {} })
+        : { familyQuizScores: {}, masteryQuizScores: {} },
   ),
 }));
 
@@ -61,6 +66,7 @@ function defaultProps() {
     onBeginExam: vi.fn(),
     onOpenExamGauntlet: vi.fn(),
     onOpenToolQuiz: vi.fn(),
+    onOpenMasteryQuiz: vi.fn(),
   };
 }
 

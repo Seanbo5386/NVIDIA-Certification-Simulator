@@ -13,6 +13,7 @@ import { TierUnlockNotificationContainer } from "./components/TierUnlockNotifica
 import { FaultToastContainer } from "./components/FaultToast";
 import { ExamGauntlet } from "./components/ExamGauntlet";
 import { WhichToolQuiz } from "./components/WhichToolQuiz";
+import { ToolMasteryQuiz } from "./components/ToolMasteryQuiz";
 import { useSimulationStore } from "./store/simulationStore";
 import { useLearningProgressStore } from "./store/learningProgressStore";
 import { useMetricsSimulation } from "./hooks/useMetricsSimulation";
@@ -44,6 +45,9 @@ function App() {
   const [showSpacedReviewDrill, setShowSpacedReviewDrill] = useState(false);
   const [showExamGauntlet, setShowExamGauntlet] = useState(false);
   const [activeToolQuiz, setActiveToolQuiz] = useState<string | null>(null);
+  const [activeMasteryQuiz, setActiveMasteryQuiz] = useState<string | null>(
+    null,
+  );
   const [examMode, setExamMode] = useState<string | undefined>(undefined);
   const [activeTour, setActiveTour] = useState<TourId | null>(null);
 
@@ -109,6 +113,28 @@ function App() {
         .completeQuiz(activeToolQuiz, passed, score);
     }
     setActiveToolQuiz(null);
+  };
+
+  const handleOpenMasteryQuiz = (familyId: string) => {
+    setActiveMasteryQuiz(familyId);
+  };
+
+  const handleCloseMasteryQuiz = (
+    passed?: boolean,
+    score?: number,
+    totalQuestions?: number,
+  ) => {
+    if (
+      activeMasteryQuiz &&
+      passed !== undefined &&
+      score !== undefined &&
+      totalQuestions !== undefined
+    ) {
+      useLearningProgressStore
+        .getState()
+        .completeMasteryQuiz(activeMasteryQuiz, passed, score, totalQuestions);
+    }
+    setActiveMasteryQuiz(null);
   };
 
   // Handler for tier unlock notification "Try Now" button
@@ -334,6 +360,7 @@ function App() {
             onBeginExam={handleBeginExam}
             onOpenExamGauntlet={() => setShowExamGauntlet(true)}
             onOpenToolQuiz={handleOpenToolQuiz}
+            onOpenMasteryQuiz={handleOpenMasteryQuiz}
           />
         )}
 
@@ -441,6 +468,17 @@ function App() {
           familyId={activeToolQuiz}
           onComplete={(passed, score) => handleCloseToolQuiz(passed, score)}
           onClose={() => setActiveToolQuiz(null)}
+        />
+      )}
+
+      {/* Deep Mastery Quiz Modal */}
+      {activeMasteryQuiz && (
+        <ToolMasteryQuiz
+          familyId={activeMasteryQuiz}
+          onComplete={(passed, score, totalQuestions) =>
+            handleCloseMasteryQuiz(passed, score, totalQuestions)
+          }
+          onClose={() => setActiveMasteryQuiz(null)}
         />
       )}
 
