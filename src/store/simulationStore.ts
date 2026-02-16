@@ -706,6 +706,13 @@ export const useSimulationStore = create<SimulationState>()(
     })),
     {
       name: "nvidia-simulator-storage",
+      version: 1,
+      migrate: () => {
+        // v0 → v1: cpuCount was persisted as socket count (2) instead of
+        // total cores (sockets × coresPerSocket). Discard stale cluster so
+        // createDefaultCluster() rebuilds it with correct values.
+        return {} as Record<string, unknown>;
+      },
       storage: createJSONStorage(() => createDebouncedStorage(2000)),
       partialize: (state) => ({
         cluster: state.cluster,

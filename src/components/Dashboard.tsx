@@ -638,12 +638,14 @@ export const Dashboard: React.FC = () => {
               <div>
                 <div className="text-gray-400">CPU</div>
                 <div className="text-gray-200 text-xs">
-                  {currentNode.cpuModel.split(" ").slice(0, 4).join(" ")}
+                  2× {currentNode.cpuModel.split(" ").slice(0, 3).join(" ")}
                 </div>
               </div>
               <div>
-                <div className="text-gray-400">CPU Cores</div>
-                <div className="text-gray-200">{currentNode.cpuCount}</div>
+                <div className="text-gray-400">Cores</div>
+                <div className="text-gray-200">
+                  {currentNode.cpuCount} ({currentNode.cpuCount / 2}×2)
+                </div>
               </div>
             </div>
 
