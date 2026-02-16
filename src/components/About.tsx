@@ -13,9 +13,19 @@ import {
 
 const CHANGELOG = [
   {
+    version: "v0.11.0",
+    title: "Pre-Launch Polish",
+    current: true,
+    highlights: [
+      "OpenGraph meta tags for rich LinkedIn/social media link previews",
+      "Horizontal scroll header for narrow viewports",
+      "Terminal text formatting fixes for all viewport sizes",
+      "Expanded Tool Selection (10 questions) and Deep Mastery (25 questions) quiz pools",
+    ],
+  },
+  {
     version: "v0.10.0",
     title: "Exams Dashboard",
-    current: true,
     highlights: [
       "Comprehensive Exams tab with readiness stats, exam history, and domain performance",
       "Data-driven exam mode registry: Full Practice, Quick Quiz, Gauntlet, Weak Area, Review Mistakes",
