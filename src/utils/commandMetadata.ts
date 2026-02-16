@@ -1312,9 +1312,9 @@ export const COMMAND_METADATA: Record<string, CommandMetadata> = {
   help: {
     name: "help",
     category: "general",
-    shortDescription: "Display available commands",
+    shortDescription: "Display available commands and simulator help",
     longDescription:
-      'The help command shows all available commands organized by category. Use "help [command]" to see detailed help for a specific command with examples and documentation.',
+      'The help command shows all available commands organized by category. Use "help [command]" to see detailed help for any command — both simulator builtins and Linux/HPC tools. For Linux manual-style pages, use "man <command>" instead.',
     syntax: "help [command]",
     difficulty: "beginner",
     domains: ["domain1", "domain2", "domain3", "domain4", "domain5"],
@@ -1331,9 +1331,9 @@ export const COMMAND_METADATA: Record<string, CommandMetadata> = {
     ],
 
     whenToUse:
-      "Use help when you need to discover available commands, remember command syntax, or get quick reference information.",
+      "Use help to discover available commands, get simulator guidance, or look up any command. Use 'man' for Linux/HPC manual pages.",
 
-    relatedCommands: ["hint"],
+    relatedCommands: ["man", "hint"],
 
     commonMistakes: [],
   },
