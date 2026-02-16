@@ -264,15 +264,15 @@ export function formatCommandHelp(metadata: CommandMetadata): string {
   lines.push(
     `\x1b[1;36m╔════════════════════════════════════════════════════════════════╗\x1b[0m`,
   );
-  lines.push(`\x1b[1;36m║  ${metadata.name.toUpperCase().padEnd(60)}║\x1b[0m`);
+  lines.push(`\x1b[1;36m║  ${metadata.name.toUpperCase().padEnd(62)}║\x1b[0m`);
   lines.push(
     `\x1b[1;36m╠════════════════════════════════════════════════════════════════╣\x1b[0m`,
   );
   lines.push(
-    `\x1b[1;36m║\x1b[0m  \x1b[1mCategory:\x1b[0m ${metadata.category.padEnd(49)}║`,
+    `\x1b[1;36m║\x1b[0m  \x1b[1mCategory:\x1b[0m ${metadata.category.padEnd(52)}\x1b[1;36m║\x1b[0m`,
   );
   lines.push(
-    `\x1b[1;36m║\x1b[0m  \x1b[1mDifficulty:\x1b[0m ${metadata.difficulty.padEnd(47)}║`,
+    `\x1b[1;36m║\x1b[0m  \x1b[1mDifficulty:\x1b[0m ${metadata.difficulty.padEnd(50)}\x1b[1;36m║\x1b[0m`,
   );
   lines.push(
     `\x1b[1;36m╚════════════════════════════════════════════════════════════════╝\x1b[0m`,
@@ -397,6 +397,9 @@ export function formatCommandList(): string {
   lines.push("");
   lines.push(
     "\x1b[33mType \x1b[1;36mhelp <command>\x1b[0m\x1b[33m for detailed help on any command.\x1b[0m",
+  );
+  lines.push(
+    "\x1b[33mType \x1b[1;36mman <command>\x1b[0m\x1b[33m for Linux/HPC command manual pages.\x1b[0m",
   );
   lines.push("");
 

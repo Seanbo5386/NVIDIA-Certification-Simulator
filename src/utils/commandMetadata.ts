@@ -1312,9 +1312,9 @@ export const COMMAND_METADATA: Record<string, CommandMetadata> = {
   help: {
     name: "help",
     category: "general",
-    shortDescription: "Display available commands",
+    shortDescription: "Display available commands and simulator help",
     longDescription:
-      'The help command shows all available commands organized by category. Use "help [command]" to see detailed help for a specific command with examples and documentation.',
+      'The help command shows all available commands organized by category. Use "help [command]" to see detailed help for any command — both simulator builtins and Linux/HPC tools. For Linux manual-style pages, use "man <command>" instead.',
     syntax: "help [command]",
     difficulty: "beginner",
     domains: ["domain1", "domain2", "domain3", "domain4", "domain5"],
@@ -1331,11 +1331,59 @@ export const COMMAND_METADATA: Record<string, CommandMetadata> = {
     ],
 
     whenToUse:
-      "Use help when you need to discover available commands, remember command syntax, or get quick reference information.",
+      "Use help to discover available commands, get simulator guidance, or look up any command. Use 'man' for Linux/HPC manual pages.",
 
-    relatedCommands: ["hint"],
+    relatedCommands: ["man", "hint"],
 
     commonMistakes: [],
+  },
+
+  man: {
+    name: "man",
+    category: "general",
+    shortDescription: "Display manual pages for Linux/HPC commands",
+    longDescription:
+      "Linux manual pager — shows detailed help including syntax, flags, examples, and related commands for real Linux and HPC tools. For simulator-specific commands (help, hint, practice), use 'help <command>' instead.",
+    syntax: "man [section] <command>",
+    difficulty: "beginner",
+
+    commonFlags: [
+      {
+        flag: "-k <keyword>",
+        description: "Search manual pages by keyword",
+        example: "man -k gpu",
+      },
+      {
+        flag: "-f <command>",
+        description: "Whatis — show one-line description of a command",
+        example: "man -f nvidia-smi",
+      },
+    ],
+
+    examples: [
+      {
+        command: "man nvidia-smi",
+        description: "Show manual page for nvidia-smi",
+      },
+      {
+        command: "man ibstat",
+        description: "Show manual page for ibstat",
+      },
+      {
+        command: "man man",
+        description: "Show manual page for the man command itself",
+      },
+    ],
+
+    whenToUse:
+      "Use man for detailed documentation on real Linux and HPC commands. For simulator builtins like help, hint, and practice, use 'help <command>' instead.",
+
+    relatedCommands: ["nvidia-smi", "ibstat", "dcgmi"],
+
+    commonMistakes: [
+      "Using man without arguments — specify a command name to look up",
+      "Using man for simulator commands — use 'help <command>' for help, hint, practice",
+    ],
   },
 
   practice: {
