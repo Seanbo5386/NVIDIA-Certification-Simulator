@@ -45,7 +45,7 @@ describe("About", () => {
     const link = screen.getByTestId("github-link");
     expect(link).toHaveAttribute(
       "href",
-      "https://github.com/Seanbo5386/NVIDIA-Certification-Simulator",
+      "https://github.com/Seanbo5386/dc-lab-sim",
     );
     expect(link).toHaveAttribute("target", "_blank");
   });

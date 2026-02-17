@@ -1,6 +1,6 @@
 # UI/UX Improvement Report
 
-## NVIDIA AI Infrastructure Certification Simulator
+## DC Lab Sim
 
 **Date:** January 29, 2026
 **Tested Version:** v1.0

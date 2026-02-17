@@ -1,4 +1,4 @@
-# Usage Guide - NVIDIA AI Infrastructure Simulator
+# Usage Guide - DC Lab Sim
 
 ## Table of Contents
 

@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Context for AI Assistants
 
-This file provides essential context about the NVIDIA AI Infrastructure Certification Simulator codebase.
+This file provides essential context about the DC Lab Sim codebase.
 
 ## Project Overview
 

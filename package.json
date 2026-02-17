@@ -1,13 +1,13 @@
 {
-  "name": "nvidia-ai-infra-simulator",
+  "name": "dc-lab-sim",
   "version": "1.0.0",
-  "description": "Interactive NVIDIA AI Infrastructure Certification (NCP-AII) Training Simulator",
+  "description": "Browser-based datacenter lab simulator for NCP-AII certification exam prep",
   "author": "Sean Boerhout",
   "license": "MIT",
-  "homepage": "https://github.com/Seanbo5386/NVIDIA-Certification-Simulator",
+  "homepage": "https://www.dclabsim.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Seanbo5386/NVIDIA-Certification-Simulator.git"
+    "url": "https://github.com/Seanbo5386/dc-lab-sim.git"
   },
   "type": "module",
   "scripts": {
