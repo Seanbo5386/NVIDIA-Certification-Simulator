@@ -149,7 +149,7 @@ export function About() {
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto p-6 space-y-8">
         {/* Motivation */}
-        <section>
+        <section data-tour="about-motivation">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-3">
             <Rocket className="w-5 h-5 text-nvidia-green" />
             Motivation
@@ -195,7 +195,7 @@ export function About() {
         </section>
 
         {/* Contribute & Feedback */}
-        <section>
+        <section data-tour="about-contribute">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-3">
             <Github className="w-5 h-5 text-nvidia-green" />
             Contribute & Feedback
@@ -252,7 +252,7 @@ export function About() {
         </section>
 
         {/* Legal Disclaimer */}
-        <section>
+        <section data-tour="about-legal">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-3">
             <Shield className="w-5 h-5 text-nvidia-green" />
             Legal Disclaimer
@@ -318,7 +318,7 @@ export function About() {
         </section>
 
         {/* Special Thanks */}
-        <section className="pb-4">
+        <section data-tour="about-credits" className="pb-4">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2 mb-3">
             <Sparkles className="w-5 h-5 text-nvidia-green" />
             Special Thanks
@@ -350,7 +350,7 @@ export function About() {
         </section>
 
         {/* Changelog */}
-        <section className="pb-4">
+        <section data-tour="about-changelog" className="pb-4">
           <details className="group">
             <summary className="text-lg font-semibold text-white flex items-center gap-2 mb-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
               <Tag className="w-5 h-5 text-nvidia-green" />
