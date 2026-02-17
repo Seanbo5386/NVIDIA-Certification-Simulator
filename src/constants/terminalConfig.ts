@@ -96,8 +96,8 @@ export function generateWelcomeMessage(cols: number): string {
   // Box: adapt inner width to terminal, min 30
   const boxInner = Math.min(48, w - 2); // 2 for ║…║
   const rule = "═".repeat(boxInner);
-  const line1 = "NVIDIA AI Infrastructure Certification";
-  const line2 = "Simulator - NCP-AII Training v1.0";
+  const line1 = "DC Lab Sim";
+  const line2 = "NCP-AII Certification Practice v1.0";
 
   const boxLine = (text: string) => {
     const t = text.length > boxInner - 2 ? text.slice(0, boxInner - 2) : text;

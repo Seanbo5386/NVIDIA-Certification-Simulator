@@ -1,6 +1,6 @@
 # Testing Guide
 
-Complete guide for running, writing, and maintaining tests for the NVIDIA AI Infrastructure Simulator.
+Complete guide for running, writing, and maintaining tests for DC Lab Sim.
 
 ## Quick Start
 
@@ -23,15 +23,15 @@ npm run test:ui
 
 ## Test Suite Overview
 
-| Category | Test Count | Location |
-|----------|-----------|----------|
-| Command Parser | 45+ | `src/utils/__tests__/commandParser.test.ts` |
-| Base Simulator | 25+ | `src/simulators/__tests__/BaseSimulator.test.ts` |
-| nvidia-smi | 50+ | `src/simulators/__tests__/nvidiaSmiSimulator.test.ts` |
-| DCGM | 60+ | `src/simulators/__tests__/dcgmiSimulator.test.ts` |
-| Interactive Shells | 40+ | `src/simulators/__tests__/interactiveShells.test.ts` |
-| Edge Cases | 80+ | `src/__tests__/edgeCases.test.ts` |
-| Scenario Validator | - | `src/tests/scenarioValidator.test.ts` |
+| Category           | Test Count | Location                                              |
+| ------------------ | ---------- | ----------------------------------------------------- |
+| Command Parser     | 45+        | `src/utils/__tests__/commandParser.test.ts`           |
+| Base Simulator     | 25+        | `src/simulators/__tests__/BaseSimulator.test.ts`      |
+| nvidia-smi         | 50+        | `src/simulators/__tests__/nvidiaSmiSimulator.test.ts` |
+| DCGM               | 60+        | `src/simulators/__tests__/dcgmiSimulator.test.ts`     |
+| Interactive Shells | 40+        | `src/simulators/__tests__/interactiveShells.test.ts`  |
+| Edge Cases         | 80+        | `src/__tests__/edgeCases.test.ts`                     |
+| Scenario Validator | -          | `src/tests/scenarioValidator.test.ts`                 |
 
 **Total: 300+ test cases**
 
@@ -40,6 +40,7 @@ npm run test:ui
 ## Running Tests
 
 ### Basic Commands
+
 ```bash
 npm test                    # Watch mode
 npm run test:run            # Single run
@@ -48,6 +49,7 @@ npm run test:ui             # Interactive UI at localhost:51204
 ```
 
 ### Run Specific Tests
+
 ```bash
 npm test commandParser      # Test the parser
 npm test nvidiaSmi          # Test nvidia-smi
@@ -58,6 +60,7 @@ npm test -- -t "pattern"    # Match test name pattern
 ```
 
 ### Coverage Report
+
 ```bash
 npm run test:coverage
 open coverage/index.html    # View HTML report
@@ -72,6 +75,7 @@ open coverage/index.html    # View HTML report
 Use these commands in the simulator's Terminal tab for manual verification:
 
 ### nvidia-smi Commands
+
 ```bash
 nvidia-smi                          # Basic GPU listing
 nvidia-smi -L                       # List GPUs with UUIDs
@@ -88,6 +92,7 @@ nvidia-smi --gpu-reset -i 0         # GPU reset
 ```
 
 ### DCGM Commands
+
 ```bash
 dcgmi discovery -l                  # Discover GPUs
 dcgmi diag -r 1                     # Quick diagnostic
@@ -98,6 +103,7 @@ dcgmi group -l                      # List GPU groups
 ```
 
 ### ipmitool Commands
+
 ```bash
 ipmitool sensor list                # List sensors
 ipmitool sel list                   # System Event Log
@@ -109,6 +115,7 @@ ipmitool lan print 1                # LAN config
 ```
 
 ### InfiniBand Commands
+
 ```bash
 ibstat                              # HCA status
 ibportstate                         # Port state
@@ -123,66 +130,73 @@ ibdiagnet                           # Full diagnostic
 ## Writing Tests
 
 ### Test File Template
-```typescript
-import { describe, it, expect, beforeEach } from 'vitest';
-import { YourSimulator } from '../yourSimulator';
-import { parse } from '@/utils/commandParser';
-import type { CommandContext } from '@/types/commands';
 
-describe('YourSimulator', () => {
+```typescript
+import { describe, it, expect, beforeEach } from "vitest";
+import { YourSimulator } from "../yourSimulator";
+import { parse } from "@/utils/commandParser";
+import type { CommandContext } from "@/types/commands";
+
+describe("YourSimulator", () => {
   let simulator: YourSimulator;
   let context: CommandContext;
 
   beforeEach(() => {
     simulator = new YourSimulator();
     context = {
-      currentNode: 'dgx-00',
-      currentPath: '/root',
+      currentNode: "dgx-00",
+      currentPath: "/root",
       environment: {},
       history: [],
     };
   });
 
-  describe('Feature Name', () => {
-    it('should do something when condition', () => {
-      const parsed = parse('command --flag');
+  describe("Feature Name", () => {
+    it("should do something when condition", () => {
+      const parsed = parse("command --flag");
       const result = simulator.execute(parsed, context);
 
       expect(result.exitCode).toBe(0);
-      expect(result.output).toContain('expected text');
+      expect(result.output).toContain("expected text");
     });
   });
 });
 ```
 
 ### Common Assertions
+
 ```typescript
 // Exit codes
-expect(result.exitCode).toBe(0);   // Success
-expect(result.exitCode).toBe(1);   // Error
+expect(result.exitCode).toBe(0); // Success
+expect(result.exitCode).toBe(1); // Error
 
 // Output content
-expect(result.output).toContain('text');
+expect(result.output).toContain("text");
 expect(result.output).toMatch(/regex/);
 
 // Interactive mode
 expect(result.prompt).toBeDefined();
-expect(result.prompt).toContain('nvsm->');
+expect(result.prompt).toContain("nvsm->");
 
 // Parser
-expect(parsed.flags.has('flag')).toBe(true);
-expect(parsed.subcommands).toContain('subcommand');
+expect(parsed.flags.has("flag")).toBe(true);
+expect(parsed.subcommands).toContain("subcommand");
 ```
 
 ### Mocking Store State
-```typescript
-import { vi } from 'vitest';
-import { useSimulationStore } from '@/store/simulationStore';
 
-vi.mock('@/store/simulationStore', () => ({
+```typescript
+import { vi } from "vitest";
+import { useSimulationStore } from "@/store/simulationStore";
+
+vi.mock("@/store/simulationStore", () => ({
   useSimulationStore: {
     getState: vi.fn(() => ({
-      cluster: { nodes: [/* mock data */] },
+      cluster: {
+        nodes: [
+          /* mock data */
+        ],
+      },
     })),
   },
 }));
@@ -193,6 +207,7 @@ vi.mock('@/store/simulationStore', () => ({
 ## Test Categories
 
 ### 1. Parser Tests
+
 - Basic command parsing
 - Flag parsing (short/long/combined)
 - Positional arguments
@@ -201,6 +216,7 @@ vi.mock('@/store/simulationStore', () => ({
 - Edge cases (empty, unicode, very long)
 
 ### 2. Simulator Tests (per simulator)
+
 - Help/version flags
 - All documented commands
 - All flag combinations
@@ -209,12 +225,14 @@ vi.mock('@/store/simulationStore', () => ({
 - State integration
 
 ### 3. Interactive Shell Tests
+
 - Enter/exit modes
 - Command execution in mode
 - Mode switching (CMSH)
 - Error handling
 
 ### 4. Edge Cases
+
 - Empty/whitespace inputs
 - Very long commands (10000+ chars)
 - Unicode and special characters
@@ -227,6 +245,7 @@ vi.mock('@/store/simulationStore', () => ({
 ## CI/CD Integration
 
 ### GitHub Actions
+
 ```yaml
 name: Tests
 on: [push, pull_request]
@@ -237,7 +256,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
       - run: npm install
       - run: npm run test:coverage
       - uses: codecov/codecov-action@v3
@@ -263,6 +282,7 @@ npm test -- --reporter=verbose  # Detailed output
 ```
 
 ### VS Code Debug Config
+
 ```json
 {
   "type": "node",

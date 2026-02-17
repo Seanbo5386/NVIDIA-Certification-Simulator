@@ -1,9 +1,10 @@
-# NVIDIA AI Infrastructure Simulator - Improvement Action Plan
+# DC Lab Sim - Improvement Action Plan
 
 ## Executive Summary
 
 **Current State:** Production-ready MVP with 83% exam coverage, solid technical foundation
 **Existing Assets:**
+
 - ✅ **Practice Exam System**: 35 questions, full UI, timer, scoring (just needs more questions + review mode)
 - ✅ **Enhanced Help**: 31 commands with comprehensive docs, fuzzy matching, examples
 - ✅ **Hint System**: Progressive hints with time/attempt-based triggers
@@ -15,6 +16,7 @@
 ---
 
 ## Phase 1: Complete Educational Loop (HIGH PRIORITY)
+
 **Goal:** Transform passive exploration into active learning with validation and assessment
 **Effort:** 16 hours (reduced from 20 - exam already exists!)
 **Impact:** 70% → 90% educational effectiveness
@@ -24,10 +26,12 @@
 **Objective:** Add real-time validation to existing scenario steps
 
 **Files to Create:**
+
 - `src/utils/scenarioValidator.ts` - Core validation logic
 - `src/types/validation.ts` - Validation types
 
 **Files to Modify:**
+
 - `src/store/simulationStore.ts` - Add validation state
 - `src/components/LabWorkspace.tsx` - Visual feedback
 - `src/components/Terminal.tsx` - Hook validation on command execution
@@ -37,7 +41,7 @@
 ```typescript
 // src/types/validation.ts
 export interface ValidationRule {
-  type: 'command' | 'output' | 'state' | 'sequence';
+  type: "command" | "output" | "state" | "sequence";
   pattern?: string | RegExp;
   commandPattern?: string;
   stateCheck?: (context: CommandContext) => boolean;
@@ -47,8 +51,8 @@ export interface ValidationRule {
 export interface StepValidation {
   stepId: string;
   rules: ValidationRule[];
-  partialCredit?: boolean;  // Allow multiple ways to complete
-  autoAdvance?: boolean;    // Move to next step automatically
+  partialCredit?: boolean; // Allow multiple ways to complete
+  autoAdvance?: boolean; // Move to next step automatically
 }
 
 export interface ValidationResult {
@@ -56,7 +60,7 @@ export interface ValidationResult {
   matchedRules: string[];
   failedRules: string[];
   feedback: string;
-  progress: number;  // 0-100
+  progress: number; // 0-100
 }
 ```
 
@@ -70,18 +74,21 @@ export class ScenarioValidator {
     command: string,
     output: string,
     step: ScenarioStep,
-    context: CommandContext
+    context: CommandContext,
   ): ValidationResult {
     const rules = this.getRulesForStep(step);
-    const results = rules.map(rule => this.validateRule(rule, command, output, context));
+    const results = rules.map((rule) =>
+      this.validateRule(rule, command, output, context),
+    );
 
-    const passed = results.filter(r => r.passed).length >= rules.length;
-    const progress = (results.filter(r => r.passed).length / rules.length) * 100;
+    const passed = results.filter((r) => r.passed).length >= rules.length;
+    const progress =
+      (results.filter((r) => r.passed).length / rules.length) * 100;
 
     return {
       passed,
-      matchedRules: results.filter(r => r.passed).map(r => r.ruleName),
-      failedRules: results.filter(r => !r.passed).map(r => r.ruleName),
+      matchedRules: results.filter((r) => r.passed).map((r) => r.ruleName),
+      failedRules: results.filter((r) => !r.passed).map((r) => r.ruleName),
       feedback: this.generateFeedback(results, step),
       progress,
     };
@@ -98,20 +105,20 @@ export class ScenarioValidator {
 
     // Parse from step.objectives or step.validationCriteria
     if (step.validationCriteria) {
-      return step.validationCriteria.map(criteria => ({
-        type: 'command',
-        pattern: new RegExp(criteria.commandPattern, 'i'),
+      return step.validationCriteria.map((criteria) => ({
+        type: "command",
+        pattern: new RegExp(criteria.commandPattern, "i"),
         errorMessage: criteria.hint,
       }));
     }
 
     // Fallback: infer from objectives
-    step.objectives.forEach(objective => {
+    step.objectives.forEach((objective) => {
       const commandMatch = objective.match(/run\s+([a-z-]+)/i);
       if (commandMatch) {
         rules.push({
-          type: 'command',
-          pattern: new RegExp(commandMatch[1], 'i'),
+          type: "command",
+          pattern: new RegExp(commandMatch[1], "i"),
           errorMessage: `Try running ${commandMatch[1]} command`,
         });
       }
@@ -127,29 +134,29 @@ export class ScenarioValidator {
     rule: ValidationRule,
     command: string,
     output: string,
-    context: CommandContext
+    context: CommandContext,
   ): { passed: boolean; ruleName: string } {
     switch (rule.type) {
-      case 'command':
+      case "command":
         return {
           passed: rule.pattern ? rule.pattern.test(command) : false,
-          ruleName: rule.pattern?.toString() || 'command',
+          ruleName: rule.pattern?.toString() || "command",
         };
 
-      case 'output':
+      case "output":
         return {
           passed: rule.pattern ? rule.pattern.test(output) : false,
-          ruleName: 'output-match',
+          ruleName: "output-match",
         };
 
-      case 'state':
+      case "state":
         return {
           passed: rule.stateCheck ? rule.stateCheck(context) : false,
-          ruleName: 'state-check',
+          ruleName: "state-check",
         };
 
       default:
-        return { passed: false, ruleName: 'unknown' };
+        return { passed: false, ruleName: "unknown" };
     }
   }
 
@@ -158,19 +165,19 @@ export class ScenarioValidator {
    */
   private static generateFeedback(
     results: Array<{ passed: boolean; ruleName: string }>,
-    step: ScenarioStep
+    step: ScenarioStep,
   ): string {
-    const failedCount = results.filter(r => !r.passed).length;
+    const failedCount = results.filter((r) => !r.passed).length;
 
     if (failedCount === 0) {
-      return '✓ Step completed successfully! Moving to next step.';
+      return "✓ Step completed successfully! Moving to next step.";
     }
 
     if (failedCount === results.length) {
       return '✗ This command doesn\'t match the step requirements. Type "hint" for guidance.';
     }
 
-    return `⚠ Partially correct (${results.filter(r => r.passed).length}/${results.length}). Keep trying!`;
+    return `⚠ Partially correct (${results.filter((r) => r.passed).length}/${results.length}). Keep trying!`;
   }
 }
 ```
@@ -219,14 +226,14 @@ const executeCommand = (cmdLine: string) => {
       cmdLine,
       result.output,
       currentStep,
-      currentContext.current
+      currentContext.current,
     );
 
     validateStep(activeScenario.id, currentStep.id, validation);
 
     // Show validation feedback in terminal
     if (validation.progress > 0) {
-      term.writeln('');
+      term.writeln("");
       term.writeln(validation.feedback);
     }
   }
@@ -302,6 +309,7 @@ const executeCommand = (cmdLine: string) => {
 ```
 
 **Success Criteria:**
+
 - [ ] Students see real-time "✓ Step completed" feedback
 - [ ] Progress bar shows completion percentage
 - [ ] Failed attempts show helpful hints
@@ -315,6 +323,7 @@ const executeCommand = (cmdLine: string) => {
 **Objective:** Enhance the existing practice exam (currently 35 questions) to 50+ questions and add review mode
 
 **Current State:**
+
 - ✅ `src/data/examQuestions.json` - 35 questions across all domains
 - ✅ `src/utils/examEngine.ts` - Full scoring engine with timer
 - ✅ `src/components/ExamWorkspace.tsx` - Complete exam UI
@@ -323,6 +332,7 @@ const executeCommand = (cmdLine: string) => {
 - ✅ Question navigation and flagging
 
 **Files to Modify:**
+
 - `src/data/examQuestions.json` - Add 15+ more questions
 - `src/components/ExamWorkspace.tsx` - Add review mode
 - `src/utils/examEngine.ts` - Add review functionality
@@ -332,6 +342,7 @@ const executeCommand = (cmdLine: string) => {
 **1. Add 15+ Questions to Reach 50 Total (4 hours)**
 
 Current distribution (35 questions):
+
 - Domain 1 (31%): 10 questions → Need 6 more for ~16 total
 - Domain 2 (5%): 2 questions → Need 1 more for ~3 total
 - Domain 3 (19%): 7 questions → Need 3 more for ~10 total
@@ -534,17 +545,20 @@ Enhance results screen to show specific commands to practice based on missed que
 
 export function getRecommendedCommands(
   questions: ExamQuestion[],
-  answers: Map<string, number | number[]>
+  answers: Map<string, number | number[]>,
 ): string[] {
-  const missedQuestions = questions.filter(q => {
+  const missedQuestions = questions.filter((q) => {
     const userAnswer = answers.get(q.id);
     const correctAnswer = q.correctAnswer;
 
-    if (q.type === 'multiple-select') {
+    if (q.type === "multiple-select") {
       // Compare arrays
-      if (!Array.isArray(userAnswer) || !Array.isArray(correctAnswer)) return true;
-      return userAnswer.length !== correctAnswer.length ||
-        !userAnswer.every(val => correctAnswer.includes(val));
+      if (!Array.isArray(userAnswer) || !Array.isArray(correctAnswer))
+        return true;
+      return (
+        userAnswer.length !== correctAnswer.length ||
+        !userAnswer.every((val) => correctAnswer.includes(val))
+      );
     }
 
     return userAnswer !== correctAnswer;
@@ -552,22 +566,27 @@ export function getRecommendedCommands(
 
   // Get all related commands from missed questions
   const commands = new Set<string>();
-  missedQuestions.forEach(q => {
+  missedQuestions.forEach((q) => {
     // Extract commands from question text
     const commandMatches = q.questionText.match(/[a-z-]+(?:\s+[a-z-]+)*/gi);
     if (commandMatches) {
-      commandMatches.forEach(cmd => {
-        if (cmd.length > 3 && !['what', 'which', 'when', 'where', 'does'].includes(cmd.toLowerCase())) {
+      commandMatches.forEach((cmd) => {
+        if (
+          cmd.length > 3 &&
+          !["what", "which", "when", "where", "does"].includes(
+            cmd.toLowerCase(),
+          )
+        ) {
           commands.add(cmd);
         }
       });
     }
 
     // Extract from choices
-    q.choices?.forEach(choice => {
+    q.choices?.forEach((choice) => {
       const choiceCommands = choice.match(/[a-z-]+ [a-z-]+/gi);
       if (choiceCommands) {
-        choiceCommands.forEach(cmd => commands.add(cmd));
+        choiceCommands.forEach((cmd) => commands.add(cmd));
       }
     });
   });
@@ -579,6 +598,7 @@ export function getRecommendedCommands(
 ```
 
 **Success Criteria:**
+
 - [ ] Total of 50+ questions with correct domain distribution
 - [ ] Review mode shows each question with correct/incorrect indication
 - [ ] Explanations displayed for all questions in review mode
@@ -589,6 +609,7 @@ export function getRecommendedCommands(
 ---
 
 ## Phase 2: Fill Domain Gaps (MEDIUM PRIORITY)
+
 **Goal:** Increase exam coverage from 83% to 93%
 **Effort:** 15 hours
 **Impact:** Complete Domain 4 coverage (70% → 85%)
@@ -598,6 +619,7 @@ export function getRecommendedCommands(
 **Objective:** Implement HPL, NCCL, and GPUBurn simulators
 
 **Files to Create:**
+
 - `src/simulators/benchmarkSimulator.ts` - HPL, NCCL, GPUBurn
 - `src/data/benchmarkResults.ts` - Realistic performance data
 
@@ -606,7 +628,6 @@ export function getRecommendedCommands(
 ```typescript
 // src/simulators/benchmarkSimulator.ts
 export class BenchmarkSimulator {
-
   /**
    * HPL (High-Performance Linpack) benchmark simulation
    */
@@ -639,8 +660,8 @@ Results:
   Theoretical Peak:     ${theoreticalFlops.toFixed(2)} TFlops
   Efficiency:           ${((actualFlops / theoreticalFlops) * 100).toFixed(1)}%
 
-Status: ${actualFlops / theoreticalFlops > 0.80 ? '\x1b[32mPASS\x1b[0m' : '\x1b[31mFAIL\x1b[0m'}
-${actualFlops / theoreticalFlops < 0.80 ? '\n⚠ Performance below expected threshold. Check GPU health and NVLink topology.' : ''}
+Status: ${actualFlops / theoreticalFlops > 0.8 ? "\x1b[32mPASS\x1b[0m" : "\x1b[31mFAIL\x1b[0m"}
+${actualFlops / theoreticalFlops < 0.8 ? "\n⚠ Performance below expected threshold. Check GPU health and NVLink topology." : ""}
 `;
 
     return { output, exitCode: 0 };
@@ -654,8 +675,8 @@ ${actualFlops / theoreticalFlops < 0.80 ? '\n⚠ Performance below expected thre
     const gpuCount = node.gpus.length;
 
     // Simulate all-reduce benchmark
-    const busSizes = ['8B', '256B', '8KB', '256KB', '8MB', '256MB', '1GB'];
-    const results = busSizes.map(size => {
+    const busSizes = ["8B", "256B", "8KB", "256KB", "8MB", "256MB", "1GB"];
+    const results = busSizes.map((size) => {
       const bandwidth = this.calculateNCCLBandwidth(size, gpuCount);
       const latency = this.calculateNCCLLatency(size);
       return { size, bandwidth, latency };
@@ -668,14 +689,14 @@ ${actualFlops / theoreticalFlops < 0.80 ? '\n⚠ Performance below expected thre
 
        Size    Time    Bandwidth   Latency
        (B)     (us)    (GB/s)      (us)
-${results.map(r => `${r.size.padStart(11)} ${r.latency.toFixed(2).padStart(8)} ${r.bandwidth.toFixed(2).padStart(11)} ${r.latency.toFixed(2).padStart(8)}`).join('\n')}
+${results.map((r) => `${r.size.padStart(11)} ${r.latency.toFixed(2).padStart(8)} ${r.bandwidth.toFixed(2).padStart(11)} ${r.latency.toFixed(2).padStart(8)}`).join("\n")}
 
 Summary:
   Average Bandwidth: ${(results.reduce((sum, r) => sum + r.bandwidth, 0) / results.length).toFixed(2)} GB/s
-  Peak Bandwidth:    ${Math.max(...results.map(r => r.bandwidth)).toFixed(2)} GB/s
-  Min Latency:       ${Math.min(...results.map(r => r.latency)).toFixed(2)} us
+  Peak Bandwidth:    ${Math.max(...results.map((r) => r.bandwidth)).toFixed(2)} GB/s
+  Min Latency:       ${Math.min(...results.map((r) => r.latency)).toFixed(2)} us
 
-${Math.max(...results.map(r => r.bandwidth)) > 200 ? '\x1b[32m✓ NVLink bandwidth healthy\x1b[0m' : '\x1b[33m⚠ NVLink bandwidth below expected\x1b[0m'}
+${Math.max(...results.map((r) => r.bandwidth)) > 200 ? "\x1b[32m✓ NVLink bandwidth healthy\x1b[0m" : "\x1b[33m⚠ NVLink bandwidth below expected\x1b[0m"}
 `;
 
     return { output, exitCode: 0 };
@@ -689,7 +710,7 @@ ${Math.max(...results.map(r => r.bandwidth)) > 200 ? '\x1b[32m✓ NVLink bandwid
     const node = this.getNode(context);
 
     // Start stress test - updates GPU utilization to 100%
-    node.gpus.forEach(gpu => {
+    node.gpus.forEach((gpu) => {
       gpu.utilization = 100;
       gpu.temperature = 78 + Math.random() * 5; // 78-83°C under load
       gpu.powerDraw = gpu.powerLimit * 0.95; // 95% of power limit
@@ -699,9 +720,12 @@ ${Math.max(...results.map(r => r.bandwidth)) > 200 ? '\x1b[32m✓ NVLink bandwid
 GPU Burn - GPU stress test
 Burning for ${duration} seconds...
 
-${node.gpus.map((gpu, idx) =>
-  `GPU ${idx}: ${gpu.temperature.toFixed(1)}°C  ${gpu.powerDraw.toFixed(0)}W  ${gpu.utilization}%`
-).join('\n')}
+${node.gpus
+  .map(
+    (gpu, idx) =>
+      `GPU ${idx}: ${gpu.temperature.toFixed(1)}°C  ${gpu.powerDraw.toFixed(0)}W  ${gpu.utilization}%`,
+  )
+  .join("\n")}
 
 Status: Running...
 Press Ctrl+C to stop early
@@ -711,7 +735,7 @@ Estimated completion: ${new Date(Date.now() + duration * 1000).toLocaleTimeStrin
 
     // Schedule reset after duration
     setTimeout(() => {
-      node.gpus.forEach(gpu => {
+      node.gpus.forEach((gpu) => {
         gpu.utilization = 5 + Math.random() * 10;
         gpu.temperature = 40 + Math.random() * 10;
         gpu.powerDraw = 50 + Math.random() * 30;
@@ -745,7 +769,7 @@ Estimated completion: ${new Date(Date.now() + duration * 1000).toLocaleTimeStrin
     const value = parseInt(match[1]);
     const unit = match[2];
 
-    const multipliers = { B: 1, KB: 1024, MB: 1024**2, GB: 1024**3 };
+    const multipliers = { B: 1, KB: 1024, MB: 1024 ** 2, GB: 1024 ** 3 };
     return value * multipliers[unit];
   }
 }
@@ -764,6 +788,7 @@ case 'gpuburn': {
 ```
 
 **Success Criteria:**
+
 - [ ] HPL shows realistic TFLOPS with 85-90% efficiency
 - [ ] NCCL shows bandwidth/latency across message sizes
 - [ ] GPUBurn stresses GPUs to 100% utilization
@@ -776,6 +801,7 @@ case 'gpuburn': {
 **Objective:** Add NFS/GPFS/Lustre filesystem checks
 
 **Files to Create:**
+
 - `src/simulators/storageSimulator.ts` - df, mount, lfs commands
 
 **Implementation:**
@@ -783,22 +809,52 @@ case 'gpuburn': {
 ```typescript
 // src/simulators/storageSimulator.ts
 export class StorageSimulator {
-
   executeDf(args: string[], context: CommandContext): CommandResult {
-    const humanReadable = args.includes('-h');
+    const humanReadable = args.includes("-h");
 
     const filesystems = [
-      { device: '/dev/sda1', size: '500G', used: '45G', avail: '455G', use: '9%', mount: '/' },
-      { device: 'nas01:/data', size: '10T', used: '7.2T', avail: '2.8T', use: '72%', mount: '/data' },
-      { device: 'nas01:/home', size: '2T', used: '1.1T', avail: '900G', use: '55%', mount: '/home' },
-      { device: 'gpfs1', size: '100T', used: '67T', avail: '33T', use: '67%', mount: '/scratch' },
+      {
+        device: "/dev/sda1",
+        size: "500G",
+        used: "45G",
+        avail: "455G",
+        use: "9%",
+        mount: "/",
+      },
+      {
+        device: "nas01:/data",
+        size: "10T",
+        used: "7.2T",
+        avail: "2.8T",
+        use: "72%",
+        mount: "/data",
+      },
+      {
+        device: "nas01:/home",
+        size: "2T",
+        used: "1.1T",
+        avail: "900G",
+        use: "55%",
+        mount: "/home",
+      },
+      {
+        device: "gpfs1",
+        size: "100T",
+        used: "67T",
+        avail: "33T",
+        use: "67%",
+        mount: "/scratch",
+      },
     ];
 
     const output = `
-Filesystem           ${humanReadable ? ' Size  Used Avail Use%' : '1K-blocks      Used Available Use%'} Mounted on
-${filesystems.map(fs =>
-  `${fs.device.padEnd(20)} ${fs.size.padStart(5)} ${fs.used.padStart(5)} ${fs.avail.padStart(6)} ${fs.use.padStart(4)} ${fs.mount}`
-).join('\n')}
+Filesystem           ${humanReadable ? " Size  Used Avail Use%" : "1K-blocks      Used Available Use%"} Mounted on
+${filesystems
+  .map(
+    (fs) =>
+      `${fs.device.padEnd(20)} ${fs.size.padStart(5)} ${fs.used.padStart(5)} ${fs.avail.padStart(6)} ${fs.use.padStart(4)} ${fs.mount}`,
+  )
+  .join("\n")}
 `;
 
     return { output, exitCode: 0 };
@@ -818,7 +874,7 @@ gpfs1 on /scratch type gpfs (rw,relatime)
     // Lustre filesystem commands
     const subcommand = args[0];
 
-    if (subcommand === 'df') {
+    if (subcommand === "df") {
       return {
         output: `
 UUID                       bytes        Used   Available Use% Mounted on
@@ -834,12 +890,13 @@ filesystem_summary:      140.8T       92.3T       48.5T  66% /scratch
       };
     }
 
-    return { output: 'lfs: unknown command', exitCode: 1 };
+    return { output: "lfs: unknown command", exitCode: 1 };
   }
 }
 ```
 
 **Success Criteria:**
+
 - [ ] df shows realistic filesystem usage
 - [ ] mount shows NFS, GPFS, Lustre mounts
 - [ ] lfs df shows Lustre OST breakdown
@@ -848,6 +905,7 @@ filesystem_summary:      140.8T       92.3T       48.5T  66% /scratch
 ---
 
 ## Phase 3: Visual Enhancements (MEDIUM PRIORITY)
+
 **Goal:** Add visual learning aids
 **Effort:** 20 hours
 **Impact:** Improve comprehension of complex topologies
@@ -857,10 +915,12 @@ filesystem_summary:      140.8T       92.3T       48.5T  66% /scratch
 **Objective:** Add time-series charts for GPU metrics
 
 **Files to Create:**
+
 - `src/components/MetricsChart.tsx` - Recharts component
 - `src/utils/metricsHistory.ts` - Historical data collection
 
 **Dependencies:**
+
 ```bash
 npm install recharts
 ```
@@ -886,7 +946,7 @@ export class MetricsHistory {
   static addSnapshot(node: Node): void {
     const timestamp = Date.now();
 
-    node.gpus.forEach(gpu => {
+    node.gpus.forEach((gpu) => {
       this.history.push({
         timestamp,
         nodeId: node.id,
@@ -905,9 +965,7 @@ export class MetricsHistory {
   }
 
   static getHistory(nodeId: string, gpuId: string): MetricSnapshot[] {
-    return this.history.filter(
-      s => s.nodeId === nodeId && s.gpuId === gpuId
-    );
+    return this.history.filter((s) => s.nodeId === nodeId && s.gpuId === gpuId);
   }
 
   static clear(): void {
@@ -953,6 +1011,7 @@ export function MetricsChart({ nodeId, gpuId }: { nodeId: string; gpuId: string 
 ```
 
 **Success Criteria:**
+
 - [ ] Chart updates in real-time with metric simulation
 - [ ] 5-minute rolling window (300 samples)
 - [ ] Toggle between metrics (utilization/temp/power/memory)
@@ -965,9 +1024,11 @@ export function MetricsChart({ nodeId, gpuId }: { nodeId: string; gpuId: string 
 **Objective:** D3.js graph showing GPU interconnect
 
 **Files to Create:**
+
 - `src/components/TopologyGraph.tsx` - D3.js visualization
 
 **Dependencies:**
+
 ```bash
 npm install d3 @types/d3
 ```
@@ -1074,6 +1135,7 @@ export function TopologyGraph({ node }: { node: Node }) {
 ```
 
 **Success Criteria:**
+
 - [ ] Shows all 8 GPUs with NVLink connections
 - [ ] Color-coded health (green=healthy, red=fault)
 - [ ] Interactive hover showing bandwidth
@@ -1088,6 +1150,7 @@ export function TopologyGraph({ node }: { node: Node }) {
 **Implementation:** Similar to Task 3.2 but showing switches and HCAs
 
 **Success Criteria:**
+
 - [ ] Shows leaf/spine switch hierarchy
 - [ ] Color-coded link health
 - [ ] Interactive node selection
@@ -1095,6 +1158,7 @@ export function TopologyGraph({ node }: { node: Node }) {
 ---
 
 ## Phase 4: Quality & Polish (LOW PRIORITY)
+
 **Goal:** Production-grade quality
 **Effort:** 15 hours
 **Impact:** Long-term maintainability
@@ -1104,11 +1168,13 @@ export function TopologyGraph({ node }: { node: Node }) {
 **Objective:** 70% code coverage
 
 **Setup:**
+
 ```bash
 npm install -D vitest @testing-library/react @testing-library/jest-dom
 ```
 
 **Test Files to Create:**
+
 - `src/utils/__tests__/scenarioValidator.test.ts`
 - `src/utils/__tests__/examScoring.test.ts`
 - `src/simulators/__tests__/benchmarkSimulator.test.ts`
@@ -1118,19 +1184,19 @@ npm install -D vitest @testing-library/react @testing-library/jest-dom
 
 ```typescript
 // src/utils/__tests__/examScoring.test.ts
-import { describe, it, expect } from 'vitest';
-import { ExamScorer } from '../examScoring';
+import { describe, it, expect } from "vitest";
+import { ExamScorer } from "../examScoring";
 
-describe('ExamScorer', () => {
-  it('calculates score correctly', () => {
+describe("ExamScorer", () => {
+  it("calculates score correctly", () => {
     const questions = [
-      { id: 'q1', domain: 1, correctAnswer: 0 },
-      { id: 'q2', domain: 1, correctAnswer: 1 },
-      { id: 'q3', domain: 2, correctAnswer: 2 },
+      { id: "q1", domain: 1, correctAnswer: 0 },
+      { id: "q2", domain: 1, correctAnswer: 1 },
+      { id: "q3", domain: 2, correctAnswer: 2 },
     ] as ExamQuestion[];
 
     const attempt = {
-      id: 'test',
+      id: "test",
       answers: { q1: 0, q2: 1, q3: 0 }, // 2/3 correct
       startTime: 0,
       timeLimit: 5400,
@@ -1144,13 +1210,14 @@ describe('ExamScorer', () => {
     expect(result.passingScore).toBe(70);
   });
 
-  it('identifies weak areas', () => {
+  it("identifies weak areas", () => {
     // Test domain breakdown logic
   });
 });
 ```
 
 **Success Criteria:**
+
 - [ ] 70% code coverage across utils and simulators
 - [ ] All scoring logic tested
 - [ ] Validation logic tested
@@ -1166,14 +1233,17 @@ describe('ExamScorer', () => {
 
 ```typescript
 // src/App.tsx - Lazy load routes
-const PracticeExam = lazy(() => import('./components/PracticeExam'));
-const TopologyGraph = lazy(() => import('./components/TopologyGraph'));
+const PracticeExam = lazy(() => import("./components/PracticeExam"));
+const TopologyGraph = lazy(() => import("./components/TopologyGraph"));
 
 // Lazy load simulators
-const BenchmarkSimulator = lazy(() => import('./simulators/benchmarkSimulator'));
+const BenchmarkSimulator = lazy(
+  () => import("./simulators/benchmarkSimulator"),
+);
 ```
 
 **Success Criteria:**
+
 - [ ] Initial bundle <400KB
 - [ ] Fast first paint (<1s)
 - [ ] Lazy load heavy components
@@ -1185,6 +1255,7 @@ const BenchmarkSimulator = lazy(() => import('./simulators/benchmarkSimulator'))
 **Objective:** WCAG 2.1 AA compliance
 
 **Changes:**
+
 - Add ARIA labels to all interactive elements
 - Keyboard navigation for terminal (Tab, Shift+Tab)
 - Screen reader announcements for validation feedback
@@ -1192,6 +1263,7 @@ const BenchmarkSimulator = lazy(() => import('./simulators/benchmarkSimulator'))
 - High contrast mode support
 
 **Success Criteria:**
+
 - [ ] Lighthouse accessibility score >90
 - [ ] Keyboard-only navigation works
 - [ ] Screen reader compatible
@@ -1201,22 +1273,26 @@ const BenchmarkSimulator = lazy(() => import('./simulators/benchmarkSimulator'))
 ## Implementation Schedule
 
 ### Week 1: Educational Loop (16 hours)
+
 - **Mon-Tue:** Task 1.1 - Scenario Validation (8h)
 - **Wed-Thu:** Task 1.2 - Enhance Existing Exam (8h)
 - **Deliverable:** Validated learning with enhanced assessment
 
 ### Week 2: Domain Coverage (15 hours)
+
 - **Mon-Wed:** Task 2.1 - Benchmarks (10h)
 - **Thu-Fri:** Task 2.2 - Storage (5h)
 - **Deliverable:** 93% exam coverage
 
 ### Week 3: Visuals (20 hours)
+
 - **Mon-Tue:** Task 3.1 - Charts (8h)
 - **Wed-Thu:** Task 3.2 - NVLink Graph (8h)
 - **Fri:** Task 3.3 - IB Fabric (4h)
 - **Deliverable:** Visual learning aids
 
 ### Week 4: Quality (15 hours)
+
 - **Mon-Tue:** Task 4.1 - Tests (8h)
 - **Wed:** Task 4.2 - Code Splitting (3h)
 - **Thu-Fri:** Task 4.3 - Accessibility (4h)
@@ -1229,6 +1305,7 @@ const BenchmarkSimulator = lazy(() => import('./simulators/benchmarkSimulator'))
 ## Success Metrics
 
 ### Quantitative:
+
 - [ ] Exam coverage: 83% → 93%
 - [ ] Educational effectiveness: 70% → 95%
 - [ ] Code coverage: 0% → 70%
@@ -1236,6 +1313,7 @@ const BenchmarkSimulator = lazy(() => import('./simulators/benchmarkSimulator'))
 - [ ] Lighthouse score: ? → >90
 
 ### Qualitative:
+
 - [ ] Students receive real-time feedback on progress
 - [ ] Students can assess readiness with practice exam
 - [ ] Complex topologies visualized clearly
@@ -1246,14 +1324,17 @@ const BenchmarkSimulator = lazy(() => import('./simulators/benchmarkSimulator'))
 ## Risk Mitigation
 
 ### High Risk: Scenario validation may not work with existing scenarios
+
 **Mitigation:** Start with one scenario, validate approach, then expand
 **Fallback:** Manual validation rules per scenario (more work but guaranteed to work)
 
 ### Medium Risk: D3.js complexity may exceed time estimate
+
 **Mitigation:** Use simpler visualization library (Recharts supports graphs too)
 **Fallback:** Static SVG diagrams as interim solution
 
 ### Low Risk: Test coverage may reveal bugs
+
 **Mitigation:** Good thing! Fix bugs as discovered
 **Fallback:** Document known issues, fix in Phase 5
 
@@ -1301,6 +1382,7 @@ git commit -m "feat: add scenario validation system"
 ```
 
 **Recommended Order:**
+
 1. Task 1.1 (Validation) - Highest impact, builds on existing
 2. Task 1.2 (Exam) - Completes educational loop
 3. Task 2.1 (Benchmarks) - Fills biggest gap

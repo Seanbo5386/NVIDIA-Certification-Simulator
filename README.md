@@ -1,4 +1,4 @@
-# NVIDIA AI Infrastructure Certification Simulator
+# DC Lab Sim
 
 <div align="center">
 
@@ -21,7 +21,7 @@
 
 ## Overview
 
-The NVIDIA AI Infrastructure Certification Simulator provides realistic, hands-on experience with the complete NVIDIA datacenter stack. Practice every task from the NCP-AII certification exam in a safe, simulated environment that feels like operating a real DGX SuperPOD.
+DC Lab Sim is a browser-based datacenter lab simulator for NCP-AII certification exam prep. Practice every task from the exam blueprint in a safe, simulated environment that feels like operating a real DGX SuperPOD.
 
 ### What You Can Practice
 
@@ -186,8 +186,8 @@ A tiered progression system built on spaced repetition:
 
 ```bash
 # Clone the repository
-git clone https://github.com/Seanbo5386/NVIDIA-Certification-Simulator.git
-cd NVIDIA-Certification-Simulator
+git clone https://github.com/Seanbo5386/dc-lab-sim.git
+cd dc-lab-sim
 
 # Install dependencies
 npm install
@@ -521,7 +521,7 @@ All other trademarks referenced herein are the property of their respective owne
 If you encounter issues or have questions:
 
 - Check the Documentation tab in the simulator
-- Review the [Issues](https://github.com/Seanbo5386/NVIDIA-Certification-Simulator/issues) page
+- Review the [Issues](https://github.com/Seanbo5386/dc-lab-sim/issues) page
 - Consult the official [NVIDIA Certification resources](https://www.nvidia.com/en-us/learn/certification/)
 
 ---
@@ -530,6 +530,6 @@ If you encounter issues or have questions:
 
 **Built for AI Infrastructure Engineers by [Sean Woods](https://www.linkedin.com/in/sean-m-woods/)**
 
-[Get Started](#quick-start) · [View Scenarios](#narrative-scenarios) · [Report Bug](https://github.com/Seanbo5386/NVIDIA-Certification-Simulator/issues)
+[Get Started](#quick-start) · [View Scenarios](#narrative-scenarios) · [Report Bug](https://github.com/Seanbo5386/dc-lab-sim/issues)
 
 </div>

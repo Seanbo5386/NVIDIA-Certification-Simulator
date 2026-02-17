@@ -1,10 +1,20 @@
-// Hardware type definitions for NVIDIA AI Infrastructure Simulator
+// Hardware type definitions for DC Lab Sim
 
-export type HealthStatus = 'OK' | 'Warning' | 'Critical' | 'Unknown';
+export type HealthStatus = "OK" | "Warning" | "Critical" | "Unknown";
 
-export type DGXSystemType = 'DGX-A100' | 'DGX-H100' | 'DGX-H200' | 'DGX-B200' | 'DGX-GB200';
+export type DGXSystemType =
+  | "DGX-A100"
+  | "DGX-H100"
+  | "DGX-H200"
+  | "DGX-B200"
+  | "DGX-GB200";
 
-export type GPUType = 'A100-80GB' | 'H100-SXM' | 'H200-SXM' | 'B200' | 'Blackwell';
+export type GPUType =
+  | "A100-80GB"
+  | "H100-SXM"
+  | "H200-SXM"
+  | "B200"
+  | "Blackwell";
 
 export interface MIGProfile {
   id: number;
@@ -32,7 +42,7 @@ export interface ComputeInstance {
 
 export interface NVLinkConnection {
   linkId: number;
-  status: 'Active' | 'Down' | 'Inactive';
+  status: "Active" | "Down" | "Inactive";
   speed: number; // GB/s
   txErrors: number;
   rxErrors: number;
@@ -52,7 +62,7 @@ export interface XIDError {
   code: number;
   timestamp: Date;
   description: string;
-  severity: 'Info' | 'Warning' | 'Critical';
+  severity: "Info" | "Warning" | "Critical";
 }
 
 export interface GPU {
@@ -81,7 +91,7 @@ export interface GPU {
 }
 
 export interface BlueFieldMode {
-  mode: 'DPU' | 'RestrictedDPU' | 'NIC' | 'SeparatedHost';
+  mode: "DPU" | "RestrictedDPU" | "NIC" | "SeparatedHost";
   internalCpuModel: number; // 0 or 1
   description: string;
 }
@@ -100,12 +110,12 @@ export interface BlueFieldDPU {
 
 export interface InfiniBandPort {
   portNumber: number;
-  state: 'Active' | 'Down' | 'Polling' | 'Disabled';
-  physicalState: 'LinkUp' | 'LinkDown' | 'Polling' | 'Sleep';
+  state: "Active" | "Down" | "Polling" | "Disabled";
+  physicalState: "LinkUp" | "LinkDown" | "Polling" | "Sleep";
   rate: 100 | 200 | 400 | 800; // Gb/s (EDR, HDR, NDR, XDR)
   lid: number;
   guid: string;
-  linkLayer: 'InfiniBand' | 'Ethernet';
+  linkLayer: "InfiniBand" | "Ethernet";
   errors: {
     symbolErrors: number;
     linkDowned: number;
@@ -141,7 +151,7 @@ export interface BMC {
   firmwareVersion: string;
   manufacturer: string;
   sensors: BMCSensor[];
-  powerState: 'On' | 'Off';
+  powerState: "On" | "Off";
 }
 
 export interface DGXNode {
@@ -161,7 +171,7 @@ export interface DGXNode {
   nvidiaDriverVersion: string;
   cudaVersion: string;
   healthStatus: HealthStatus;
-  slurmState: 'idle' | 'alloc' | 'drain' | 'down';
+  slurmState: "idle" | "alloc" | "drain" | "down";
   slurmReason?: string;
   clusterPowerLimit?: number; // Power limit set via DCMI in watts
 }
@@ -169,12 +179,12 @@ export interface DGXNode {
 export interface ClusterConfig {
   name: string;
   nodes: DGXNode[];
-  fabricTopology: 'FatTree' | 'RailOptimized' | 'DragonFly';
+  fabricTopology: "FatTree" | "RailOptimized" | "DragonFly";
   bcmHA: {
     enabled: boolean;
     primary: string;
     secondary: string;
-    state: 'Active' | 'Standby' | 'Fault';
+    state: "Active" | "Standby" | "Fault";
   };
   slurmConfig: {
     controlMachine: string;

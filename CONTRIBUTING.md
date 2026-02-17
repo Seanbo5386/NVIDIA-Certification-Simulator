@@ -1,6 +1,6 @@
-# Contributing to NVIDIA AI Infrastructure Simulator
+# Contributing to DC Lab Sim
 
-Thank you for your interest in contributing to the NVIDIA AI Infrastructure Simulator! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to the DC Lab Sim! This document provides guidelines and instructions for contributing to the project.
 
 ## Table of Contents
 
@@ -24,12 +24,14 @@ Thank you for your interest in contributing to the NVIDIA AI Infrastructure Simu
 ### Installation
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/your-org/nvidia-ai-infra-simulator.git
    cd nvidia-ai-infra-simulator
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -41,19 +43,19 @@ Thank you for your interest in contributing to the NVIDIA AI Infrastructure Simu
 
 ### Running Locally
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start development server with hot reload |
-| `npm run build` | Build for production (TypeScript + Vite) |
-| `npm run preview` | Preview production build locally |
-| `npm run lint` | Run ESLint with strict settings |
-| `npm run test` | Run unit tests in watch mode |
-| `npm run test:run` | Run unit tests once |
-| `npm run test:coverage` | Run tests with coverage report |
-| `npm run test:ui` | Open Vitest UI |
-| `npm run test:e2e` | Run Playwright E2E tests |
-| `npm run test:e2e:ui` | Open Playwright UI mode |
-| `npm run test:e2e:debug` | Debug E2E tests |
+| Command                  | Description                              |
+| ------------------------ | ---------------------------------------- |
+| `npm run dev`            | Start development server with hot reload |
+| `npm run build`          | Build for production (TypeScript + Vite) |
+| `npm run preview`        | Preview production build locally         |
+| `npm run lint`           | Run ESLint with strict settings          |
+| `npm run test`           | Run unit tests in watch mode             |
+| `npm run test:run`       | Run unit tests once                      |
+| `npm run test:coverage`  | Run tests with coverage report           |
+| `npm run test:ui`        | Open Vitest UI                           |
+| `npm run test:e2e`       | Run Playwright E2E tests                 |
+| `npm run test:e2e:ui`    | Open Playwright UI mode                  |
+| `npm run test:e2e:debug` | Debug E2E tests                          |
 
 ---
 
@@ -68,10 +70,10 @@ Thank you for your interest in contributing to the NVIDIA AI Infrastructure Simu
 
 ```typescript
 // Good
-import { SimulationStore } from '@/store/simulationStore';
+import { SimulationStore } from "@/store/simulationStore";
 
 // Avoid
-import { SimulationStore } from '../../../store/simulationStore';
+import { SimulationStore } from "../../../store/simulationStore";
 ```
 
 ### React
@@ -123,14 +125,16 @@ describe('ComponentName', () => {
 
 ```typescript
 // Good - Using Tailwind with clsx
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-const className = twMerge(clsx(
-  'px-4 py-2 rounded',
-  isActive && 'bg-blue-500 text-white',
-  isDisabled && 'opacity-50 cursor-not-allowed'
-));
+const className = twMerge(
+  clsx(
+    "px-4 py-2 rounded",
+    isActive && "bg-blue-500 text-white",
+    isDisabled && "opacity-50 cursor-not-allowed",
+  ),
+);
 ```
 
 ---
@@ -141,13 +145,13 @@ const className = twMerge(clsx(
 
 Use descriptive branch names with prefixes:
 
-| Prefix | Use Case | Example |
-|--------|----------|---------|
-| `feature/` | New features | `feature/add-nemo-simulator` |
-| `fix/` | Bug fixes | `fix/terminal-scroll-issue` |
+| Prefix      | Use Case         | Example                           |
+| ----------- | ---------------- | --------------------------------- |
+| `feature/`  | New features     | `feature/add-nemo-simulator`      |
+| `fix/`      | Bug fixes        | `fix/terminal-scroll-issue`       |
 | `refactor/` | Code refactoring | `refactor/extract-base-simulator` |
-| `docs/` | Documentation | `docs/add-api-reference` |
-| `test/` | Test additions | `test/increase-coverage` |
+| `docs/`     | Documentation    | `docs/add-api-reference`          |
+| `test/`     | Test additions   | `test/increase-coverage`          |
 
 ### Commit Conventions
 
@@ -162,6 +166,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 
 **Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -171,6 +176,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 - `chore`: Maintenance tasks
 
 **Examples:**
+
 ```
 feat(simulators): add NeMo framework simulator
 fix(terminal): resolve scroll position reset on command
@@ -183,16 +189,19 @@ test(store): add unit tests for learningStore
 Before submitting a PR:
 
 1. **All tests must pass**
+
    ```bash
    npm run test:run
    ```
 
 2. **Lint must pass**
+
    ```bash
    npm run lint
    ```
 
 3. **Build must succeed**
+
    ```bash
    npm run build
    ```
@@ -218,34 +227,40 @@ Before submitting a PR:
 Use this checklist when reviewing PRs:
 
 ### Functionality
+
 - [ ] Code accomplishes the stated goal
 - [ ] Edge cases are handled appropriately
 - [ ] Error handling is implemented correctly
 
 ### Code Quality
+
 - [ ] No `any` types (use proper types or `unknown`)
 - [ ] No unused imports or variables
 - [ ] Functions are reasonably sized (<50 lines preferred)
 - [ ] Complex logic has explanatory comments
 
 ### Testing
+
 - [ ] New code has corresponding tests
 - [ ] Tests are meaningful (not just for coverage)
 - [ ] Edge cases are tested
 - [ ] Test descriptions are clear
 
 ### Performance
+
 - [ ] No unnecessary re-renders in React components
 - [ ] Heavy computations are memoized appropriately
 - [ ] No memory leaks (cleanup in useEffect)
 
 ### Accessibility
+
 - [ ] Interactive elements are keyboard accessible
 - [ ] ARIA labels are provided where needed
 - [ ] Color is not the only indicator of state
 - [ ] Focus management is handled correctly
 
 ### Documentation
+
 - [ ] Public APIs are documented with JSDoc
 - [ ] Complex functions have explanatory comments
 - [ ] README is updated if needed
@@ -288,7 +303,7 @@ The project uses **Zustand** for state management:
 
 ```typescript
 // Example: Using the simulation store
-import { useSimulationStore } from '@/store/simulationStore';
+import { useSimulationStore } from "@/store/simulationStore";
 
 const MyComponent = () => {
   const { gpus, updateGpuMetrics } = useSimulationStore();
@@ -299,6 +314,7 @@ const MyComponent = () => {
 ### Adding a New Simulator
 
 1. **Create the simulator file** in `src/simulators/`
+
    ```typescript
    // src/simulators/myToolSimulator.ts
    import { BaseSimulator } from './BaseSimulator';
@@ -331,14 +347,16 @@ const MyComponent = () => {
 
      private showHelp(): string {
        return `Usage: mytool <command> [options]
+   ```
 
 Commands:
-  status    Show current status
-  config    Configure settings
-  run       Execute operation`;
-     }
-   }
-   ```
+status Show current status
+config Configure settings
+run Execute operation`;
+}
+}
+
+```
 
 2. **Register the simulator** in the command dispatcher
 
@@ -383,4 +401,5 @@ By contributing to this project, you agree that your contributions will be licen
 
 ---
 
-Thank you for contributing to the NVIDIA AI Infrastructure Simulator!
+Thank you for contributing to the DC Lab Sim!
+```
