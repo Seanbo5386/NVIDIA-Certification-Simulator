@@ -3,6 +3,13 @@ import { render, screen } from '@testing-library/react';
 import { NVSwitchTopology } from '../NVSwitchTopology';
 import type { DGXNode, GPU } from '@/types/hardware';
 
+// Mock ResizeObserver (not available in jsdom)
+global.ResizeObserver = vi.fn().mockImplementation(() => ({
+  observe: vi.fn(),
+  unobserve: vi.fn(),
+  disconnect: vi.fn(),
+}));
+
 // Mock D3 with chainable selection methods
 vi.mock('d3', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
