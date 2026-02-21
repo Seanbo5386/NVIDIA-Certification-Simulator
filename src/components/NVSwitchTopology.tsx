@@ -8,6 +8,7 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import * as d3 from "d3";
 import type { DGXNode, GPU } from "@/types/hardware";
+import { useContainerSize } from "@/hooks/useContainerSize";
 
 interface NVSwitchTopologyProps {
   node: DGXNode;
@@ -47,6 +48,7 @@ export const NVSwitchTopology: React.FC<NVSwitchTopologyProps> = ({
   dataFlowPath = [],
 }) => {
   const svgRef = useRef<SVGSVGElement>(null);
+  const { containerRef, width, height } = useContainerSize(900, 600 / 900);
   const [selectedNode, setSelectedNode] = useState<GPUNode | null>(null);
   const [hoveredNode, setHoveredNode] = useState<TopologyNode | null>(null);
 
@@ -62,9 +64,6 @@ export const NVSwitchTopology: React.FC<NVSwitchTopologyProps> = ({
 
   useEffect(() => {
     if (!svgRef.current) return;
-
-    const width = 900;
-    const height = 600;
 
     // Clear previous content
     d3.select(svgRef.current).selectAll("*").remove();
@@ -334,7 +333,7 @@ export const NVSwitchTopology: React.FC<NVSwitchTopologyProps> = ({
         .attr("fill", d.utilization > 80 ? "#76B900" : "#10B981")
         .attr("rx", 2);
     });
-  }, [node, selectedNode, handleNodeClick, showDataFlow, dataFlowPath]);
+  }, [node, selectedNode, handleNodeClick, showDataFlow, dataFlowPath, width, height]);
 
   return (
     <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
@@ -354,7 +353,7 @@ export const NVSwitchTopology: React.FC<NVSwitchTopologyProps> = ({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div ref={containerRef} className="overflow-x-auto">
         <svg
           ref={svgRef}
           className="w-full min-w-[600px] bg-gray-900 rounded-lg"

@@ -195,7 +195,7 @@ export abstract class BaseSimulator {
    * @param context - Optional command context for dynamic version lookup
    * @returns Command result with version info
    */
-  protected handleVersion(context?: CommandContext): CommandResult {
+  protected handleVersion(_context?: CommandContext): CommandResult {
     const metadata = this.getMetadata();
     return {
       output: `${metadata.name} version ${metadata.version}`,

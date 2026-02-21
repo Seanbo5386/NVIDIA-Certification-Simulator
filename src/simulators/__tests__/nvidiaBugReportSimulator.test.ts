@@ -146,7 +146,7 @@ describe("NvidiaBugReportSimulator", () => {
       const result = simulator.execute(parsed, context);
 
       expect(result.output).toContain("Driver Information");
-      expect(result.output).toContain("535.104.05");
+      expect(result.output).toContain("535.129.03");
       expect(result.output).toContain("CUDA Version");
     });
 
@@ -778,7 +778,7 @@ describe("NvidiaBugReportSimulator", () => {
 
       expect(result.exitCode).toBe(0);
       expect(result.output).toContain("nvidia-bug-report.sh");
-      expect(result.output).toContain("535.104.05");
+      expect(result.output).toContain("535.129.03");
     });
   });
 });

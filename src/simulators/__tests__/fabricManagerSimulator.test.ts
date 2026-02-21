@@ -149,14 +149,14 @@ describe("FabricManagerSimulator", () => {
         context,
       );
       expect(result.exitCode).toBe(0);
-      expect(result.output).toContain("535.104.05");
+      expect(result.output).toContain("535.129.03");
       expect(result.output).toContain("CUDA Version");
     });
 
     it("should show version with -v flag", () => {
       const result = simulator.execute(parse("nv-fabricmanager -v"), context);
       expect(result.exitCode).toBe(0);
-      expect(result.output).toContain("535.104.05");
+      expect(result.output).toContain("535.129.03");
     });
   });
 

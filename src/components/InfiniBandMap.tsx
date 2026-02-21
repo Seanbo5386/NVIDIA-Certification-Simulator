@@ -10,6 +10,7 @@ import React, { useEffect, useRef, useMemo, useState } from "react";
 import * as d3 from "d3";
 import type { ClusterConfig, DGXNode } from "@/types/hardware";
 import { Network } from "lucide-react";
+import { useContainerSize } from "@/hooks/useContainerSize";
 import {
   useNetworkAnimation,
   AnimationLink,
@@ -145,6 +146,7 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({
     ? highlightedSwitches
     : EMPTY_SWITCH_ARRAY;
   const svgRef = useRef<SVGSVGElement>(null);
+  const { containerRef, width, height } = useContainerSize(1000, 600 / 1000);
   const particleGroupRef = useRef<SVGGElement | null>(null);
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const clusterRef = useRef(cluster); // Ref to access current cluster data in click handlers
@@ -181,7 +183,6 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({
   // Calculate animation links from fabric topology
   const animationLinks: AnimationLink[] = useMemo(() => {
     const links: AnimationLink[] = [];
-    const width = 1000;
 
     // Spine positions (use config)
     const spineCount = fabricConfig.spineCount;
@@ -245,7 +246,7 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({
     });
 
     return links;
-  }, [cluster, fabricConfig]);
+  }, [cluster, fabricConfig, width]);
 
   // Disable particle animations when user prefers reduced motion
   const { particleCount } = useNetworkAnimation({
@@ -256,9 +257,6 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({
 
   useEffect(() => {
     if (!svgRef.current) return;
-
-    const width = 1000;
-    const height = 600;
 
     // Clear previous content
     d3.select(svgRef.current).selectAll("*").remove();
@@ -890,6 +888,8 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({
     fabricConfig,
     stableHighlightedNodes,
     stableHighlightedSwitches,
+    width,
+    height,
   ]);
 
   // Dynamic update effect: update link/node colors when HCA state changes
@@ -1005,7 +1005,7 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({
       </div>
 
       <div className="relative">
-        <div className="overflow-x-auto">
+        <div ref={containerRef} className="overflow-x-auto">
           <svg
             ref={svgRef}
             className="w-full min-w-[600px] bg-gray-900 rounded-lg"

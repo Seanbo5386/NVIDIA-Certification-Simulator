@@ -65,7 +65,7 @@ export class FabricManagerSimulator extends BaseSimulator {
     }
 
     if (this.hasAnyFlag(parsed, ["version", "v"])) {
-      return this.showVersion();
+      return this.showVersion(context);
     }
 
     const subcommand = parsed.subcommands[0];
@@ -129,9 +129,12 @@ export class FabricManagerSimulator extends BaseSimulator {
     return this.createSuccess(output);
   }
 
-  private showVersion(): CommandResult {
+  private showVersion(context?: CommandContext): CommandResult {
+    const node = context ? this.resolveNode(context) : undefined;
+    const driverVersion = node?.nvidiaDriverVersion || "535.104.05";
+    const cudaVersion = node?.cudaVersion || "12.2";
     return this.createSuccess(
-      `nv-fabricmanager version 535.104.05\nCUDA Version: 12.2\nDriver Version: 535.104.05\n`,
+      `nv-fabricmanager version ${driverVersion}\nCUDA Version: ${cudaVersion}\nDriver Version: ${driverVersion}\n`,
     );
   }
 

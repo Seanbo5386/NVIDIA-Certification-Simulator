@@ -10,6 +10,7 @@ import React, { useEffect, useRef, useMemo, useState } from "react";
 import * as d3 from "d3";
 import type { DGXNode } from "@/types/hardware";
 import { Network } from "lucide-react";
+import { useContainerSize } from "@/hooks/useContainerSize";
 import {
   useNetworkAnimation,
   AnimationLink,
@@ -63,6 +64,7 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
     ? highlightedLinks
     : EMPTY_LINK_ARRAY;
   const svgRef = useRef<SVGSVGElement>(null);
+  const { containerRef, width, height } = useContainerSize(800, 500 / 800);
   const particleGroupRef = useRef<SVGGElement | null>(null);
   const detailPanelRef = useRef<HTMLDivElement>(null);
   const nodeDataRef = useRef(node); // Ref to access current node data in click handlers
@@ -109,8 +111,6 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
 
   // Calculate animation links from GPU NVLink connections using accurate layout
   const animationLinks = useMemo((): AnimationLink[] => {
-    const width = 800;
-    const height = 500;
     const gpuPositions = calculateGPUPositions(layout, width, height);
 
     const links: AnimationLink[] = [];
@@ -140,7 +140,7 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
       });
     }
     return links;
-  }, [node, layout]);
+  }, [node, layout, width, height]);
 
   // Disable particle animations when user prefers reduced motion
   const { particleCount } = useNetworkAnimation({
@@ -152,8 +152,6 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
   // Memoize STATIC layout data - only recalculate when layout or GPU count changes
   // This prevents SVG rebuilds on every simulation tick
   const { nodes, links, nvSwitchPositions } = useMemo(() => {
-    const width = 800;
-    const height = 500;
     const gpuPos = calculateGPUPositions(layout, width, height);
     const nvSwitchPos = calculateNVSwitchPositions(layout, width, height);
 
@@ -196,14 +194,11 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
     return { nodes: nodeList, links: linkList, nvSwitchPositions: nvSwitchPos };
     // Only depend on layout and GPU count, NOT on GPU metrics that change every tick
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layout, node.gpus.length]);
+  }, [layout, node.gpus.length, width, height]);
 
   // Initial SVG setup - only runs when layout changes, NOT on every node data update
   useEffect(() => {
     if (!svgRef.current) return;
-
-    const width = 800;
-    const height = 500;
 
     // Clear previous content
     d3.select(svgRef.current).selectAll("*").remove();
@@ -541,6 +536,8 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
     layout,
     stableHighlightedGpus,
     stableHighlightedLinks,
+    width,
+    height,
   ]);
 
   // Update dynamic visual attributes (colors, temperature text) without rebuilding SVG
@@ -688,7 +685,7 @@ export const TopologyGraph: React.FC<TopologyGraphProps> = ({
       </div>
 
       <div className="relative">
-        <div className="overflow-x-auto">
+        <div ref={containerRef} className="overflow-x-auto">
           <svg
             ref={svgRef}
             className="w-full min-w-[600px] bg-gray-900 rounded-lg"
