@@ -9,7 +9,7 @@
  */
 
 import type { CommandResult, CommandContext } from "@/types/commands";
-import type { ParsedCommand } from "@/utils/commandParser";
+import { parse, type ParsedCommand } from "@/utils/commandParser";
 import type {
   ClusterConfig,
   DGXNode,
@@ -518,6 +518,23 @@ export abstract class BaseSimulator {
   protected async initializeDefinitionRegistry(): Promise<void> {
     this.definitionRegistry = await getCommandDefinitionRegistry();
     this.stateEngine = new StateEngine(this.definitionRegistry);
+  }
+
+  /**
+   * Parse a command string using schema-aware flag parsing.
+   * Uses the definition registry to determine which flags are boolean
+   * vs value-consuming. Falls back to heuristic parsing if registry
+   * is unavailable.
+   * @param cmdLine - Raw command line string
+   * @returns Parsed command object
+   */
+  protected parseWithSchema(cmdLine: string): ParsedCommand {
+    if (!this.definitionRegistry) {
+      return parse(cmdLine);
+    }
+
+    const schema = this.definitionRegistry.getFlagSchema(this.getMetadata().name);
+    return parse(cmdLine, schema);
   }
 
   /**
