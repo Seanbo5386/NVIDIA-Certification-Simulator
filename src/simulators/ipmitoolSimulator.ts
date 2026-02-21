@@ -215,6 +215,7 @@ export class IpmitoolSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle root-level flags (--version, --help, -V, -h) first
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
       return this.handleVersion();

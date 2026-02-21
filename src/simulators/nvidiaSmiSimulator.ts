@@ -194,6 +194,7 @@ export class NvidiaSmiSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle root-level flags (--version, --help, -v, -h)
     if (this.hasAnyFlag(parsed, ["version", "v"])) {
       return this.handleVersion();
