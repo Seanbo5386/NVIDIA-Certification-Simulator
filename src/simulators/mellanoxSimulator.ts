@@ -78,6 +78,7 @@ export class MellanoxSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --version flag at root level
     if (this.hasAnyFlag(parsed, ["version", "v"])) {
       return this.handleVersion();

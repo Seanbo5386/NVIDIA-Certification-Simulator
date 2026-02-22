@@ -253,6 +253,7 @@ export class DcgmiSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Only validate root-level flags when no subcommand is specified
     // Subcommand flags are validated within individual handlers
     if (parsed.subcommands.length === 0) {

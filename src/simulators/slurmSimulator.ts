@@ -120,6 +120,7 @@ export class SlurmSimulator extends BaseSimulator {
 
   // sinfo - Show partition and node information
   executeSinfo(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       return (
@@ -348,6 +349,7 @@ export class SlurmSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     _context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       return (
@@ -678,6 +680,7 @@ export class SlurmSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       return (
@@ -940,6 +943,7 @@ export class SlurmSimulator extends BaseSimulator {
 
   // sbatch - Submit batch job
   executeSbatch(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --help or bare "help" argument
     if (
       this.hasAnyFlag(parsed, ["help"]) ||
@@ -1123,6 +1127,7 @@ export class SlurmSimulator extends BaseSimulator {
 
   // srun - Run job interactively
   executeSrun(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --help or bare "help" argument
     if (
       this.hasAnyFlag(parsed, ["help"]) ||
@@ -1183,6 +1188,7 @@ export class SlurmSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --help or bare "help" argument
     if (
       this.hasAnyFlag(parsed, ["help"]) ||
@@ -1235,6 +1241,7 @@ export class SlurmSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     _context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       let output = "Usage: sacctmgr [COMMAND] [OPTIONS]\n\n";
@@ -1454,6 +1461,7 @@ export class SlurmSimulator extends BaseSimulator {
 
   // sacct - Job accounting
   executeSacct(parsed: ParsedCommand, _context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       return (

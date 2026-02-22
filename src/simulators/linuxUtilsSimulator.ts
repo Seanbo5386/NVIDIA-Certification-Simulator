@@ -66,6 +66,7 @@ export class LinuxUtilsSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (!parsed?.flags) {
       return this.createSuccess("");
     }

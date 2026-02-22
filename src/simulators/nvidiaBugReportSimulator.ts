@@ -37,6 +37,7 @@ export class NvidiaBugReportSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle help
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return this.showHelp();

@@ -463,13 +463,16 @@ describe("StorageSimulator", () => {
     });
 
     describe("lfs help", () => {
-      it("should show available lfs commands", () => {
+      it("should show available lfs commands from registry", async () => {
+        await simulator["initializeDefinitionRegistry"]();
+
         const parsed = parse("lfs help");
         const result = simulator.execute(parsed, context);
 
         expect(result.exitCode).toBe(0);
+        expect(result.output).toContain("lfs");
         expect(result.output).toContain("df");
-        expect(result.output).toContain("check servers");
+        expect(result.output).toContain("check");
         expect(result.output).toContain("getstripe");
         expect(result.output).toContain("setstripe");
       });

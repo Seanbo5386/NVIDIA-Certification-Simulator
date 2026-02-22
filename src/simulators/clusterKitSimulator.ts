@@ -49,6 +49,7 @@ export class ClusterKitSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle global flags
     if (this.hasAnyFlag(parsed, ["version", "v"])) {
       return this.handleVersion();

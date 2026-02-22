@@ -57,6 +57,7 @@ export class NvlinkAuditSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --version flag
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
       return this.handleVersion();

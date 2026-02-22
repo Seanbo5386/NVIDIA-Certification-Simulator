@@ -98,6 +98,7 @@ export class ContainerSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --version flag at root level
     if (this.hasAnyFlag(parsed, ["version", "v"])) {
       return this.handleVersion();
@@ -368,7 +369,7 @@ Server: Docker Engine - Community
     }
 
     if (command === "pull") {
-      const image = parsed.positionalArgs[0];
+      const image = parsed.positionalArgs[0] || parsed.subcommands[1];
 
       if (!image) {
         return this.createError("Error: Image name not specified");
@@ -461,7 +462,7 @@ Server: Docker Engine - Community
         }
 
         if (action === "pull") {
-          const image = parsed.positionalArgs[0];
+          const image = parsed.positionalArgs[0] || parsed.subcommands[3];
 
           if (!image) {
             return this.createError("Error: Image name not specified");
@@ -531,7 +532,7 @@ Server: Docker Engine - Community
     const command = parsed.subcommands[0];
 
     if (command === "import") {
-      const source = parsed.positionalArgs[0];
+      const source = parsed.positionalArgs[0] || parsed.subcommands[1];
 
       if (!source) {
         return this.createError("Error: Source not specified");
@@ -546,7 +547,7 @@ Server: Docker Engine - Community
     }
 
     if (command === "create") {
-      const image = parsed.positionalArgs[0];
+      const image = parsed.positionalArgs[0] || parsed.subcommands[1];
 
       if (!image) {
         return this.createError("Error: Image not specified");
@@ -569,7 +570,7 @@ Server: Docker Engine - Community
     }
 
     if (command === "start") {
-      const container = parsed.positionalArgs[0];
+      const container = parsed.positionalArgs[0] || parsed.subcommands[1];
 
       if (!container) {
         return this.createError("Error: Container not specified");

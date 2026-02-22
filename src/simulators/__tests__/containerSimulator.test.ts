@@ -249,17 +249,13 @@ describe("ContainerSimulator", () => {
 
     describe("docker pull", () => {
       it("should pull image successfully", () => {
-        // Parser treats 'ubuntu:22.04' as subcommand, not positionalArg when no flags
-        // Need to simulate what the actual command structure looks like
         const parsed = parse("docker pull ubuntu:22.04");
-        // The parser puts 'ubuntu:22.04' in subcommands, but the simulator reads from positionalArgs
-        // So we need to check the actual behavior
         const result = simulator.execute(parsed, context);
 
-        // The simulator reads image from positionalArgs[0], which is empty here
-        // So this will fail with "Image name not specified"
-        expect(result.exitCode).toBe(1);
-        expect(result.output).toContain("Image name not specified");
+        expect(result.exitCode).toBe(0);
+        expect(result.output).toContain("Pulling ubuntu:22.04");
+        expect(result.output).toContain("100%");
+        expect(result.output).toContain("Downloaded newer image");
       });
 
       it("should require image name", () => {
@@ -271,9 +267,8 @@ describe("ContainerSimulator", () => {
       });
 
       it("should pull image with manual positionalArg setup", () => {
-        // Manually set up parsed command as the simulator expects it
-        const parsed = parse("docker pull");
-        parsed.positionalArgs = ["ubuntu:22.04"];
+        // Use full command string so parseWithSchema can re-parse correctly
+        const parsed = parse("docker pull ubuntu:22.04");
         const result = simulator.execute(parsed, context);
 
         expect(result.exitCode).toBe(0);
@@ -406,10 +401,8 @@ describe("ContainerSimulator", () => {
       });
 
       it("should pull image from NGC with manual positionalArg", () => {
-        // Parser puts the image name in subcommands, not positionalArgs
-        // Manually set up as expected by the simulator
-        const parsed = parse("ngc registry image pull");
-        parsed.positionalArgs = ["nvcr.io/nvidia/pytorch:24.01-py3"];
+        // Use full command string so parseWithSchema can re-parse correctly
+        const parsed = parse("ngc registry image pull nvcr.io/nvidia/pytorch:24.01-py3");
         const result = simulator.execute(parsed, context);
 
         expect(result.exitCode).toBe(0);
@@ -499,9 +492,8 @@ describe("ContainerSimulator", () => {
   describe("Enroot Commands", () => {
     describe("enroot import", () => {
       it("should import docker image with manual positionalArg", () => {
-        // Parser puts source in subcommands, not positionalArgs
-        const parsed = parse("enroot import");
-        parsed.positionalArgs = ["docker://nvidia/cuda:12.4.0-base"];
+        // Use full command string so parseWithSchema can re-parse correctly
+        const parsed = parse("enroot import docker://nvidia/cuda:12.4.0-base");
         const result = simulator.execute(parsed, context);
 
         expect(result.exitCode).toBe(0);
@@ -523,9 +515,8 @@ describe("ContainerSimulator", () => {
 
     describe("enroot create", () => {
       it("should create container from image with manual positionalArg", () => {
-        // Parser puts image in subcommands, not positionalArgs
-        const parsed = parse("enroot create");
-        parsed.positionalArgs = ["pytorch-image.sqsh"];
+        // Use full command string so parseWithSchema can re-parse correctly
+        const parsed = parse("enroot create pytorch-image.sqsh");
         const result = simulator.execute(parsed, context);
 
         expect(result.exitCode).toBe(0);
@@ -556,9 +547,8 @@ describe("ContainerSimulator", () => {
 
     describe("enroot start", () => {
       it("should start container with manual positionalArg", () => {
-        // Parser puts container name in subcommands, not positionalArgs
-        const parsed = parse("enroot start");
-        parsed.positionalArgs = ["my-container"];
+        // Use full command string so parseWithSchema can re-parse correctly
+        const parsed = parse("enroot start my-container");
         const result = simulator.execute(parsed, context);
 
         expect(result.exitCode).toBe(0);

@@ -61,6 +61,7 @@ export class StorageSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["version", "v"])) {
       return this.handleVersion();
     }
@@ -289,16 +290,7 @@ All Lustre servers are responding
       }
 
       case "help": {
-        return this.createSuccess(`Usage: lfs <command> [options]
-
-Available commands:
-  df [-h]           Show Lustre filesystem disk space usage
-  check servers     Check Lustre server connectivity
-  getstripe <file>  Get striping information for a file
-  setstripe <file>  Set striping pattern for a file
-
-For more information: man lfs
-`);
+        return this.getHelpFromRegistry("lfs", parsed) || this.handleHelp();
       }
 
       case "getstripe": {
