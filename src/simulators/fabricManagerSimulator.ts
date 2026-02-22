@@ -59,6 +59,7 @@ export class FabricManagerSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Main command handler
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return this.showHelp();

@@ -488,10 +488,8 @@ describe("BcmSimulator", () => {
     });
 
     it("should return error for unknown base tool", () => {
-      // Simulate a parsed command with baseCommand 'unknown-tool'
-      const parsed = parse("bcm-node list");
-      // Override baseCommand to test unknown tool
-      parsed.baseCommand = "unknown-tool";
+      // Use full command string so parseWithSchema can re-parse correctly
+      const parsed = parse("unknown-tool list");
       const result = simulator.execute(parsed, context);
 
       expect(result.exitCode).not.toBe(0);

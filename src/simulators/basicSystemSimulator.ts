@@ -157,6 +157,7 @@ export class BasicSystemSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle empty/invalid parsed commands
     if (!parsed?.flags) {
       return this.createSuccess("");

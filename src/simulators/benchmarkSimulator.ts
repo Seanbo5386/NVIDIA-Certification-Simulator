@@ -238,6 +238,7 @@ export class BenchmarkSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["version", "v"])) {
       return this.handleVersion();
     }

@@ -339,6 +339,7 @@ export class CmshSimulator extends BaseSimulator {
    * Main execute method - handles both interactive and non-interactive modes
    */
   execute(parsed: ParsedCommand, _context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --help flag
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       let output = "Cluster Management Shell (cmsh)\n\n";

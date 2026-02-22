@@ -462,9 +462,7 @@ describe("BenchmarkSimulator", () => {
     });
 
     it("should wrap HPL output when executable is hpl", () => {
-      const parsed = parse("mpirun");
-      parsed.flags.set("np", "8");
-      parsed.positionalArgs = ["./hpl"];
+      const parsed = parse("mpirun -np 8 ./hpl");
       const result = simulator.execute(parsed, context);
 
       expect(result.exitCode).toBe(0);
@@ -475,10 +473,7 @@ describe("BenchmarkSimulator", () => {
     });
 
     it("should show hosts when -H flag is provided", () => {
-      const parsed = parse("mpirun");
-      parsed.flags.set("np", "16");
-      parsed.flags.set("H", "node1,node2");
-      parsed.positionalArgs = ["all_reduce_perf"];
+      const parsed = parse("mpirun -np 16 -H node1,node2 all_reduce_perf");
       const result = simulator.execute(parsed, context);
 
       expect(result.exitCode).toBe(0);
@@ -486,9 +481,7 @@ describe("BenchmarkSimulator", () => {
     });
 
     it("should handle generic wrapped command", () => {
-      const parsed = parse("mpirun");
-      parsed.flags.set("np", "4");
-      parsed.positionalArgs = ["my_benchmark"];
+      const parsed = parse("mpirun -np 4 my_benchmark");
       const result = simulator.execute(parsed, context);
 
       expect(result.exitCode).toBe(0);
@@ -498,10 +491,7 @@ describe("BenchmarkSimulator", () => {
     });
 
     it("should match validation patterns for NCCL scenario", () => {
-      const parsed = parse("mpirun");
-      parsed.flags.set("np", "16");
-      parsed.flags.set("H", "node1,node2");
-      parsed.positionalArgs = ["all_reduce_perf"];
+      const parsed = parse("mpirun -np 16 -H node1,node2 all_reduce_perf");
       const result = simulator.execute(parsed, context);
 
       expect(result.exitCode).toBe(0);
@@ -510,9 +500,7 @@ describe("BenchmarkSimulator", () => {
     });
 
     it("should match validation patterns for HPL scenario", () => {
-      const parsed = parse("mpirun");
-      parsed.flags.set("np", "8");
-      parsed.positionalArgs = ["./hpl"];
+      const parsed = parse("mpirun -np 8 ./hpl");
       const result = simulator.execute(parsed, context);
 
       expect(result.exitCode).toBe(0);

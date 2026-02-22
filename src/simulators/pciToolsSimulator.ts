@@ -80,6 +80,7 @@ export class PciToolsSimulator extends BaseSimulator {
   }
 
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --version flag
     if (this.hasAnyFlag(parsed, ["version"])) {
       return this.handleVersion();

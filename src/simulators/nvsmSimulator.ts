@@ -607,6 +607,7 @@ export class NvsmSimulator extends BaseSimulator {
    * Main execute method - handles both interactive and non-interactive modes
    */
   execute(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     // Handle --help flag
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       let output = "NVIDIA System Management (NVSM) v24.03\n\n";
