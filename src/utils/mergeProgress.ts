@@ -82,7 +82,7 @@ function mergeRecordByField<T>(
 
 /**
  * Union two arrays of objects by a key field, capping at maxItems.
- * When both have an entry with the same key, later entry wins.
+ * When both have an entry with the same key, the first source (local) wins.
  */
 function unionByKey<T>(
   a: T[] | undefined,

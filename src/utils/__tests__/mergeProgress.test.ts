@@ -96,6 +96,37 @@ describe("mergeLearningProgress", () => {
     expect(result.reviewSchedule["gpu-monitoring"].nextReviewDate).toBe(2000);
   });
 
+  it("takes higher score per family quiz and ORs passed", () => {
+    const local = {
+      familyQuizScores: {
+        "gpu-monitoring": { passed: false, score: 70, attempts: 1 },
+      },
+    };
+    const cloud = {
+      familyQuizScores: {
+        "gpu-monitoring": { passed: true, score: 60, attempts: 2 },
+      },
+    };
+    const result = mergeLearningProgress(local, cloud);
+    expect(result.familyQuizScores["gpu-monitoring"].score).toBe(70);
+    expect(result.familyQuizScores["gpu-monitoring"].passed).toBe(true);
+  });
+
+  it("takes passed=true for explanation gates", () => {
+    const local = {
+      explanationGateResults: {
+        "gate-1": { passed: false, scenarioId: "s1" },
+      },
+    };
+    const cloud = {
+      explanationGateResults: {
+        "gate-1": { passed: true, scenarioId: "s1" },
+      },
+    };
+    const result = mergeLearningProgress(local, cloud);
+    expect(result.explanationGateResults["gate-1"].passed).toBe(true);
+  });
+
   it("unions toolsUsed per family", () => {
     const local = {
       toolsUsed: { "gpu-monitoring": ["nvidia-smi", "nvtop"] },
@@ -160,6 +191,75 @@ describe("mergeLearningData", () => {
     const cloud = { totalSessions: 10 };
     const result = mergeLearningData(local, cloud);
     expect(result.totalSessions).toBe(15);
+  });
+
+  it("takes higher questionsCorrect per domain", () => {
+    const local = {
+      domainProgress: {
+        domain1: {
+          domainId: "domain1",
+          questionsCorrect: 10,
+          questionsAttempted: 15,
+        },
+      },
+    };
+    const cloud = {
+      domainProgress: {
+        domain1: {
+          domainId: "domain1",
+          questionsCorrect: 15,
+          questionsAttempted: 20,
+        },
+      },
+    };
+    const result = mergeLearningData(local, cloud);
+    expect(result.domainProgress["domain1"].questionsCorrect).toBe(15);
+  });
+
+  it("unions sessionHistory by id and caps at 100", () => {
+    const local = {
+      sessionHistory: [
+        { id: "s1", mode: "practice" },
+        { id: "s2", mode: "exam" },
+      ],
+    };
+    const cloud = {
+      sessionHistory: [
+        { id: "s2", mode: "exam" },
+        { id: "s3", mode: "review" },
+      ],
+    };
+    const result = mergeLearningData(local, cloud);
+    expect(result.sessionHistory).toHaveLength(3);
+    expect(result.sessionHistory.map((s: { id: string }) => s.id)).toEqual(
+      expect.arrayContaining(["s1", "s2", "s3"]),
+    );
+  });
+
+  it("takes later lastStudyDate", () => {
+    const local = { lastStudyDate: "2026-02-20" };
+    const cloud = { lastStudyDate: "2026-02-21" };
+    const result = mergeLearningData(local, cloud);
+    expect(result.lastStudyDate).toBe("2026-02-21");
+  });
+
+  it("unions examAttempts by timestamp and caps at 20", () => {
+    const local = { examAttempts: [{ timestamp: 1000, score: 80 }] };
+    const cloud = {
+      examAttempts: [
+        { timestamp: 2000, score: 90 },
+        { timestamp: 1000, score: 80 },
+      ],
+    };
+    const result = mergeLearningData(local, cloud);
+    expect(result.examAttempts).toHaveLength(2);
+  });
+
+  it("unions gauntletAttempts by timestamp and caps at 50", () => {
+    const local = { gauntletAttempts: [{ timestamp: 1000, score: 70 }] };
+    const cloud = { gauntletAttempts: [{ timestamp: 2000, score: 85 }] };
+    const result = mergeLearningData(local, cloud);
+    expect(result.gauntletAttempts).toHaveLength(2);
   });
 
   it("unions achievements", () => {
