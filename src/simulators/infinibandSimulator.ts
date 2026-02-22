@@ -58,6 +58,7 @@ export class InfiniBandSimulator extends BaseSimulator {
    * ibstat - Display HCA status
    */
   executeIbstat(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ibstat", parsed) ||
@@ -121,6 +122,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ibportstate", parsed) ||
@@ -156,6 +158,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ibporterrors", parsed) ||
@@ -207,6 +210,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("iblinkinfo", parsed) ||
@@ -258,6 +262,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("perfquery", parsed) ||
@@ -325,6 +330,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ibdiagnet", parsed) ||
@@ -410,6 +416,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ibnetdiscover", parsed) ||
@@ -533,6 +540,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ibdev2netdev", parsed) ||
@@ -576,6 +584,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ibhosts", parsed) ||
@@ -614,6 +623,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ibswitches", parsed) ||
@@ -668,6 +678,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ibcableerrors", parsed) ||
@@ -723,6 +734,7 @@ Options:
    * ibping - Ping an InfiniBand port by LID or GUID
    */
   executeIbping(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ibping", parsed) ||
@@ -778,6 +790,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ibtracert", parsed) ||
@@ -835,6 +848,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ib_write_bw", parsed) ||
@@ -891,6 +905,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ib_read_bw", parsed) ||
@@ -944,6 +959,7 @@ Options:
    * sminfo - Display Subnet Manager information
    */
   executeSminfo(parsed: ParsedCommand, context: CommandContext): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("sminfo", parsed) ||
@@ -981,6 +997,7 @@ Options:
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("smpquery", parsed) ||
@@ -1062,6 +1079,7 @@ Options:
     parsed: ParsedCommand,
     _context: CommandContext,
   ): CommandResult {
+    parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
       return (
         this.getHelpFromRegistry("ofed_info", parsed) ||
