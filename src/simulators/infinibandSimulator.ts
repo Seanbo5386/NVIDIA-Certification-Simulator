@@ -60,17 +60,7 @@ export class InfiniBandSimulator extends BaseSimulator {
   executeIbstat(parsed: ParsedCommand, context: CommandContext): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("ibstat", parsed) ||
-        this.createSuccess(`Usage: ibstat [options] [<ca_name>] [portnum]
-Options:
-  -d, --debug          increase debug level
-  -l, --list_of_cas    list all CA names
-  -s, --short          short output
-  -p, --port_list      show port list
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("ibstat", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -124,14 +114,7 @@ Options:
   ): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("ibportstate", parsed) ||
-        this.createSuccess(`Usage: ibportstate [options] <lid|guid> <portnum>
-Options:
-  -d, --debug          increase debug level
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("ibportstate", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -212,16 +195,7 @@ Options:
   ): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("iblinkinfo", parsed) ||
-        this.createSuccess(`Usage: iblinkinfo [options]
-Options:
-  -v, --verbose        verbose output
-  -l, --line           line format
-  -R, --GNDN           include switches with no link down
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("iblinkinfo", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -264,17 +238,7 @@ Options:
   ): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("perfquery", parsed) ||
-        this
-          .createSuccess(`Usage: perfquery [options] [<lid|guid> [[port(s)] [reset_mask]]]
-Options:
-  -x, --extended       extended counters
-  -X, --xmtsl          transmit data
-  -r, --reset          reset after read
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("perfquery", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -332,19 +296,7 @@ Options:
   ): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("ibdiagnet", parsed) ||
-        this.createSuccess(`Usage: ibdiagnet [options]
-Options:
-  -o, --output <dir>   output directory
-  -t, --topo <file>    topology file
-  -p, --port <num>     port number
-  --skip <checks>      skip specific checks
-  --detailed           show detailed signal quality metrics
-  --signal-quality     show signal quality metrics
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("ibdiagnet", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -418,21 +370,7 @@ Options:
   ): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("ibnetdiscover", parsed) ||
-        this.createSuccess(`Usage: ibnetdiscover [options]
-Options:
-  -l, --list           list of connected endpoints
-  -g, --grouping       group by switch
-  -s, --switch <lid>   show only switch with specified lid
-  -H, --Hca_list       list of HCAs only
-  -S, --Switch_list    list of switches only
-  -p, --ports          show port connections
-  -R, --GNDN           show all nodes (including those with no desc)
-  -o, --output <file>  output to file
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("ibnetdiscover", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -586,15 +524,7 @@ Options:
   ): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("ibhosts", parsed) ||
-        this.createSuccess(`Usage: ibhosts [options]
-Options:
-  -C, --Ca <ca>        CA name to use
-  -P, --Port <port>    port number to use
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("ibhosts", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -625,15 +555,7 @@ Options:
   ): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("ibswitches", parsed) ||
-        this.createSuccess(`Usage: ibswitches [options]
-Options:
-  -C, --Ca <ca>        CA name to use
-  -P, --Port <port>    port number to use
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("ibswitches", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -736,18 +658,7 @@ Options:
   executeIbping(parsed: ParsedCommand, context: CommandContext): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("ibping", parsed) ||
-        this.createSuccess(`Usage: ibping [options] -L <lid> | -G <guid>
-Options:
-  -L, --Lid <lid>      destination LID
-  -G, --Guid <guid>    destination GUID
-  -c, --count <n>      number of pings (default 5)
-  -f, --flood          flood ping
-  -S, --Server         start as server
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("ibping", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -792,16 +703,7 @@ Options:
   ): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("ibtracert", parsed) ||
-        this.createSuccess(`Usage: ibtracert [options] <src-lid> <dest-lid>
-Options:
-  -n, --no-resolve     don't resolve names
-  -m, --mlid <mlid>    multicast LID
-  -f, --force          force route
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("ibtracert", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -850,18 +752,7 @@ Options:
   ): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("ib_write_bw", parsed) ||
-        this.createSuccess(`Usage: ib_write_bw [options] [server]
-Options:
-  -d, --ib-dev <dev>   IB device
-  -s, --size <size>    message size (default 65536)
-  -n, --iters <n>      number of iterations (default 1000)
-  -b, --bidirectional  bidirectional test
-  -D, --duration <s>   run duration in seconds
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("ib_write_bw", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -907,18 +798,7 @@ Options:
   ): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("ib_read_bw", parsed) ||
-        this.createSuccess(`Usage: ib_read_bw [options] [server]
-Options:
-  -d, --ib-dev <dev>   IB device
-  -s, --size <size>    message size (default 65536)
-  -n, --iters <n>      number of iterations (default 1000)
-  -b, --bidirectional  bidirectional test
-  -D, --duration <s>   run duration in seconds
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("ib_read_bw", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -961,16 +841,7 @@ Options:
   executeSminfo(parsed: ParsedCommand, context: CommandContext): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("sminfo", parsed) ||
-        this.createSuccess(`Usage: sminfo [options] [<lid> [<port>]]
-Options:
-  -C, --Ca <ca>        CA name to use
-  -P, --Port <port>    port number to use
-  -s, --state          show SM state only
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("sminfo", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
@@ -999,23 +870,7 @@ Options:
   ): CommandResult {
     parsed = this.parseWithSchema(parsed.raw);
     if (this.hasAnyFlag(parsed, ["help", "h"])) {
-      return (
-        this.getHelpFromRegistry("smpquery", parsed) ||
-        this.createSuccess(`Usage: smpquery [options] <op> <lid> [port]
-Operations:
-  nodeinfo         Node information
-  nodedesc         Node description
-  portinfo         Port information
-  switchinfo       Switch information
-  pkeytable        P_Key table
-  sl2vl            SL to VL mapping table
-  vlarbitration    VL arbitration table
-Options:
-  -C, --Ca <ca>        CA name to use
-  -P, --Port <port>    port number to use
-  -V, --version        show version
-  -h, --help           show this help`)
-      );
+      return this.getHelpFromRegistry("smpquery", parsed) || this.handleHelp();
     }
 
     if (this.hasAnyFlag(parsed, ["version", "V"])) {
