@@ -38,10 +38,19 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
     setError("");
     setLoading(true);
     try {
-      await signIn({ username: email, password });
-      setAuthView("closed");
-      setEmail("");
-      setPassword("");
+      const { isSignedIn, nextStep } = await signIn({
+        username: email,
+        password,
+      });
+      if (isSignedIn) {
+        setAuthView("closed");
+        setEmail("");
+        setPassword("");
+      } else if (nextStep?.signInStep === "CONFIRM_SIGN_UP") {
+        setAuthView("confirm");
+      } else {
+        setError("Additional verification required.");
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Sign in failed");
     } finally {
@@ -69,11 +78,17 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
     setLoading(true);
     try {
       await confirmSignUp({ username: email, confirmationCode: confirmCode });
-      await signIn({ username: email, password });
-      setAuthView("closed");
-      setEmail("");
-      setPassword("");
-      setConfirmCode("");
+      const { isSignedIn } = await signIn({ username: email, password });
+      if (isSignedIn) {
+        setAuthView("closed");
+        setEmail("");
+        setPassword("");
+        setConfirmCode("");
+      } else {
+        setError(
+          "Sign in failed after verification. Please try signing in again.",
+        );
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Confirmation failed");
     } finally {
