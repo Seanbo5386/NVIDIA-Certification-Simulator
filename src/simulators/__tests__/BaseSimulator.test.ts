@@ -681,7 +681,7 @@ describe("BaseSimulator", () => {
 
     it("should return error CommandResult when sync handler throws a non-Error", () => {
       const handler: CommandHandler = () => {
-        throw "string error"; // eslint-disable-line no-throw-literal
+        throw "string error";
       };
 
       const result = safeSim.testSafeExecute(
