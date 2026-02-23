@@ -181,6 +181,7 @@ A tiered progression system built on spaced repetition:
 
 - Node.js 18+ and npm
 - Modern web browser (Chrome, Firefox, Edge, Safari)
+- **Screen size**: Designed for desktop viewports (1280px+ wide). Smaller screens and mobile devices may experience layout issues.
 
 ### Installation
 

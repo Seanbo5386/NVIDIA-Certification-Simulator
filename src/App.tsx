@@ -28,6 +28,7 @@ import {
   RotateCcw,
   HelpCircle,
   Info,
+  X,
 } from "lucide-react";
 import { SpotlightTour } from "./components/SpotlightTour";
 import { TOUR_STEPS, type TourId } from "./data/tourSteps";
@@ -54,6 +55,7 @@ function App() {
   );
   const [examMode, setExamMode] = useState<string | undefined>(undefined);
   const [activeTour, setActiveTour] = useState<TourId | null>(null);
+  const [smallScreenDismissed, setSmallScreenDismissed] = useState(false);
 
   const { syncStatus, isLoggedIn } = useCloudSync();
   const [userEmail, setUserEmail] = useState<string>();
@@ -176,6 +178,23 @@ function App() {
       >
         Skip to main content
       </a>
+
+      {/* Small screen warning */}
+      {!smallScreenDismissed && (
+        <div className="xl:hidden bg-yellow-900/80 border-b border-yellow-700 px-4 py-2 flex items-center justify-between text-xs text-yellow-200 flex-shrink-0">
+          <span>
+            Best experienced on a desktop (1280px+). Some layouts may not
+            display correctly on smaller screens.
+          </span>
+          <button
+            onClick={() => setSmallScreenDismissed(true)}
+            className="ml-3 p-0.5 hover:text-white flex-shrink-0"
+            aria-label="Dismiss screen size warning"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Header + Nav scrollable wrapper */}
       <div
