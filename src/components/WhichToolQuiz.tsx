@@ -5,8 +5,7 @@
  * to unlock tiered scenarios for a command family.
  */
 
-import React, { useState, useMemo, useCallback } from "react";
-import quizQuestionsData from "../data/quizQuestions.json";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import type {
   QuizQuestion,
   QuizQuestionsData,
@@ -46,16 +45,31 @@ export const WhichToolQuiz: React.FC<WhichToolQuizProps> = ({
   onComplete,
   onClose,
 }) => {
+  // Dynamically loaded quiz data
+  const [quizQuestionsData, setQuizQuestionsData] =
+    useState<QuizQuestionsData | null>(null);
+
+  useEffect(() => {
+    import("../data/quizQuestions.json").then((m) =>
+      setQuizQuestionsData(m.default as QuizQuestionsData),
+    );
+  }, []);
+
   // All questions for this family (unshuffled pool)
   const allFamilyQuestions = useMemo(() => {
-    const data = quizQuestionsData as QuizQuestionsData;
-    return data.questions.filter((q) => q.familyId === familyId);
-  }, [familyId]);
+    if (!quizQuestionsData) return [];
+    return quizQuestionsData.questions.filter((q) => q.familyId === familyId);
+  }, [familyId, quizQuestionsData]);
 
   // Shuffled subset for this quiz session
-  const [questions, setQuestions] = useState<QuizQuestion[]>(() =>
-    shuffleArray(allFamilyQuestions).slice(0, TOTAL_QUESTIONS),
-  );
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+
+  // Initialize questions once data loads
+  useEffect(() => {
+    if (allFamilyQuestions.length > 0 && questions.length === 0) {
+      setQuestions(shuffleArray(allFamilyQuestions).slice(0, TOTAL_QUESTIONS));
+    }
+  }, [allFamilyQuestions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Quiz state
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -409,8 +423,19 @@ export const WhichToolQuiz: React.FC<WhichToolQuizProps> = ({
     );
   };
 
+  // Loading state while JSON is fetched
+  if (!quizQuestionsData) {
+    return (
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="bg-gray-900 rounded-lg p-8 max-w-lg w-full text-center">
+          <p className="text-gray-400">Loading quiz...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Handle empty questions case
-  if (questions.length === 0) {
+  if (questions.length === 0 && allFamilyQuestions.length === 0) {
     return (
       <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
         <div className="bg-gray-900 rounded-lg p-8 max-w-lg w-full text-center">

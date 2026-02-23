@@ -3,7 +3,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { WhichToolQuiz } from "../WhichToolQuiz";
 
 // Mock the quiz questions data
@@ -111,6 +117,19 @@ vi.mock("../../data/quizQuestions.json", () => ({
   },
 }));
 
+// Helper to render and wait for async JSON to load
+async function renderAndWaitForLoad(
+  props: React.ComponentProps<typeof WhichToolQuiz>,
+) {
+  await act(async () => {
+    render(<WhichToolQuiz {...props} />);
+  });
+  // Wait for the loading state to disappear
+  await waitFor(() => {
+    expect(screen.queryByText("Loading quiz...")).not.toBeInTheDocument();
+  });
+}
+
 describe("WhichToolQuiz", () => {
   const mockOnComplete = vi.fn();
   const mockOnClose = vi.fn();
@@ -126,42 +145,36 @@ describe("WhichToolQuiz", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders quiz for the specified family", () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+  it("renders quiz for the specified family", async () => {
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     expect(screen.getByText("Tool Selection Quiz")).toBeInTheDocument();
     expect(screen.getByText("Question 1 of 4")).toBeInTheDocument();
     expect(screen.getByText(/check GPU memory usage/)).toBeInTheDocument();
   });
 
-  it("shows empty state for family with no questions", () => {
-    render(
-      <WhichToolQuiz
-        familyId="unknown-family"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+  it("shows empty state for family with no questions", async () => {
+    await renderAndWaitForLoad({
+      familyId: "unknown-family",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     expect(
       screen.getByText("No quiz questions available for this tool family."),
     ).toBeInTheDocument();
   });
 
-  it("allows selecting an answer", () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+  it("allows selecting an answer", async () => {
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     const nvidiaSmiButton = screen.getByRole("button", { name: /nvidia-smi/i });
     fireEvent.click(nvidiaSmiButton);
@@ -170,27 +183,23 @@ describe("WhichToolQuiz", () => {
     expect(nvidiaSmiButton).toHaveClass("border-nvidia-green");
   });
 
-  it("disables submit button when no answer selected", () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+  it("disables submit button when no answer selected", async () => {
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     const submitButton = screen.getByRole("button", { name: /submit answer/i });
     expect(submitButton).toBeDisabled();
   });
 
-  it("enables submit button when answer is selected", () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+  it("enables submit button when answer is selected", async () => {
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     const nvidiaSmiButton = screen.getByRole("button", { name: /nvidia-smi/i });
     fireEvent.click(nvidiaSmiButton);
@@ -200,13 +209,11 @@ describe("WhichToolQuiz", () => {
   });
 
   it("shows feedback after submitting correct answer", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Select correct answer
     const nvidiaSmiButton = screen.getByRole("button", { name: /nvidia-smi/i });
@@ -223,13 +230,11 @@ describe("WhichToolQuiz", () => {
   });
 
   it("shows feedback after submitting incorrect answer", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Select incorrect answer
     const ipmitoolButton = screen.getByRole("button", { name: /ipmitool/i });
@@ -247,13 +252,11 @@ describe("WhichToolQuiz", () => {
   });
 
   it("shows explanation in feedback", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Select and submit answer
     const nvidiaSmiButton = screen.getByRole("button", { name: /nvidia-smi/i });
@@ -271,13 +274,11 @@ describe("WhichToolQuiz", () => {
   });
 
   it("shows why not others in feedback", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Select and submit answer
     const nvidiaSmiButton = screen.getByRole("button", { name: /nvidia-smi/i });
@@ -293,13 +294,11 @@ describe("WhichToolQuiz", () => {
   });
 
   it("progresses to next question", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer first question
     const nvidiaSmiButton = screen.getByRole("button", { name: /nvidia-smi/i });
@@ -322,13 +321,11 @@ describe("WhichToolQuiz", () => {
   });
 
   it("shows results after all questions", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer all 4 questions
     for (let i = 0; i < 4; i++) {
@@ -371,14 +368,12 @@ describe("WhichToolQuiz", () => {
     });
   });
 
-  it("calls onClose when close button is clicked", () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+  it("calls onClose when close button is clicked", async () => {
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     const closeButton = screen.getByRole("button", { name: /×/i });
     fireEvent.click(closeButton);
@@ -387,13 +382,11 @@ describe("WhichToolQuiz", () => {
   });
 
   it("tracks score correctly", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer first question correctly
     const nvidiaSmiButton = screen.getByRole("button", { name: /nvidia-smi/i });
@@ -428,13 +421,11 @@ describe("WhichToolQuiz - Pass/Fail Logic", () => {
   });
 
   it("shows pass message when 3/4 correct", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer 4 questions - need to get at least 3 correct
     // Q1: nvidia-smi (correct)
@@ -472,13 +463,11 @@ describe("WhichToolQuiz - Pass/Fail Logic", () => {
   });
 
   it("shows fail message when less than 3/4 correct", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer all questions incorrectly
     for (let i = 0; i < 4; i++) {
@@ -522,13 +511,11 @@ describe("WhichToolQuiz - Pass/Fail Logic", () => {
   });
 
   it("shows retry button when quiz failed", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer all questions incorrectly to fail
     for (let i = 0; i < 4; i++) {
@@ -573,13 +560,11 @@ describe("WhichToolQuiz - Pass/Fail Logic", () => {
   });
 
   it("calls onComplete with correct values when quiz finishes", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer all questions correctly
     // Q1: nvidia-smi (correct)
