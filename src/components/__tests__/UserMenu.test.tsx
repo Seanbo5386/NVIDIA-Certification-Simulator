@@ -298,4 +298,18 @@ describe("UserMenu", () => {
     fireEvent.click(screen.getByTestId("icon-LogIn"));
     expect(screen.queryByPlaceholderText("Email")).not.toBeInTheDocument();
   });
+
+  it("clears password field when dropdown is closed", () => {
+    render(<UserMenu isLoggedIn={false} syncStatus="idle" />);
+    fireEvent.click(screen.getByText("Sign in"));
+    fireEvent.change(screen.getByPlaceholderText("Password"), {
+      target: { value: "secretpass" },
+    });
+    expect(screen.getByPlaceholderText("Password")).toHaveValue("secretpass");
+    // Close by toggling
+    fireEvent.click(screen.getByTestId("icon-LogIn"));
+    // Re-open
+    fireEvent.click(screen.getByTestId("icon-LogIn"));
+    expect(screen.getByPlaceholderText("Password")).toHaveValue("");
+  });
 });

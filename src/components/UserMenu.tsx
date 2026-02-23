@@ -62,6 +62,11 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
         buttonRef.current &&
         !buttonRef.current.contains(e.target as Node)
       ) {
+        setEmail("");
+        setPassword("");
+        setConfirmCode("");
+        setError("");
+        setPasswordErrors([]);
         setAuthView("closed");
       }
     };
@@ -179,7 +184,18 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
     <div className="relative">
       <button
         ref={buttonRef}
-        onClick={() => setAuthView(authView === "closed" ? "signIn" : "closed")}
+        onClick={() => {
+          if (authView !== "closed") {
+            setEmail("");
+            setPassword("");
+            setConfirmCode("");
+            setError("");
+            setPasswordErrors([]);
+            setAuthView("closed");
+          } else {
+            setAuthView("signIn");
+          }
+        }}
         className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors px-2 py-1 rounded hover:bg-gray-700"
       >
         <LogIn className="w-4 h-4" />
