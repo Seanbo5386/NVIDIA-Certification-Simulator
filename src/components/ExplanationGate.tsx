@@ -6,9 +6,8 @@
  * to help them understand why a particular tool is better for the task.
  */
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { CheckCircle, XCircle, AlertCircle, Lightbulb } from "lucide-react";
-import explanationGatesData from "../data/explanationGates.json";
 import { useLearningProgressStore } from "../store/learningProgressStore";
 
 // ============================================================================
@@ -49,11 +48,23 @@ export const ExplanationGate: React.FC<ExplanationGateProps> = ({
   onComplete,
   onDismiss,
 }) => {
+  // Dynamically loaded gate data
+  const [explanationGatesData, setExplanationGatesData] =
+    useState<ExplanationGatesJson | null>(null);
+
+  useEffect(() => {
+    import("../data/explanationGates.json").then((m) =>
+      setExplanationGatesData(m.default as ExplanationGatesJson),
+    );
+  }, []);
+
   // Load gate data
   const gateData = useMemo(() => {
-    const data = explanationGatesData as ExplanationGatesJson;
-    return data.explanationGates.find((gate) => gate.id === gateId);
-  }, [gateId]);
+    if (!explanationGatesData) return undefined;
+    return explanationGatesData.explanationGates.find(
+      (gate) => gate.id === gateId,
+    );
+  }, [gateId, explanationGatesData]);
 
   // Component state
   const [gateState, setGateState] = useState<GateState>("question");
@@ -109,6 +120,17 @@ export const ExplanationGate: React.FC<ExplanationGateProps> = ({
       onDismiss();
     }
   }, [onDismiss]);
+
+  // Loading state while JSON is fetched
+  if (!explanationGatesData) {
+    return (
+      <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="bg-gray-900 rounded-lg p-8 max-w-lg w-full text-center border border-gray-700">
+          <p className="text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Handle case when gate data is not found
   if (!gateData) {

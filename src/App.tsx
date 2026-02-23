@@ -1,12 +1,34 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { SimulatorView } from "./components/SimulatorView";
-import { LabsAndScenariosView } from "./components/LabsAndScenariosView";
-import { ExamsView } from "./components/ExamsView";
-import { LabWorkspace } from "./components/LabWorkspace";
-import { ExamWorkspace } from "./components/ExamWorkspace";
 import { WelcomeScreen } from "./components/WelcomeScreen";
-import { Documentation } from "./components/Documentation";
-import { About } from "./components/About";
+
+// Lazy-loaded views (not needed on the default Simulator tab)
+const LabsAndScenariosView = lazy(() =>
+  import("./components/LabsAndScenariosView").then((m) => ({
+    default: m.LabsAndScenariosView,
+  })),
+);
+const ExamsView = lazy(() =>
+  import("./components/ExamsView").then((m) => ({ default: m.ExamsView })),
+);
+const LabWorkspace = lazy(() =>
+  import("./components/LabWorkspace").then((m) => ({
+    default: m.LabWorkspace,
+  })),
+);
+const ExamWorkspace = lazy(() =>
+  import("./components/ExamWorkspace").then((m) => ({
+    default: m.ExamWorkspace,
+  })),
+);
+const Documentation = lazy(() =>
+  import("./components/Documentation").then((m) => ({
+    default: m.Documentation,
+  })),
+);
+const About = lazy(() =>
+  import("./components/About").then((m) => ({ default: m.About })),
+);
 import { StudyDashboard } from "./components/StudyDashboard";
 import { SpacedReviewDrill } from "./components/SpacedReviewDrill";
 import { TierUnlockNotificationContainer } from "./components/TierUnlockNotification";
@@ -38,6 +60,12 @@ import { getCurrentUser } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
 
 type View = "simulator" | "labs" | "exams" | "reference" | "about";
+
+const ViewFallback = () => (
+  <div className="flex-1 flex items-center justify-center text-gray-500">
+    Loading...
+  </div>
+);
 
 function App() {
   const [currentView, setCurrentView] = useState<View>("simulator");
@@ -409,22 +437,24 @@ function App() {
           <SimulatorView className="flex-1 h-full" />
         )}
 
-        {currentView === "labs" && (
-          <LabsAndScenariosView onStartScenario={handleStartScenario} />
-        )}
+        <Suspense fallback={<ViewFallback />}>
+          {currentView === "labs" && (
+            <LabsAndScenariosView onStartScenario={handleStartScenario} />
+          )}
 
-        {currentView === "exams" && (
-          <ExamsView
-            onBeginExam={handleBeginExam}
-            onOpenExamGauntlet={() => setShowExamGauntlet(true)}
-            onOpenToolQuiz={handleOpenToolQuiz}
-            onOpenMasteryQuiz={handleOpenMasteryQuiz}
-          />
-        )}
+          {currentView === "exams" && (
+            <ExamsView
+              onBeginExam={handleBeginExam}
+              onOpenExamGauntlet={() => setShowExamGauntlet(true)}
+              onOpenToolQuiz={handleOpenToolQuiz}
+              onOpenMasteryQuiz={handleOpenMasteryQuiz}
+            />
+          )}
 
-        {currentView === "reference" && <Documentation />}
+          {currentView === "reference" && <Documentation />}
 
-        {currentView === "about" && <About />}
+          {currentView === "about" && <About />}
+        </Suspense>
       </main>
 
       {/* Footer */}
@@ -456,20 +486,24 @@ function App() {
       </footer>
 
       {/* Lab Workspace Overlay */}
-      {showLabWorkspace && (
-        <LabWorkspace onClose={() => setShowLabWorkspace(false)} />
-      )}
+      <Suspense fallback={null}>
+        {showLabWorkspace && (
+          <LabWorkspace onClose={() => setShowLabWorkspace(false)} />
+        )}
+      </Suspense>
 
       {/* Exam Workspace Overlay */}
-      {showExamWorkspace && (
-        <ExamWorkspace
-          mode={examMode}
-          onClose={() => {
-            setShowExamWorkspace(false);
-            setExamMode(undefined);
-          }}
-        />
-      )}
+      <Suspense fallback={null}>
+        {showExamWorkspace && (
+          <ExamWorkspace
+            mode={examMode}
+            onClose={() => {
+              setShowExamWorkspace(false);
+              setExamMode(undefined);
+            }}
+          />
+        )}
+      </Suspense>
       {/* Spotlight Tour */}
       {activeTour && !showWelcome && (
         <SpotlightTour

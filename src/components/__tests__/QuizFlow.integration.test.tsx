@@ -9,8 +9,15 @@
  * - Updating CommandFamilyCards progress
  */
 
+import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { WhichToolQuiz } from "../WhichToolQuiz";
 
 // Mock the quiz questions data with a controlled set of questions
@@ -104,6 +111,19 @@ vi.mock("../../data/quizQuestions.json", () => ({
   },
 }));
 
+// Helper to render and wait for async JSON to load
+async function renderAndWaitForLoad(
+  props: React.ComponentProps<typeof WhichToolQuiz>,
+) {
+  await act(async () => {
+    render(<WhichToolQuiz {...props} />);
+  });
+  // Wait for the loading state to disappear
+  await waitFor(() => {
+    expect(screen.queryByText("Loading quiz...")).not.toBeInTheDocument();
+  });
+}
+
 describe("Quiz Flow Integration", () => {
   const mockOnComplete = vi.fn();
   const mockOnClose = vi.fn();
@@ -120,13 +140,11 @@ describe("Quiz Flow Integration", () => {
   });
 
   it("should complete full quiz flow: start -> answer -> result", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Verify quiz started at question 1
     expect(screen.getByText("Question 1 of 4")).toBeInTheDocument();
@@ -203,13 +221,11 @@ describe("Quiz Flow Integration", () => {
   });
 
   it("should record quiz result in onComplete callback", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer all 4 questions correctly
     // Q1: nvidia-smi
@@ -255,13 +271,11 @@ describe("Quiz Flow Integration", () => {
   });
 
   it("should show failed result when score below passing threshold", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer all 4 questions incorrectly (pick wrong answers)
     for (let i = 0; i < 4; i++) {
@@ -316,13 +330,11 @@ describe("Quiz Flow Integration", () => {
   });
 
   it("should handle quiz retry correctly", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer all questions wrong to get to retry
     for (let i = 0; i < 4; i++) {
@@ -371,13 +383,11 @@ describe("Quiz Flow Integration", () => {
   });
 
   it("should show explanation feedback for incorrect answers", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer Q1 incorrectly
     fireEvent.click(screen.getByRole("button", { name: /nvtop/i }));
@@ -397,13 +407,11 @@ describe("Quiz Flow Integration", () => {
   });
 
   it("should track score correctly through multiple questions", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer Q1 correctly
     fireEvent.click(screen.getByRole("button", { name: /^nvidia-smi$/i }));
@@ -432,13 +440,11 @@ describe("Quiz Flow Integration", () => {
   });
 
   it("should show review section for missed questions", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Answer Q1 incorrectly
     fireEvent.click(screen.getByRole("button", { name: /nvtop/i }));
@@ -478,13 +484,11 @@ describe("Quiz Flow Integration", () => {
   });
 
   it("should close quiz without calling onComplete if closed early", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Verify quiz is showing
     expect(screen.getByText("Question 1 of 4")).toBeInTheDocument();
@@ -498,14 +502,12 @@ describe("Quiz Flow Integration", () => {
     expect(mockOnComplete).not.toHaveBeenCalled();
   });
 
-  it("should show no questions message for invalid family", () => {
-    render(
-      <WhichToolQuiz
-        familyId="non-existent-family"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+  it("should show no questions message for invalid family", async () => {
+    await renderAndWaitForLoad({
+      familyId: "non-existent-family",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     expect(
       screen.getByText("No quiz questions available for this tool family."),
@@ -527,13 +529,11 @@ describe("Quiz Flow Additional", () => {
   });
 
   it("should allow user to answer questions without time pressure", async () => {
-    render(
-      <WhichToolQuiz
-        familyId="gpu-monitoring"
-        onComplete={mockOnComplete}
-        onClose={mockOnClose}
-      />,
-    );
+    await renderAndWaitForLoad({
+      familyId: "gpu-monitoring",
+      onComplete: mockOnComplete,
+      onClose: mockOnClose,
+    });
 
     // Verify quiz started at Question 1
     expect(screen.getByText("Question 1 of 4")).toBeInTheDocument();

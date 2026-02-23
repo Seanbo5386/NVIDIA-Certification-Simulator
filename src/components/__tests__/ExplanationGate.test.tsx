@@ -2,8 +2,15 @@
  * ExplanationGate Component Tests
  */
 
+import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import { ExplanationGate } from "../ExplanationGate";
 
 // Mock the explanationGates.json data
@@ -56,6 +63,19 @@ vi.mock("../../store/learningProgressStore", () => ({
   ),
 }));
 
+// Helper to render and wait for async JSON to load
+async function renderAndWaitForLoad(
+  props: React.ComponentProps<typeof ExplanationGate>,
+) {
+  await act(async () => {
+    render(<ExplanationGate {...props} />);
+  });
+  // Wait for the loading state to disappear
+  await waitFor(() => {
+    expect(screen.queryByText("Loading...")).not.toBeInTheDocument();
+  });
+}
+
 describe("ExplanationGate", () => {
   const mockOnComplete = vi.fn();
   const mockOnDismiss = vi.fn();
@@ -69,13 +89,11 @@ describe("ExplanationGate", () => {
   // ============================================================================
 
   describe("Initial Render", () => {
-    it("renders the gate with question and choices", () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+    it("renders the gate with question and choices", async () => {
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       // Check title
       expect(screen.getByText("Teachable Moment")).toBeInTheDocument();
@@ -93,13 +111,11 @@ describe("ExplanationGate", () => {
       expect(screen.getByText("ipmitool sensor list")).toBeInTheDocument();
     });
 
-    it("renders choice letters A through D", () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+    it("renders choice letters A through D", async () => {
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       expect(screen.getByText("A")).toBeInTheDocument();
       expect(screen.getByText("B")).toBeInTheDocument();
@@ -107,13 +123,11 @@ describe("ExplanationGate", () => {
       expect(screen.getByText("D")).toBeInTheDocument();
     });
 
-    it("disables submit button when no answer is selected", () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+    it("disables submit button when no answer is selected", async () => {
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const submitButton = screen.getByRole("button", {
         name: /check answer/i,
@@ -121,41 +135,35 @@ describe("ExplanationGate", () => {
       expect(submitButton).toBeDisabled();
     });
 
-    it("shows dismiss button when onDismiss is provided", () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-          onDismiss={mockOnDismiss}
-        />,
-      );
+    it("shows dismiss button when onDismiss is provided", async () => {
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+        onDismiss: mockOnDismiss,
+      });
 
       expect(
         screen.getByRole("button", { name: /skip for now/i }),
       ).toBeInTheDocument();
     });
 
-    it("does not show dismiss button when onDismiss is not provided", () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+    it("does not show dismiss button when onDismiss is not provided", async () => {
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       expect(
         screen.queryByRole("button", { name: /skip for now/i }),
       ).not.toBeInTheDocument();
     });
 
-    it("shows error state when gate is not found", () => {
-      render(
-        <ExplanationGate
-          gateId="non-existent-gate"
-          onComplete={mockOnComplete}
-          onDismiss={mockOnDismiss}
-        />,
-      );
+    it("shows error state when gate is not found", async () => {
+      await renderAndWaitForLoad({
+        gateId: "non-existent-gate",
+        onComplete: mockOnComplete,
+        onDismiss: mockOnDismiss,
+      });
 
       expect(
         screen.getByText(/Explanation gate not found: non-existent-gate/),
@@ -168,13 +176,11 @@ describe("ExplanationGate", () => {
   // ============================================================================
 
   describe("Answer Selection", () => {
-    it("allows selecting an answer", () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+    it("allows selecting an answer", async () => {
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const choice = screen.getByText("ipmitool lan print 1").closest("button");
       expect(choice).not.toBeNull();
@@ -185,13 +191,11 @@ describe("ExplanationGate", () => {
       expect(choice).toHaveClass("border-nvidia-green");
     });
 
-    it("enables submit button when an answer is selected", () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+    it("enables submit button when an answer is selected", async () => {
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const choice = screen.getByText("ipmitool lan print 1").closest("button");
       fireEvent.click(choice!);
@@ -202,13 +206,11 @@ describe("ExplanationGate", () => {
       expect(submitButton).not.toBeDisabled();
     });
 
-    it("allows changing selection before submission", () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+    it("allows changing selection before submission", async () => {
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       // Select first choice
       const firstChoice = screen
@@ -235,12 +237,10 @@ describe("ExplanationGate", () => {
 
   describe("Correct Answer Feedback", () => {
     it("shows correct feedback when right answer is selected", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       // Select the correct answer (index 1)
       const correctChoice = screen
@@ -261,12 +261,10 @@ describe("ExplanationGate", () => {
     });
 
     it("shows explanation after correct answer", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       // Select correct answer
       const correctChoice = screen
@@ -283,12 +281,10 @@ describe("ExplanationGate", () => {
     });
 
     it("shows first try message when answered correctly on first attempt", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const correctChoice = screen
         .getByText("ipmitool lan print 1")
@@ -304,12 +300,10 @@ describe("ExplanationGate", () => {
     });
 
     it("calls recordExplanationGate with passed=true on correct answer", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const correctChoice = screen
         .getByText("ipmitool lan print 1")
@@ -327,12 +321,10 @@ describe("ExplanationGate", () => {
     });
 
     it("calls onComplete when Continue is clicked after correct answer", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const correctChoice = screen
         .getByText("ipmitool lan print 1")
@@ -356,12 +348,10 @@ describe("ExplanationGate", () => {
 
   describe("Incorrect Answer Feedback", () => {
     it("shows incorrect feedback when wrong answer is selected", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       // Select an incorrect answer (index 0)
       const wrongChoice = screen
@@ -377,12 +367,10 @@ describe("ExplanationGate", () => {
     });
 
     it("shows the correct answer after incorrect submission", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const wrongChoice = screen
         .getByText("ipmitool mc info")
@@ -400,12 +388,10 @@ describe("ExplanationGate", () => {
     });
 
     it("shows the user's incorrect answer", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const wrongChoice = screen
         .getByText("ipmitool mc info")
@@ -423,12 +409,10 @@ describe("ExplanationGate", () => {
     });
 
     it("shows explanation after incorrect answer", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const wrongChoice = screen
         .getByText("ipmitool mc info")
@@ -445,12 +429,10 @@ describe("ExplanationGate", () => {
     });
 
     it("calls recordExplanationGate with passed=false on incorrect answer", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const wrongChoice = screen
         .getByText("ipmitool mc info")
@@ -468,12 +450,10 @@ describe("ExplanationGate", () => {
     });
 
     it("shows Try Again button after incorrect answer", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const wrongChoice = screen
         .getByText("ipmitool mc info")
@@ -489,12 +469,10 @@ describe("ExplanationGate", () => {
     });
 
     it("shows Continue Anyway button after incorrect answer", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const wrongChoice = screen
         .getByText("ipmitool mc info")
@@ -516,12 +494,10 @@ describe("ExplanationGate", () => {
 
   describe("Retry Functionality", () => {
     it("returns to question state when Try Again is clicked", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       // Submit wrong answer
       const wrongChoice = screen
@@ -547,12 +523,10 @@ describe("ExplanationGate", () => {
     });
 
     it("clears selection when retrying", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       // Submit wrong answer
       const wrongChoice = screen
@@ -577,12 +551,10 @@ describe("ExplanationGate", () => {
     });
 
     it("increments attempt count on each submission", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       // First attempt (wrong)
       const wrongChoice = screen
@@ -618,12 +590,10 @@ describe("ExplanationGate", () => {
     });
 
     it("calls onComplete when Continue Anyway is clicked after incorrect answer", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+      });
 
       const wrongChoice = screen
         .getByText("ipmitool mc info")
@@ -646,42 +616,36 @@ describe("ExplanationGate", () => {
   // ============================================================================
 
   describe("Dismiss Functionality", () => {
-    it("calls onDismiss when Skip for now is clicked", () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-          onDismiss={mockOnDismiss}
-        />,
-      );
+    it("calls onDismiss when Skip for now is clicked", async () => {
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+        onDismiss: mockOnDismiss,
+      });
 
       fireEvent.click(screen.getByRole("button", { name: /skip for now/i }));
 
       expect(mockOnDismiss).toHaveBeenCalled();
     });
 
-    it("calls onDismiss when X button is clicked", () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-bmc-config"
-          onComplete={mockOnComplete}
-          onDismiss={mockOnDismiss}
-        />,
-      );
+    it("calls onDismiss when X button is clicked", async () => {
+      await renderAndWaitForLoad({
+        gateId: "gate-test-bmc-config",
+        onComplete: mockOnComplete,
+        onDismiss: mockOnDismiss,
+      });
 
       fireEvent.click(screen.getByRole("button", { name: /close/i }));
 
       expect(mockOnDismiss).toHaveBeenCalled();
     });
 
-    it("calls onDismiss when close button is clicked in error state", () => {
-      render(
-        <ExplanationGate
-          gateId="non-existent-gate"
-          onComplete={mockOnComplete}
-          onDismiss={mockOnDismiss}
-        />,
-      );
+    it("calls onDismiss when close button is clicked in error state", async () => {
+      await renderAndWaitForLoad({
+        gateId: "non-existent-gate",
+        onComplete: mockOnComplete,
+        onDismiss: mockOnDismiss,
+      });
 
       fireEvent.click(screen.getByRole("button", { name: /close/i }));
 
@@ -694,13 +658,11 @@ describe("ExplanationGate", () => {
   // ============================================================================
 
   describe("Loading Different Gate Data", () => {
-    it("loads correct data for different gateId", () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-gpu-monitoring"
-          onComplete={mockOnComplete}
-        />,
-      );
+    it("loads correct data for different gateId", async () => {
+      await renderAndWaitForLoad({
+        gateId: "gate-test-gpu-monitoring",
+        onComplete: mockOnComplete,
+      });
 
       expect(
         screen.getByText(/What nvidia-smi flag displays the full GPU topology/),
@@ -710,12 +672,10 @@ describe("ExplanationGate", () => {
     });
 
     it("uses correct answer index from gate data", async () => {
-      render(
-        <ExplanationGate
-          gateId="gate-test-gpu-monitoring"
-          onComplete={mockOnComplete}
-        />,
-      );
+      await renderAndWaitForLoad({
+        gateId: "gate-test-gpu-monitoring",
+        onComplete: mockOnComplete,
+      });
 
       // For this gate, correct answer is index 1 (nvidia-smi topo -m)
       const correctChoice = screen
