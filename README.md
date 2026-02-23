@@ -2,519 +2,369 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.1.0-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-3200+-brightgreen?style=for-the-badge)
 ![NVIDIA](https://img.shields.io/badge/NVIDIA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
 
-**A browser-based training environment for the NCP-AII (NVIDIA-Certified Professional: AI Infrastructure) certification exam**
+**The most comprehensive browser-based training environment for the NCP-AII certification exam.**
+
+Practice on a simulated 8-node DGX SuperPOD with 64 GPUs. No hardware required.
 
 ![Demo](docs/demo-optimized.gif)
 
-[Features](#features) · [Quick Start](#quick-start) · [Commands](#available-commands) · [Scenarios](#narrative-scenarios) · [Architecture](#architecture)
+[Live Demo](https://www.dclabsim.com) · [Get Started](#quick-start) · [Scenarios](#narrative-scenarios) · [Roadmap](docs/ROADMAP.md)
 
 </div>
 
 ---
 
-## Overview
+## Why This Exists
 
-Data Center Lab Simulator is a browser-based training environment for NCP-AII certification exam prep. Practice every task from the exam blueprint in a safe, simulated environment that feels like operating a real DGX SuperPOD.
+The NCP-AII certification exam tests hands-on datacenter skills — but most people studying for it don't have a DGX cluster in their garage. This simulator gives you a realistic terminal, dashboard, and guided scenarios so you can build muscle memory on every command in the exam blueprint before test day.
 
-### What You Can Practice
+**What makes it different:**
 
-- **GPU Management**: nvidia-smi, MIG partitioning, power/clock management
-- **BMC Operations**: ipmitool for out-of-band management and sensor monitoring
-- **Health Monitoring**: DCGM diagnostics, NVSM health checks, Fabric Manager
-- **InfiniBand Fabric**: Cable validation, error counters, fabric diagnostics
-- **Troubleshooting**: XID errors, performance issues, hardware faults
-- **Cluster Management**: Slurm, BCM, Docker, NGC, Enroot containers
-- **Storage**: Lustre, NFS, df, mount
+- **It feels real** — `nvidia-smi`, `ipmitool`, `dcgmi`, `ibstat`, and 60+ other commands produce output modeled after actual DGX hardware
+- **Scenarios tell a story** — You're not just running commands; you're responding to a 2AM GPU failure or debugging NCCL performance before a deadline
+- **Faults inject automatically** — When a scenario says "GPU 3 has an XID 48 error," the simulated cluster actually shows it in every tool
+- **Four DGX architectures** — Switch between A100, H100, H200, and B200 and watch every metric, topology, and output adapt
+
+---
+
+## At a Glance
+
+|                   |                                                                              |
+| ----------------- | ---------------------------------------------------------------------------- |
+| **Commands**      | 20 simulators, 229 CLI definitions across 17 categories                      |
+| **Scenarios**     | 32 story-driven labs across all 5 exam domains                               |
+| **Exam Prep**     | 199 practice questions + 60 tool selection + 150 deep mastery quizzes        |
+| **Architectures** | DGX A100, H100, H200, B200 (switchable from dashboard)                       |
+| **Learning**      | 3-tier progression (Guided > Choice > Realistic) with SM-2 spaced repetition |
+| **Cloud Sync**    | Optional sign-in to save progress across devices (AWS Cognito)               |
+| **Tests**         | 3,200+ unit tests, 0 TypeScript errors, 0 lint warnings                      |
+
+---
 
 ## Features
 
-### Realistic Terminal Emulation
+### Terminal That Feels Like the Real Thing
 
-- Full xterm.js-powered terminal with ANSI color support
-- Command history (Up/Down arrows) and readline shortcuts (Ctrl+A/E/W/U/K)
-- Accurate output formatting validated against real NVIDIA tool output
-- Tab completion for commands and arguments
-- Pipe support (`|`) for command chaining with `grep`, `head`, `tail`
+Full xterm.js terminal with ANSI colors, command history, readline shortcuts (Ctrl+A/E/W/U/K), tab completion, and pipe support. Output formatting is validated against real NVIDIA tools.
 
-### Narrative Scenario Engine
+```bash
+$ nvidia-smi
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.129.03   Driver Version: 535.129.03   CUDA Version: 12.2                 |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|=========================================+========================+======================|
+|   0  NVIDIA A100-SXM4-80GB         On  | 00000000:07:00.0   Off |                    0 |
+| N/A   37C    P0             311W / 400W |       0MiB / 81920MiB  |      0%      Default |
+...
+```
 
-32 story-driven scenarios across all 5 NCP-AII exam domains. Each scenario puts you in the role of a datacenter engineer responding to real-world situations:
+### Narrative Scenarios
 
-- **Mission briefing** with narrative hook, setting, and stakes
-- **SITUATION/TASK framing** per step — what's happening and what you need to do
-- **Inline quizzes** that test conceptual understanding mid-scenario
-- **autoFaults** — automatic fault injection per step so cluster state matches the narrative
-- **Resolution screen** that ties the story together and reinforces learning
-- Difficulty levels (beginner/intermediate/advanced) with estimated completion times
+32 scenarios put you in the role of a datacenter engineer. Each one has a story hook, automatic fault injection, inline quizzes, and a debrief:
 
-### Sandbox Isolation
+> **The Midnight Deployment** — It's 2AM and the training job crashed. Nodes are reporting XID errors, NCCL allreduce is hanging, and the team lead wants answers by morning. You have ibstat, dcgmi, and nvidia-smi. Go.
 
-Each scenario runs in its own isolated sandbox — faults and mutations never leak between scenarios or to the global cluster:
-
-- Per-scenario deep-cloned cluster state (ScenarioContext)
-- All 20 simulators route through sandbox-aware resolve helpers
-- Clean exit discards the sandbox entirely; global state stays pristine
+Scenarios run in **sandboxed isolation** — faults and mutations never leak to other scenarios or the global cluster state.
 
 ### Multi-Architecture Support
 
-Switch between four DGX system types from the dashboard:
+Switch architectures from the dashboard dropdown. Everything adapts — GPU specs, NVLink topology, InfiniBand rates, and all simulator output:
 
-- **DGX A100** — 8x A100 80GB, NVLink 3rd-gen (12 links), HDR InfiniBand (200Gb/s)
-- **DGX H100** — 8x H100 SXM, NVLink 4th-gen (18 links), NDR InfiniBand (400Gb/s)
-- **DGX H200** — 8x H200 SXM (141GB HBM3e), NVLink 4th-gen, NDR InfiniBand
-- **DGX B200** — 8x B200, NVLink 5th-gen (18 links), NDR InfiniBand (400Gb/s)
+| System   | GPUs        | Memory      | NVLink             | InfiniBand  |
+| -------- | ----------- | ----------- | ------------------ | ----------- |
+| DGX A100 | 8x A100     | 80GB HBM2e  | 3rd-gen (12 links) | HDR 200Gb/s |
+| DGX H100 | 8x H100 SXM | 80GB HBM3   | 4th-gen (18 links) | NDR 400Gb/s |
+| DGX H200 | 8x H200 SXM | 141GB HBM3e | 4th-gen (18 links) | NDR 400Gb/s |
+| DGX B200 | 8x B200     | 192GB HBM3e | 5th-gen (18 links) | NDR 400Gb/s |
 
-All simulators, visualizations, and metrics dynamically adapt to the selected architecture.
+### Exam Dashboard
 
-### Spotlight Tour
-
-Built-in guided tours for each tab (Simulator, Labs, Exams, Documentation, About) that walk new users through key UI elements with highlighted overlays and step-by-step explanations.
+- **199 questions** weighted by the NCP-AII blueprint across all 5 domains
+- **5 exam modes**: Full Practice (90 min), Quick Quiz, Gauntlet, Weak Area Focus, Review Mistakes
+- **Tool Selection Quizzes**: 60 "which tool do you use?" questions (10 per session)
+- **Deep Mastery Quizzes**: 150 questions on flags, output interpretation, and edge cases (25 per session)
+- Readiness score, domain performance heatmap, and full exam history
 
 ### Learning System
 
-A tiered progression system built on spaced repetition:
-
-- **6 Command Families**: gpu-monitoring, infiniband-tools, bmc-hardware, cluster-tools, container-tools, diagnostics
-- **3-Tier Progression**: Guided (tool specified) → Choice (problem area identified) → Realistic (symptom only, no hints)
-- **WhichToolQuiz**: 60 scenario-based questions testing tool selection intuition (10 per session, randomized)
-- **SpacedReviewDrill**: SM-2 algorithm schedules retention drills at optimal intervals
-- **ExplanationGates**: 56 post-scenario conceptual checks
-- **ExamGauntlet**: Timed random scenario testing for exam prep
-- **StudyDashboard**: Progress overview with domain breakdown and study recommendations
+- **6 Command Families**: GPU Monitoring, InfiniBand Tools, BMC/Hardware, Cluster Tools, Container Tools, Diagnostics
+- **3-Tier Progression**: Guided (tool specified) > Choice (problem area identified) > Realistic (symptom only, figure it out)
+- **Spaced Repetition**: SM-2 algorithm schedules review drills at optimal intervals
+- **56 Explanation Gates**: Post-scenario conceptual checks to reinforce understanding
 
 ### Real-Time Dashboard
 
-- Live GPU metrics (utilization, memory, temperature, power)
-- Cluster health monitoring with heatmap visualization
-- Per-node GPU status cards
-- XID error tracking
-- InfiniBand fabric status
-- Interactive NVLink topology visualization (D3.js)
-- InfiniBand fabric map with switch and host details
+Live cluster health monitoring with GPU metrics (utilization, memory, temp, power), per-node status cards, XID error tracking, InfiniBand fabric status, and interactive D3.js topology visualizations for NVLink and InfiniBand.
 
-### Comprehensive Tool Simulation
-
-#### nvidia-smi
-
-- GPU listing and detailed queries
-- MIG mode enable/disable
-- MIG instance creation/deletion
-- Power limit management
-- NVLink topology and status
-- ECC error reporting
-
-#### dcgmi (Data Center GPU Manager)
-
-- GPU discovery
-- Diagnostic modes (short/medium/long)
-- Health monitoring with 8 subsystems
-- Group management
-- Statistics collection
-
-#### ipmitool
-
-- BMC sensor readings
-- LAN configuration
-- Chassis power control
-- User management
-- FRU inventory
-- SEL (System Event Log)
-
-#### nvsm (NVIDIA System Management)
-
-- Interactive hierarchical navigation (CWT mode)
-- Health checks with dot-leader formatting
-- Show alerts and system overview
-
-#### InfiniBand Tools
-
-- `ibstat` - HCA status and port information
-- `ibdiagnet` - Full fabric diagnostics
-- `iblinkinfo` - Fabric link discovery
-- `perfquery` - Performance counters
-
-#### Cluster Management
-
-- `sinfo`, `squeue`, `scontrol`, `sbatch`, `scancel` - Slurm workload manager
-- `bcm` - Base Command Manager with node/job management
-- `cmsh` - Cluster management shell with interactive modes
-- `docker`, `enroot`, `pyxis` - Container runtimes
-
-#### Additional Tools
-
-- `nv-fabricmanager` - NVSwitch fabric management and diagnostics
-- `lspci` - PCI device listing with verbose modes
-- `journalctl` - System journal with XID error tracking
-- `nvidia-bug-report.sh` - Bug report generation with XID database
-- `df`, `mount`, `lfs` - Storage and Lustre filesystem tools
-- `sensors`, `dmidecode` - Hardware monitoring
-
-### Exams Dashboard
-
-- **199 exam questions** across all 5 NCP-AII domains
-- **5 exam modes**: Full Practice, Quick Quiz, Gauntlet, Weak Area, Review Mistakes
-- **Tool Selection Quizzes**: 60 "which tool?" questions across 6 command families (10 per session)
-- **Deep Mastery Quizzes**: 150 questions on flags, output interpretation, and troubleshooting (25 per session)
-- Timed exam mode (90 minutes) with question navigation
-- Readiness score, domain performance grid, and exam history tracking
-
-### Documentation & Reference
-
-- System architecture overview with node layout and hardware specs
-- Architecture comparison across DGX A100, H100, H200, and B200
-- Searchable CLI tool reference with 229 commands across 17 categories
-- Glossary & Acronyms reference with 78 searchable terms
-- Troubleshooting playbooks with 4 diagnostic scenarios
-- XID error reference with severity filtering
-- Exam guide with domain coverage and study tips
+---
 
 ## Quick Start
 
 ### Prerequisites
 
 - Node.js 18+ and npm
-- Modern web browser (Chrome, Firefox, Edge, Safari)
-- **Screen size**: Designed for desktop viewports (1280px+ wide). Smaller screens and mobile devices may experience layout issues.
+- Modern browser (Chrome, Firefox, Edge, Safari)
+- Desktop viewport recommended (1280px+ wide)
 
-### Installation
+### Install and Run
 
 ```bash
-# Clone the repository
 git clone https://github.com/Seanbo5386/dc-lab-sim.git
 cd dc-lab-sim
-
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
 ```
 
-The simulator will open at `http://localhost:5173`
-
-### Building for Production
-
-```bash
-# Build optimized production bundle
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-### Cloud Sync & Authentication (Optional)
-
-Data Center Lab Simulator includes optional user authentication and cloud sync powered by AWS Amplify Gen 2. When enabled, users can sign up with email/password, and their simulation progress, learning data, and quiz scores are synced to the cloud.
-
-**The app works fully offline without this.** If no backend is configured, the login button still appears but auth calls will gracefully fail, and all progress is stored locally in the browser.
-
-#### Setting Up Your Own Backend
-
-1. **Prerequisites**
-   - An [AWS account](https://aws.amazon.com/)
-   - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) installed and configured (`aws configure`)
-   - Node.js 18+
-
-2. **Deploy the backend**
-
-   The infrastructure-as-code is already in the `amplify/` directory:
-   - `amplify/auth/resource.ts` — Cognito user pool (email + password auth)
-   - `amplify/data/resource.ts` — DynamoDB `UserProgress` table with owner-based authorization
-   - `amplify/backend.ts` — Ties auth and data together
-
-   ```bash
-   # For local development (creates a personal sandbox backend)
-   npx ampx sandbox
-
-   # For production deployment
-   npx ampx deploy
-   ```
-
-   This generates `amplify_outputs.json` in the project root with your Cognito pool ID, AppSync endpoint, etc. This file is gitignored and never committed.
-
-3. **Start the app**
-
-   ```bash
-   npm run dev
-   ```
-
-   The app detects `amplify_outputs.json` at startup and enables auth features automatically.
-
-#### What Gets Synced
-
-| Data              | Description                                                        |
-| ----------------- | ------------------------------------------------------------------ |
-| Simulation state  | Cluster configuration, GPU metrics, fault states                   |
-| Learning progress | Quiz scores, tool usage, tier unlocks, spaced repetition schedules |
-| Learning data     | Domain progress, study sessions, total session count               |
-
-Data is synced on sign-in (merge local + cloud) and debounced during active use. Each user's data is isolated via Cognito owner-based authorization — users can only read/write their own records.
-
-#### Password Requirements
-
-Cognito enforces (and the UI validates client-side):
-
-- 8+ characters
-- At least one uppercase letter
-- At least one lowercase letter
-- At least one number
-- At least one special character
-
----
-
-## Usage Guide
-
-### Getting Started
-
-1. **Simulator**: Terminal and dashboard for hands-on command practice
-2. **Labs & Scenarios**: 32 narrative missions with guided exercises across all 5 exam domains
-3. **Exams**: Practice exams, tool selection quizzes, deep mastery quizzes, and readiness tracking
-4. **Documentation**: Reference materials, command guides, troubleshooting playbooks, and XID error lookup
-5. **About**: Project background, changelog, and contribution info
+Opens at `http://localhost:5173`. That's it — no backend required.
 
 ### Your First Commands
 
-Open the Terminal tab and try these commands:
-
 ```bash
-# Check GPU status
-nvidia-smi
-
-# Detailed GPU query
-nvidia-smi -q
-
-# Enable MIG mode on GPU 0
-nvidia-smi -i 0 -mig 1
-
-# List MIG profiles
-nvidia-smi mig -lgip
-
-# Check BMC sensors
-ipmitool sensor list
-
-# Run DCGM diagnostics
-dcgmi diag --mode 1
-
-# Check InfiniBand status
-ibstat
-
-# Get help on any command
-help nvidia-smi
-
-# Practice exercises
-practice nvidia-smi
+nvidia-smi                    # GPU status overview
+nvidia-smi -q -i 0            # Detailed query for GPU 0
+ibstat                         # InfiniBand adapter status
+dcgmi diag --mode 1           # Quick DCGM diagnostic
+ipmitool sensor list          # BMC sensor readings
+sinfo                          # Slurm cluster status
+help nvidia-smi               # Detailed command reference
+practice nvidia-smi           # Auto-generated exercises
+hint                           # Context-aware help during labs
 ```
 
-### Learning Commands
+### Production Build
 
-- `help <command>` - Detailed command reference with options and usage examples
-- `practice <command>` - Auto-generated practice exercises
-- `hint` - Context-aware guidance during scenarios
+```bash
+npm run build     # Optimized bundle -> dist/
+npm run preview   # Preview locally
+```
+
+---
 
 ## Available Commands
 
-### GPU Management
+<details>
+<summary><strong>GPU Management</strong> — nvidia-smi, MIG, power limits, topology</summary>
 
-| Command                      | Description           | Example                                |
-| ---------------------------- | --------------------- | -------------------------------------- |
-| `nvidia-smi`                 | Display GPU status    | `nvidia-smi`                           |
-| `nvidia-smi -q`              | Detailed GPU query    | `nvidia-smi -q -i 0`                   |
-| `nvidia-smi -i <id> -mig 1`  | Enable MIG mode       | `nvidia-smi -i 0 -mig 1`               |
-| `nvidia-smi mig -lgip`       | List MIG profiles     | `nvidia-smi mig -lgip`                 |
-| `nvidia-smi mig -cgi <ids>`  | Create GPU instances  | `nvidia-smi mig -i 0 -cgi 19,19,19 -C` |
-| `nvidia-smi mig -lgi`        | List GPU instances    | `nvidia-smi mig -lgi`                  |
-| `nvidia-smi mig -dgi`        | Destroy GPU instances | `nvidia-smi mig -i 0 -dgi`             |
-| `nvidia-smi -pl <watts>`     | Set power limit       | `nvidia-smi -i 0 -pl 350`              |
-| `nvidia-smi nvlink --status` | NVLink status         | `nvidia-smi nvlink --status`           |
-| `nvidia-smi topo -m`         | Topology matrix       | `nvidia-smi topo -m`                   |
+| Command                        | Description                    |
+| ------------------------------ | ------------------------------ |
+| `nvidia-smi`                   | GPU status and utilization     |
+| `nvidia-smi -q`                | Detailed GPU query             |
+| `nvidia-smi -i <id> -mig 1`    | Enable MIG mode                |
+| `nvidia-smi mig -lgip`         | List MIG profiles              |
+| `nvidia-smi mig -cgi <ids> -C` | Create GPU + compute instances |
+| `nvidia-smi mig -lgi`          | List GPU instances             |
+| `nvidia-smi mig -dgi`          | Destroy GPU instances          |
+| `nvidia-smi -pl <watts>`       | Set power limit                |
+| `nvidia-smi nvlink --status`   | NVLink status                  |
+| `nvidia-smi topo -m`           | Topology matrix                |
 
-### DCGM (Data Center GPU Manager)
+</details>
 
-| Command                   | Description      | Example                   |
-| ------------------------- | ---------------- | ------------------------- |
-| `dcgmi discovery -l`      | List GPUs        | `dcgmi discovery -l`      |
-| `dcgmi diag --mode <1-3>` | Run diagnostics  | `dcgmi diag --mode 2`     |
-| `dcgmi health --check`    | Check GPU health | `dcgmi health --check`    |
-| `dcgmi group -c <name>`   | Create GPU group | `dcgmi group -c my-group` |
+<details>
+<summary><strong>DCGM</strong> — GPU discovery, diagnostics, health, groups</summary>
 
-### BMC Management (ipmitool)
+| Command                   | Description                         |
+| ------------------------- | ----------------------------------- |
+| `dcgmi discovery -l`      | List GPUs                           |
+| `dcgmi diag --mode <1-3>` | Run diagnostics (short/medium/long) |
+| `dcgmi health --check`    | Health check across 8 subsystems    |
+| `dcgmi group -c <name>`   | Create GPU group                    |
+| `dcgmi stats -g <id> -e`  | Enable statistics collection        |
 
-| Command                        | Description       | Example                        |
-| ------------------------------ | ----------------- | ------------------------------ |
-| `ipmitool sensor list`         | Read all sensors  | `ipmitool sensor list`         |
-| `ipmitool mc info`             | BMC firmware info | `ipmitool mc info`             |
-| `ipmitool chassis status`      | Power state       | `ipmitool chassis status`      |
-| `ipmitool chassis power cycle` | Power cycle       | `ipmitool chassis power cycle` |
-| `ipmitool lan print`           | LAN configuration | `ipmitool lan print 1`         |
-| `ipmitool user list`           | List BMC users    | `ipmitool user list 1`         |
+</details>
 
-### InfiniBand Tools
+<details>
+<summary><strong>BMC / ipmitool</strong> — Sensors, power, LAN, users, FRU, SEL</summary>
 
-| Command      | Description            | Example         |
-| ------------ | ---------------------- | --------------- |
-| `ibstat`     | Port status            | `ibstat`        |
-| `iblinkinfo` | Fabric link info       | `iblinkinfo -v` |
-| `perfquery`  | Performance counters   | `perfquery`     |
-| `ibdiagnet`  | Full fabric diagnostic | `ibdiagnet`     |
+| Command                        | Description                      |
+| ------------------------------ | -------------------------------- |
+| `ipmitool sensor list`         | Read all sensors                 |
+| `ipmitool mc info`             | BMC firmware info                |
+| `ipmitool chassis status`      | Power state                      |
+| `ipmitool chassis power cycle` | Power cycle                      |
+| `ipmitool lan print 1`         | LAN configuration                |
+| `ipmitool user list 1`         | List BMC users                   |
+| `ipmitool fru print`           | Field Replaceable Unit inventory |
+| `ipmitool sel list`            | System Event Log                 |
 
-### Cluster Management
+</details>
 
-| Command              | Description              | Example                     |
-| -------------------- | ------------------------ | --------------------------- |
-| `sinfo`              | Slurm partition status   | `sinfo`                     |
-| `squeue`             | Job queue                | `squeue`                    |
-| `scontrol show node` | Node details             | `scontrol show node dgx-01` |
-| `sbatch`             | Submit batch job         | `sbatch job.sh`             |
-| `bcm`                | Base Command Manager     | `bcm-node list`             |
-| `cmsh`               | Cluster management shell | `cmsh`                      |
+<details>
+<summary><strong>InfiniBand</strong> — ibstat, ibdiagnet, iblinkinfo, perfquery</summary>
+
+| Command      | Description             |
+| ------------ | ----------------------- |
+| `ibstat`     | HCA port status         |
+| `iblinkinfo` | Fabric link discovery   |
+| `ibdiagnet`  | Full fabric diagnostics |
+| `perfquery`  | Performance counters    |
+
+</details>
+
+<details>
+<summary><strong>Cluster Management</strong> — Slurm, BCM, containers</summary>
+
+| Command                     | Description        |
+| --------------------------- | ------------------ |
+| `sinfo`                     | Partition status   |
+| `squeue`                    | Job queue          |
+| `scontrol show node <name>` | Node details       |
+| `sbatch <script>`           | Submit batch job   |
+| `scancel <jobid>`           | Cancel job         |
+| `bcm-node list`             | BCM node inventory |
+| `docker ps`                 | Running containers |
+| `enroot list`               | Enroot containers  |
+
+</details>
+
+<details>
+<summary><strong>Additional Tools</strong> — 50+ more commands</summary>
+
+| Command                      | Description                     |
+| ---------------------------- | ------------------------------- |
+| `nvsm show health`           | NVIDIA System Management health |
+| `nv-fabricmanager -v`        | Fabric Manager version/status   |
+| `mlxconfig -d <dev> query`   | ConnectX/BlueField config       |
+| `mlxlink -d <dev>`           | Link diagnostics                |
+| `lspci \| grep -i nvidia`    | PCI device listing              |
+| `journalctl -k \| grep NVRM` | Kernel XID error log            |
+| `nvidia-bug-report.sh`       | Bug report generation           |
+| `sensors`                    | Hardware temperature monitoring |
+| `dmidecode -t system`        | BIOS/hardware info              |
+| `df -h`                      | Disk usage                      |
+| `lfs df`                     | Lustre filesystem status        |
+
+</details>
+
+---
 
 ## Narrative Scenarios
 
-The simulator includes **32 narrative scenarios** covering all 5 NCP-AII exam domains:
+32 scenarios across all 5 NCP-AII domains, weighted to match the exam blueprint:
 
 ### Domain 1: Systems and Server Bring-Up (31%)
 
-Story-driven scenarios covering BMC configuration, server POST verification, driver installation, firmware validation, GPU discovery, hardware inventory, network bonding, and Fabric Manager setup.
+BMC configuration, POST verification, driver installation, firmware validation, GPU discovery, hardware inventory, network bonding, Fabric Manager setup.
 
 ### Domain 2: Physical Layer Management (5%)
 
-Scenarios for NVLink topology analysis, MIG configuration, NVLink error recovery, GPU power optimization, and cable diagnostics.
+NVLink topology analysis, MIG configuration, NVLink error recovery, GPU power optimization, cable diagnostics.
 
 ### Domain 3: Control Plane Installation (19%)
 
-Scenarios for Slurm configuration, container runtime setup, NGC pipelines, Pyxis/Enroot workflows, Lustre validation, and DCGM policy configuration.
+Slurm cluster setup, container runtime configuration, NGC pipelines, Pyxis/Enroot workflows, Lustre validation, DCGM policy configuration.
 
 ### Domain 4: Cluster Test and Verification (33%)
 
-Scenarios for DCGMI diagnostics, NCCL testing, HPL benchmarks, cluster health monitoring, GPU bandwidth validation, InfiniBand stress testing, ECC error investigation, and ClusterKit assessment.
+DCGMI diagnostics, NCCL collective tests, HPL benchmarks, cluster health monitoring, GPU bandwidth validation, InfiniBand stress testing, ECC error investigation.
 
 ### Domain 5: Troubleshooting and Optimization (12%)
 
-Scenarios for XID error investigation, thermal troubleshooting, network diagnostics, memory issues, and cable detective work — each with automatic fault injection that makes the simulated cluster exhibit the exact symptoms you're investigating.
+XID error triage, thermal troubleshooting, network diagnostics, memory fault isolation, cable detective work — each with automatic fault injection so the cluster exhibits real symptoms.
 
-## Architecture
-
-### Technology Stack
-
-- **Frontend**: React 18 with TypeScript
-- **Terminal**: xterm.js with FitAddon and WebLinksAddon
-- **State Management**: Zustand with persistence (4 stores + sandbox context)
-- **Styling**: TailwindCSS with custom NVIDIA theme
-- **Icons**: Lucide React
-- **Build Tool**: Vite
-- **Visualization**: Recharts (metrics), D3.js (topology and network maps)
-- **Auth & Cloud Sync**: AWS Amplify Gen 2 (Cognito, AppSync, DynamoDB) — optional
-- **Testing**: Vitest, React Testing Library
-- **CI/CD**: GitHub Actions (lint, test, build)
-
-### Project Structure
-
-```
-src/
-├── components/          # React components (116 components)
-│   ├── Terminal.tsx      # xterm.js terminal with command routing
-│   ├── Dashboard.tsx     # Real-time metrics dashboard
-│   ├── LabWorkspace.tsx  # Scenario execution workspace
-│   ├── LabsAndScenariosView.tsx # Mission browser with domain cards
-│   ├── Documentation.tsx # Tabbed reference (Architecture, Commands, XID, Exam Guide, Glossary)
-│   ├── About.tsx         # Project info, changelog, and links
-│   ├── FaultInjection.tsx # Fault injection controls
-│   ├── NarrativeIntro.tsx # Mission briefing screen
-│   ├── SpotlightTour.tsx # Guided tour overlay
-│   ├── ExamWorkspace.tsx  # Timed practice exam
-│   ├── ArchitectureComparison.tsx # Side-by-side DGX spec comparison
-│   ├── ClusterHeatmap.tsx # GPU utilization heatmap
-│   ├── TopologyGraph.tsx  # D3.js NVLink visualization
-│   └── ...
-├── simulators/          # Command simulators (20 simulators + BaseSimulator)
-│   ├── BaseSimulator.ts   # Base class with sandbox-aware resolve helpers
-│   ├── nvidiaSmiSimulator.ts
-│   ├── dcgmiSimulator.ts
-│   ├── ipmitoolSimulator.ts
-│   ├── infinibandSimulator.ts
-│   ├── slurmSimulator.ts
-│   ├── fabricManagerSimulator.ts
-│   ├── nvsmSimulator.ts
-│   └── ...
-├── cli/                 # Data-driven CLI framework
-│   ├── CommandDefinitionLoader.ts
-│   ├── CommandDefinitionRegistry.ts
-│   └── CommandExerciseGenerator.ts
-├── data/                # Static data
-│   ├── narrativeScenarios.json  # 32 narrative scenarios
-│   ├── examQuestions.json       # 199 practice exam questions
-│   ├── commandFamilies.json     # 6 command family definitions
-│   ├── quizQuestions.json       # Tool selection quizzes
-│   ├── explanationGates.json    # 56 post-scenario knowledge checks
-│   ├── hardwareSpecs.ts         # DGX A100/H100/H200/B200 spec registry
-│   └── output/                  # 229 JSON command definitions
-├── store/               # Zustand state management
-│   ├── simulationStore.ts       # Cluster state, GPU metrics, exam state
-│   ├── scenarioContext.ts       # Per-scenario sandbox isolation
-│   ├── learningProgressStore.ts # Quiz scores, tier unlocks, spaced repetition
-│   ├── learningStore.ts         # Domain progress, study sessions
-│   └── tierNotificationStore.ts # Tier unlock notifications
-├── types/               # TypeScript type definitions
-├── utils/               # Utilities (61 modules)
-│   ├── scenarioLoader.ts        # Scenario loading and fault application
-│   ├── narrativeAdapter.ts      # Narrative-to-scenario conversion
-│   ├── tierProgressionEngine.ts # Tier unlock logic
-│   ├── spacedRepetition.ts      # SM-2 algorithm
-│   ├── examEngine.ts            # Exam question selection and scoring
-│   ├── clusterFactory.ts        # DGX cluster generation
-│   └── tabCompletion.ts         # Terminal tab completion
-└── App.tsx              # Main application (5-tab layout)
-```
-
-### Hardware Models
-
-The simulator accurately models:
-
-- **DGX Systems**: A100, H100, H200, B200 with switchable architecture
-- **GPUs**: A100 (80GB HBM2e), H100 SXM (80GB HBM3), H200 SXM (141GB HBM3e), B200 (192GB HBM3e)
-- **MIG Profiles**: All 6 standard profiles (1g.5gb through 7g.40gb)
-- **NVLink**: 12 links (A100) / 18 links (H100/H200/B200) with error tracking
-- **InfiniBand**: HDR (200Gb/s) for A100, NDR (400Gb/s) for H100/H200/B200
-- **BMC**: Sensor readings, power management, firmware info
-- **NVSwitch**: UUID format, power ranges, diagnostic modes
+---
 
 ## XID Error Reference
 
-Common GPU XID errors you'll encounter:
+Common GPU errors you'll encounter and diagnose:
 
 | XID | Description               | Action                                   |
 | --- | ------------------------- | ---------------------------------------- |
 | 8   | GPU memory access fault   | Check application memory usage           |
 | 13  | Graphics engine exception | Check application, possible GPU issue    |
-| 14  | GPU driver error          | Update driver, check compatibility       |
 | 31  | GPU memory page fault     | Application bug or memory corruption     |
 | 48  | Double-bit ECC error      | Replace GPU if persistent                |
 | 63  | ECC page retirement       | Monitor; excessive retirements = replace |
 | 79  | GPU fallen off bus        | Check PCIe slot, reseat GPU              |
 | 119 | GSP error                 | Driver/firmware mismatch                 |
 
+---
+
+## Cloud Sync & Authentication (Optional)
+
+Sign in with email/password to sync progress across devices. Powered by AWS Amplify Gen 2 (Cognito + DynamoDB).
+
+**The app works fully without this** — all progress is saved locally in the browser. If no backend is configured, auth calls fail silently.
+
+<details>
+<summary><strong>Setting up your own backend</strong></summary>
+
+1. Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) and run `aws configure`
+
+2. The Amplify infrastructure code lives in `amplify/` (gitignored, kept locally):
+   - `amplify/auth/resource.ts` — Cognito user pool
+   - `amplify/data/resource.ts` — DynamoDB UserProgress table
+   - `amplify/backend.ts` — Ties auth and data together
+
+3. Deploy:
+
+   ```bash
+   npx ampx sandbox       # Local development sandbox
+   npx ampx deploy        # Production deployment
+   ```
+
+   This generates `amplify_outputs.json` (also gitignored) which the app detects at startup.
+
+4. Run `npm run dev` — sign-in button activates automatically.
+
+**What syncs:** Simulation state, quiz scores, learning progress, tier unlocks, spaced repetition schedules. Each user's data is isolated via Cognito owner-based authorization.
+
+</details>
+
+---
+
 ## Testing
-
-### Unit Tests
-
-The project has **3,200+ unit tests** across 144 test files covering simulators, stores, utilities, components, and data validation:
 
 ```bash
 npm run test           # Watch mode
-npm run test:run       # Single run
+npm run test:run       # Single run (3,200+ tests)
 npm run test:coverage  # With coverage report
+npm run lint           # ESLint (0 errors, 0 warnings)
 ```
 
-### CI/CD
+CI/CD via GitHub Actions runs lint, tests, and production build on every push.
 
-GitHub Actions runs lint, unit tests, and production build on every push.
+---
+
+## Architecture
+
+### Tech Stack
+
+| Layer         | Technology                                                      |
+| ------------- | --------------------------------------------------------------- |
+| UI            | React 18, TypeScript, TailwindCSS, Lucide icons                 |
+| Terminal      | xterm.js with FitAddon and WebLinksAddon                        |
+| State         | Zustand (4 stores + sandbox context, persisted to localStorage) |
+| Visualization | D3.js (topology maps), Recharts (metrics)                       |
+| Auth & Sync   | AWS Amplify Gen 2 (Cognito, AppSync, DynamoDB) — optional       |
+| Build         | Vite                                                            |
+| Testing       | Vitest + React Testing Library                                  |
+| CI/CD         | GitHub Actions                                                  |
+
+### Project Structure
+
+```
+src/
+├── components/       # 116 React components
+├── simulators/       # 20 command simulators + BaseSimulator
+├── cli/              # Data-driven CLI framework (229 JSON definitions)
+├── data/             # Scenarios, exam questions, hardware specs
+├── store/            # Zustand stores + sandbox context
+├── utils/            # 61 utility modules
+├── types/            # TypeScript definitions
+└── App.tsx           # 5-tab layout (Simulator, Labs, Exams, Docs, About)
+```
+
+---
 
 ## Roadmap
 
@@ -542,15 +392,28 @@ GitHub Actions runs lint, unit tests, and production build on every push.
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for the full roadmap with priorities and details.
 
+---
+
 ## Contributing
 
-Contributions are welcome! This simulator is designed to help engineers prepare for NVIDIA certification. If you'd like to add features or fix issues:
+Contributions welcome! Priority areas:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+1. **Exam questions** — especially Domains 4 and 5
+2. **Scenario authoring** — new story-driven labs
+3. **Command accuracy** — validated against real DGX output
+4. **E2E tests** — Playwright smoke tests
+5. **Accessibility** — keyboard navigation, screen reader support
+
+```bash
+git checkout -b feature/your-feature
+# make changes
+npm run test:run && npm run lint
+git commit -m 'Add your feature'
+git push origin feature/your-feature
+# Open a Pull Request
+```
+
+---
 
 ## Legal Disclaimer
 
@@ -560,26 +423,17 @@ This project is an **independent, community-built educational tool** and is **no
 
 All simulated command outputs, hardware specifications, and diagnostic data are approximations created for **educational purposes only** and may not reflect the exact behavior of real NVIDIA hardware or software. Users should always refer to official NVIDIA documentation for authoritative technical information.
 
-Exam content, format, and objectives may be updated by NVIDIA at any time. This simulator may not reflect the most current exam material and is intended to **supplement, not replace**, official NVIDIA training materials and documentation.
-
-This software is provided **"as is" without warranty of any kind**, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability arising from the use of this software, including but not limited to exam results or certification outcomes.
+This software is provided **"as is" without warranty of any kind**, express or implied. In no event shall the authors or copyright holders be liable for any claim, damages, or other liability arising from the use of this software.
 
 All other trademarks referenced herein are the property of their respective owners. Slurm is a trademark of SchedMD LLC. Linux is a registered trademark of Linus Torvalds. Docker is a trademark of Docker, Inc.
+
+---
 
 ## Acknowledgments
 
 - [Claude Code](https://www.anthropic.com/claude-code) (Anthropic's Claude Opus 4.6) — AI pair-programming partner throughout development
 - NVIDIA for comprehensive datacenter documentation
-- The open-source community for amazing tools (xterm.js, React, Vite)
-- All engineers preparing for NCP-AII certification
-
-## Support
-
-If you encounter issues or have questions:
-
-- Check the Documentation tab in the simulator
-- Review the [Issues](https://github.com/Seanbo5386/dc-lab-sim/issues) page
-- Consult the official [NVIDIA Certification resources](https://www.nvidia.com/en-us/learn/certification/)
+- The open-source community for xterm.js, React, Vite, D3.js, and Zustand
 
 ---
 
@@ -587,6 +441,6 @@ If you encounter issues or have questions:
 
 **Built for AI Infrastructure Engineers by [Sean Woods](https://www.linkedin.com/in/sean-m-woods/)**
 
-[Get Started](#quick-start) · [View Scenarios](#narrative-scenarios) · [Report Bug](https://github.com/Seanbo5386/dc-lab-sim/issues)
+[Live Demo](https://www.dclabsim.com) · [Get Started](#quick-start) · [Report Bug](https://github.com/Seanbo5386/dc-lab-sim/issues)
 
 </div>
