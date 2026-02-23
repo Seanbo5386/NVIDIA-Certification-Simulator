@@ -1,8 +1,9 @@
 // src/components/UserMenu.tsx
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { signOut, signIn, signUp, confirmSignUp } from "aws-amplify/auth";
 import { LogIn, LogOut, User, Cloud, CloudOff, Loader2 } from "lucide-react";
 import type { SyncStatus } from "@/hooks/useCloudSync";
+import { validatePassword } from "@/utils/passwordValidation";
 
 interface UserMenuProps {
   isLoggedIn: boolean;
@@ -19,6 +20,36 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
   const [confirmCode, setConfirmCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
+
+  useEffect(() => {
+    if (authView !== "closed" && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+      });
+    }
+  }, [authView]);
+
+  useEffect(() => {
+    if (authView === "closed") return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node) &&
+        buttonRef.current &&
+        !buttonRef.current.contains(e.target as Node)
+      ) {
+        setAuthView("closed");
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [authView]);
 
   const syncIcon = () => {
     switch (syncStatus) {
@@ -61,6 +92,11 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    const validation = validatePassword(password);
+    if (!validation.isValid) {
+      setError("Password requirements not met.");
+      return;
+    }
     setLoading(true);
     try {
       await signUp({ username: email, password });
@@ -124,6 +160,7 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
   return (
     <div className="relative">
       <button
+        ref={buttonRef}
         onClick={() => setAuthView(authView === "closed" ? "signIn" : "closed")}
         className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors px-2 py-1 rounded hover:bg-gray-700"
       >
@@ -132,7 +169,11 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
       </button>
 
       {authView !== "closed" && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-4 z-50">
+        <div
+          ref={dropdownRef}
+          className="fixed w-80 bg-gray-800 border border-gray-700 rounded-lg shadow-xl p-4 z-[9999]"
+          style={{ top: dropdownPos.top, right: dropdownPos.right }}
+        >
           {authView === "signIn" && (
             <form onSubmit={handleSignIn} className="space-y-3">
               <h3 className="text-sm font-semibold text-white">Sign in</h3>
@@ -197,10 +238,22 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
                 placeholder="Password (8+ characters)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onBlur={() => {
+                  if (password) {
+                    setPasswordErrors(validatePassword(password).errors);
+                  }
+                }}
                 className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm text-white placeholder-gray-500 focus:border-nvidia-green focus:outline-none"
                 required
                 minLength={8}
               />
+              {passwordErrors.length > 0 && (
+                <ul className="text-xs text-yellow-400 space-y-0.5 list-disc list-inside">
+                  {passwordErrors.map((err) => (
+                    <li key={err}>{err}</li>
+                  ))}
+                </ul>
+              )}
               {error && <p className="text-xs text-red-400">{error}</p>}
               <button
                 type="submit"
