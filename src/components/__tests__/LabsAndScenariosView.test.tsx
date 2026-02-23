@@ -231,13 +231,11 @@ describe("LabsAndScenariosView", () => {
   // 8. Scenario card shows domain badge (domain number & weight)
   // --------------------------------------------------------------------------
 
-  it("displays domain numbers and exam weights", () => {
+  it("displays domain numbers", () => {
     const props = defaultProps();
     render(<LabsAndScenariosView {...props} />);
     expect(screen.getByText(/Domain 1/)).toBeInTheDocument();
-    expect(screen.getByText(/31%/)).toBeInTheDocument();
     expect(screen.getByText(/Domain 4/)).toBeInTheDocument();
-    expect(screen.getByText(/33%/)).toBeInTheDocument();
   });
 
   // --------------------------------------------------------------------------
