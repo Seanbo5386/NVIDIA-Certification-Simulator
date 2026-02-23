@@ -1,6 +1,6 @@
-# Contributing to DC Lab Sim
+# Contributing to Data Center Lab Simulator
 
-Thank you for your interest in contributing to the DC Lab Sim! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to the Data Center Lab Simulator! This document provides guidelines and instructions for contributing to the project.
 
 ## Table of Contents
 
@@ -401,5 +401,5 @@ By contributing to this project, you agree that your contributions will be licen
 
 ---
 
-Thank you for contributing to the DC Lab Sim!
+Thank you for contributing to the Data Center Lab Simulator!
 ```

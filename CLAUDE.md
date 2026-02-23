@@ -1,6 +1,6 @@
 # CLAUDE.md - Project Context for AI Assistants
 
-This file provides essential context about the DC Lab Sim codebase.
+This file provides essential context about the Data Center Lab Simulator codebase.
 
 ## Project Overview
 

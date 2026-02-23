@@ -210,7 +210,7 @@ function App() {
                   </div>
                   <div>
                     <h1 className="text-xl font-bold text-nvidia-green">
-                      DC Lab Sim
+                      Data Center Lab Simulator
                     </h1>
                     <p className="text-xs text-gray-400">
                       NCP-AII Certification Training Environment

@@ -96,7 +96,7 @@ export function generateWelcomeMessage(cols: number): string {
   // Box: adapt inner width to terminal, min 30
   const boxInner = Math.min(48, w - 2); // 2 for ║…║
   const rule = "═".repeat(boxInner);
-  const line1 = "DC Lab Sim";
+  const line1 = "Data Center Lab Simulator";
   const line2 = "NCP-AII Certification Practice v1.0";
 
   const boxLine = (text: string) => {

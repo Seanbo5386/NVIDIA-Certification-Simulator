@@ -1,4 +1,4 @@
-# Usage Guide - DC Lab Sim
+# Usage Guide - Data Center Lab Simulator
 
 ## Table of Contents
 

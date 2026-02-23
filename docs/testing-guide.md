@@ -1,6 +1,6 @@
 # Testing Guide
 
-Complete guide for running, writing, and maintaining tests for DC Lab Sim.
+Complete guide for running, writing, and maintaining tests for Data Center Lab Simulator.
 
 ## Quick Start
 

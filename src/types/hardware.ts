@@ -1,4 +1,4 @@
-// Hardware type definitions for DC Lab Sim
+// Hardware type definitions for Data Center Lab Simulator
 
 export type HealthStatus = "OK" | "Warning" | "Critical" | "Unknown";
 

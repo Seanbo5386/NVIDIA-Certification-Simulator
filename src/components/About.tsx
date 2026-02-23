@@ -167,8 +167,11 @@ export function About() {
           </h3>
           <div className="bg-gray-800 rounded-lg p-5 space-y-3 text-gray-300 text-sm leading-relaxed">
             <p>
-              The <span className="text-white font-medium">DC Lab Sim</span> is
-              a browser-based training environment for the{" "}
+              The{" "}
+              <span className="text-white font-medium">
+                Data Center Lab Simulator
+              </span>{" "}
+              is a browser-based training environment for the{" "}
               <span className="text-nvidia-green font-medium">
                 NCP-AII certification exam
               </span>

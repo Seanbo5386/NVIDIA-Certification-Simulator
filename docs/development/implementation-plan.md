@@ -1,4 +1,4 @@
-# DC Lab Sim - Improvement Action Plan
+# Data Center Lab Simulator - Improvement Action Plan
 
 ## Executive Summary
 

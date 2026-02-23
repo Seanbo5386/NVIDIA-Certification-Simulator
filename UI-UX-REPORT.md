@@ -1,6 +1,6 @@
 # UI/UX Improvement Report
 
-## DC Lab Sim
+## Data Center Lab Simulator
 
 **Date:** January 29, 2026
 **Tested Version:** v1.0

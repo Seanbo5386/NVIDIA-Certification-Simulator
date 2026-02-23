@@ -1,4 +1,4 @@
-# DC Lab Sim
+# Data Center Lab Simulator
 
 <div align="center">
 
@@ -21,7 +21,7 @@
 
 ## Overview
 
-DC Lab Sim is a browser-based datacenter lab simulator for NCP-AII certification exam prep. Practice every task from the exam blueprint in a safe, simulated environment that feels like operating a real DGX SuperPOD.
+Data Center Lab Simulator is a browser-based training environment for NCP-AII certification exam prep. Practice every task from the exam blueprint in a safe, simulated environment that feels like operating a real DGX SuperPOD.
 
 ### What You Can Practice
 
@@ -211,7 +211,7 @@ npm run preview
 
 ### Cloud Sync & Authentication (Optional)
 
-DC Lab Sim includes optional user authentication and cloud sync powered by AWS Amplify Gen 2. When enabled, users can sign up with email/password, and their simulation progress, learning data, and quiz scores are synced to the cloud.
+Data Center Lab Simulator includes optional user authentication and cloud sync powered by AWS Amplify Gen 2. When enabled, users can sign up with email/password, and their simulation progress, learning data, and quiz scores are synced to the cloud.
 
 **The app works fully offline without this.** If no backend is configured, the login button still appears but auth calls will gracefully fail, and all progress is stored locally in the browser.
 

@@ -1,6 +1,6 @@
 # Test Plan
 
-Complete test matrix for DC Lab Sim.
+Complete test matrix for Data Center Lab Simulator.
 
 ## Test Categories
 
