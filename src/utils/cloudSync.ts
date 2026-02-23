@@ -95,6 +95,7 @@ export async function saveCloudProgress(
     }
   } catch (err) {
     console.error("[CloudSync] Failed to save progress:", err);
+    throw err;
   }
 }
 

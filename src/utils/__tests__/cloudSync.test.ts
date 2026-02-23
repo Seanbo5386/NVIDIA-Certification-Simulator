@@ -112,9 +112,9 @@ describe("cloudSync", () => {
       expect(mockUpdate).not.toHaveBeenCalled();
     });
 
-    it("does not throw on save error", async () => {
+    it("re-throws on save error so callers can set error status", async () => {
       mockFetchAuthSession.mockRejectedValue(new Error("Network"));
-      await expect(saveCloudProgress({}, {}, {})).resolves.toBeUndefined();
+      await expect(saveCloudProgress({}, {}, {})).rejects.toThrow("Network");
     });
   });
 });
