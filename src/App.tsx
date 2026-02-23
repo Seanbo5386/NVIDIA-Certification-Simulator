@@ -260,11 +260,13 @@ function App() {
                   <span>Tour</span>
                 </button>
 
-                <UserMenu
-                  isLoggedIn={isLoggedIn}
-                  syncStatus={syncStatus}
-                  userEmail={userEmail}
-                />
+                <div data-tour="user-menu">
+                  <UserMenu
+                    isLoggedIn={isLoggedIn}
+                    syncStatus={syncStatus}
+                    userEmail={userEmail}
+                  />
+                </div>
 
                 <div className="text-right">
                   <div className="text-sm font-medium text-nvidia-green">

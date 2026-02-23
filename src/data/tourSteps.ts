@@ -41,6 +41,13 @@ export const SIMULATOR_TOUR_STEPS: TourStep[] = [
     placement: "bottom",
   },
   {
+    selector: '[data-tour="user-menu"]',
+    title: "Account & Cloud Sync",
+    description:
+      "Sign in to save your progress to the cloud. Your simulation state, quiz scores, and learning data sync automatically across devices.",
+    placement: "bottom",
+  },
+  {
     selector: '[data-tour="split-handle"]',
     title: "Adjustable Layout",
     description:
@@ -82,7 +89,7 @@ export const LABS_TOUR_STEPS: TourStep[] = [
     selector: '[data-tour="missions-grid"]',
     title: "Mission Board",
     description:
-      "Scenarios are organized by exam domain. Each domain maps to a section of the NCP-AII certification with its exam weight shown.",
+      "Scenarios are organized by exam domain. Each domain maps to a section of the NCP-AII certification blueprint.",
     placement: "top",
   },
   {

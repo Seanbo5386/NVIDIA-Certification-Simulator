@@ -20,8 +20,8 @@ function validateSteps(steps: TourStep[]) {
 }
 
 describe("tourSteps", () => {
-  it("SIMULATOR_TOUR_STEPS has 8 steps with valid structure", () => {
-    expect(SIMULATOR_TOUR_STEPS).toHaveLength(8);
+  it("SIMULATOR_TOUR_STEPS has 9 steps with valid structure", () => {
+    expect(SIMULATOR_TOUR_STEPS).toHaveLength(9);
     validateSteps(SIMULATOR_TOUR_STEPS);
   });
 
