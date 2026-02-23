@@ -208,6 +208,66 @@ npm run build
 npm run preview
 ```
 
+### Cloud Sync & Authentication (Optional)
+
+DC Lab Sim includes optional user authentication and cloud sync powered by AWS Amplify Gen 2. When enabled, users can sign up with email/password, and their simulation progress, learning data, and quiz scores are synced to the cloud.
+
+**The app works fully offline without this.** If no backend is configured, the login button still appears but auth calls will gracefully fail, and all progress is stored locally in the browser.
+
+#### Setting Up Your Own Backend
+
+1. **Prerequisites**
+   - An [AWS account](https://aws.amazon.com/)
+   - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) installed and configured (`aws configure`)
+   - Node.js 18+
+
+2. **Deploy the backend**
+
+   The infrastructure-as-code is already in the `amplify/` directory:
+   - `amplify/auth/resource.ts` — Cognito user pool (email + password auth)
+   - `amplify/data/resource.ts` — DynamoDB `UserProgress` table with owner-based authorization
+   - `amplify/backend.ts` — Ties auth and data together
+
+   ```bash
+   # For local development (creates a personal sandbox backend)
+   npx ampx sandbox
+
+   # For production deployment
+   npx ampx deploy
+   ```
+
+   This generates `amplify_outputs.json` in the project root with your Cognito pool ID, AppSync endpoint, etc. This file is gitignored and never committed.
+
+3. **Start the app**
+
+   ```bash
+   npm run dev
+   ```
+
+   The app detects `amplify_outputs.json` at startup and enables auth features automatically.
+
+#### What Gets Synced
+
+| Data              | Description                                                        |
+| ----------------- | ------------------------------------------------------------------ |
+| Simulation state  | Cluster configuration, GPU metrics, fault states                   |
+| Learning progress | Quiz scores, tool usage, tier unlocks, spaced repetition schedules |
+| Learning data     | Domain progress, study sessions, total session count               |
+
+Data is synced on sign-in (merge local + cloud) and debounced during active use. Each user's data is isolated via Cognito owner-based authorization — users can only read/write their own records.
+
+#### Password Requirements
+
+Cognito enforces (and the UI validates client-side):
+
+- 8+ characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+- At least one special character
+
+---
+
 ## Usage Guide
 
 ### Getting Started
@@ -349,6 +409,7 @@ Scenarios for XID error investigation, thermal troubleshooting, network diagnost
 - **Icons**: Lucide React
 - **Build Tool**: Vite
 - **Visualization**: Recharts (metrics), D3.js (topology and network maps)
+- **Auth & Cloud Sync**: AWS Amplify Gen 2 (Cognito, AppSync, DynamoDB) — optional
 - **Testing**: Vitest, React Testing Library
 - **CI/CD**: GitHub Actions (lint, test, build)
 
@@ -473,6 +534,8 @@ GitHub Actions runs lint, unit tests, and production build on every push.
 - [x] Fault injection system for troubleshooting practice
 - [x] Study dashboard with progress analytics
 - [x] CI/CD pipeline (lint, test, build)
+- [x] User authentication and cloud sync (AWS Amplify Gen 2)
+- [x] Security hardening (secret scanning, error sanitization, rate limiting)
 - [x] 3,200+ unit tests with 0 TypeScript errors
 
 ### Future Enhancements
