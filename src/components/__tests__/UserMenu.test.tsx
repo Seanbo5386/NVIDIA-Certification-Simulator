@@ -238,6 +238,57 @@ describe("UserMenu", () => {
     expect(screen.getByText("Account")).toBeInTheDocument();
   });
 
+  it("shows generic error for UserNotFoundException", async () => {
+    mockSignIn.mockRejectedValue(
+      Object.assign(new Error("User does not exist."), {
+        name: "UserNotFoundException",
+      }),
+    );
+    render(<UserMenu isLoggedIn={false} syncStatus="idle" />);
+    fireEvent.click(screen.getByText("Sign in"));
+    fireEvent.change(screen.getByPlaceholderText("Email"), {
+      target: { value: "unknown@example.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Password"), {
+      target: { value: "password123" },
+    });
+    const submitBtn = screen
+      .getAllByRole("button", { name: "Sign in" })
+      .find((btn) => btn.getAttribute("type") === "submit")!;
+    fireEvent.click(submitBtn);
+    await waitFor(() => {
+      expect(
+        screen.getByText("Incorrect email or password."),
+      ).toBeInTheDocument();
+    });
+    expect(screen.queryByText("User does not exist.")).not.toBeInTheDocument();
+  });
+
+  it("shows generic error for NotAuthorizedException", async () => {
+    mockSignIn.mockRejectedValue(
+      Object.assign(new Error("Incorrect username or password."), {
+        name: "NotAuthorizedException",
+      }),
+    );
+    render(<UserMenu isLoggedIn={false} syncStatus="idle" />);
+    fireEvent.click(screen.getByText("Sign in"));
+    fireEvent.change(screen.getByPlaceholderText("Email"), {
+      target: { value: "test@example.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Password"), {
+      target: { value: "wrongpass" },
+    });
+    const submitBtn = screen
+      .getAllByRole("button", { name: "Sign in" })
+      .find((btn) => btn.getAttribute("type") === "submit")!;
+    fireEvent.click(submitBtn);
+    await waitFor(() => {
+      expect(
+        screen.getByText("Incorrect email or password."),
+      ).toBeInTheDocument();
+    });
+  });
+
   it("closes the auth form when clicking sign in button again", () => {
     render(<UserMenu isLoggedIn={false} syncStatus="idle" />);
     // Open

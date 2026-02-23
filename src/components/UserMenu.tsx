@@ -5,6 +5,24 @@ import { LogIn, LogOut, User, Cloud, CloudOff, Loader2 } from "lucide-react";
 import type { SyncStatus } from "@/hooks/useCloudSync";
 import { validatePassword } from "@/utils/passwordValidation";
 
+function sanitizeAuthError(err: unknown): string {
+  if (err instanceof Error) {
+    const name = (err as Error & { name?: string }).name;
+    switch (name) {
+      case "UserNotFoundException":
+      case "NotAuthorizedException":
+        return "Incorrect email or password.";
+      case "UserAlreadyAuthenticatedException":
+        return "You are already signed in.";
+      case "LimitExceededException":
+        return "Too many attempts. Please try again later.";
+      default:
+        return err.message;
+    }
+  }
+  return "An unexpected error occurred.";
+}
+
 interface UserMenuProps {
   isLoggedIn: boolean;
   syncStatus: SyncStatus;
@@ -83,7 +101,7 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
         setError("Additional verification required.");
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Sign in failed");
+      setError(sanitizeAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -102,7 +120,7 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
       await signUp({ username: email, password });
       setAuthView("confirm");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Sign up failed");
+      setError(sanitizeAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -126,7 +144,7 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
         );
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Confirmation failed");
+      setError(sanitizeAuthError(err));
     } finally {
       setLoading(false);
     }
