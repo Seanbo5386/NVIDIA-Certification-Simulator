@@ -64,6 +64,16 @@ export class BasicSystemSimulator extends BaseSimulator {
           ],
         },
         {
+          name: "journalctl",
+          description: "Query the systemd journal",
+          usage: "journalctl [OPTIONS]",
+          examples: [
+            "journalctl",
+            "journalctl -k",
+            "journalctl | grep -i error",
+          ],
+        },
+        {
           name: "systemctl",
           description: "Service management",
           usage: "systemctl [action] <service>",
@@ -193,6 +203,7 @@ export class BasicSystemSimulator extends BaseSimulator {
       case "dmidecode":
         return this.handleDmidecode(parsed, context);
       case "dmesg":
+      case "journalctl":
         return this.handleDmesg(parsed, context);
       case "systemctl":
         return this.handleSystemctl(parsed, context);
@@ -600,6 +611,15 @@ Available types:
 
     // Check simulation store for any active XID errors (from fault injection)
     const xidMessages: string[] = [];
+
+    // Pull in EventLog entries from active ScenarioContext (live incidents)
+    const scenarioCtx = context.scenarioContext;
+    if (scenarioCtx) {
+      const eventLogLines = scenarioCtx.getEventLog().toDmesgOutput();
+      if (eventLogLines.length > 0) {
+        xidMessages.push(...eventLogLines);
+      }
+    }
 
     // Only check current node's GPUs for XID errors
     const currentNode = this.resolveNode(context);
