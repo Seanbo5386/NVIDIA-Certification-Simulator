@@ -244,18 +244,24 @@ describe("MetricsSimulator", () => {
     });
 
     it("should derive temperature from power draw, not utilization", () => {
-      // Both GPUs have same low utilization but different power draws
+      // High-utilization GPU under load vs idle GPU.
+      // The active GPU sustains higher power draw, which drives higher temperature.
       const highPowerGpu = createMockGPU({
+        id: 0,
+        uuid: "GPU-HIGH-POWER",
         powerDraw: 380,
         powerLimit: 400,
         temperature: 32,
-        utilization: 10,
+        utilization: 90,
+        allocatedJobId: 1001,
       });
       const lowPowerGpu = createMockGPU({
+        id: 1,
+        uuid: "GPU-LOW-POWER",
         powerDraw: 60,
         powerLimit: 400,
         temperature: 32,
-        utilization: 10,
+        utilization: 5,
       });
 
       let highP = highPowerGpu;
@@ -264,7 +270,7 @@ describe("MetricsSimulator", () => {
         highP = tickMetrics([highP])[0];
         lowP = tickMetrics([lowP])[0];
       }
-      // High power GPU should be warmer despite same utilization
+      // Active GPU with sustained high power should be warmer than idle GPU
       expect(highP.temperature).toBeGreaterThan(lowP.temperature);
     });
 

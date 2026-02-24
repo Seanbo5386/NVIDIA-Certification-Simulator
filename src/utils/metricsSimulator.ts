@@ -1,5 +1,6 @@
 import type { GPU, InfiniBandHCA } from "@/types/hardware";
 import { HARDWARE_SPECS } from "@/data/hardwareSpecs";
+import { ClusterPhysicsEngine } from "@/simulation/clusterPhysicsEngine";
 
 /** Look up the boost clock for a GPU by its model name. Falls back to A100's 1410 MHz. */
 function getBoostClock(gpuName: string): number {
@@ -17,6 +18,16 @@ export interface MetricsUpdate {
 export class MetricsSimulator {
   private intervalId: number | null = null;
   private isRunning: boolean = false;
+  private physicsEngine: ClusterPhysicsEngine;
+
+  constructor() {
+    this.physicsEngine = new ClusterPhysicsEngine();
+  }
+
+  /** Expose the physics engine for external access to threshold events. */
+  getPhysicsEngine(): ClusterPhysicsEngine {
+    return this.physicsEngine;
+  }
 
   start(
     updateCallback: (
@@ -124,7 +135,7 @@ export class MetricsSimulator {
       const eccDoubleBitIncrement =
         isActive && Math.random() < 0.0000005 ? 1 : 0;
 
-      return {
+      const jittered: GPU = {
         ...gpu,
         utilization: Math.round(newUtilization * 10) / 10,
         memoryUsed: Math.round(newMemoryUsed),
@@ -143,6 +154,9 @@ export class MetricsSimulator {
           },
         },
       };
+
+      // Apply causal physics adjustments (temperature, power, clock throttling)
+      return this.physicsEngine.tickGPU(jittered);
     });
   }
 
