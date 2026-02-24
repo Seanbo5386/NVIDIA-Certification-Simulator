@@ -16,6 +16,7 @@ import {
   useTierNotificationStore,
   FAMILY_METADATA,
 } from "./tierNotificationStore";
+import { DifficultyScaler } from "../simulation/difficultyScaler";
 
 // ============================================================================
 // TYPES
@@ -81,6 +82,15 @@ export interface ReviewScheduleEntry {
 }
 
 /**
+ * Entry in incident performance history
+ */
+export interface IncidentHistoryEntry {
+  templateId: string;
+  score: number;
+  date: number;
+}
+
+/**
  * Core state shape for learning progress
  */
 export interface LearningProgressData {
@@ -98,6 +108,10 @@ export interface LearningProgressData {
 
   // Spaced Repetition
   reviewSchedule: Record<string, ReviewScheduleEntry>;
+
+  // Incident Difficulty Rating (ELO-like adaptive system)
+  incidentRating: number;
+  incidentHistory: IncidentHistoryEntry[];
 }
 
 /**
@@ -136,6 +150,9 @@ export interface LearningProgressState extends LearningProgressData {
   recordReviewResult: (familyId: string, success: boolean) => void;
   getDueReviews: () => string[];
 
+  // Incident difficulty
+  recordIncidentResult: (templateId: string, score: number) => void;
+
   // Utility
   resetProgress: () => void;
 }
@@ -171,6 +188,8 @@ const initialState: LearningProgressData = {
   tierProgress: {},
   explanationGateResults: {},
   reviewSchedule: {},
+  incidentRating: 1000,
+  incidentHistory: [],
 };
 
 // ============================================================================
@@ -489,6 +508,25 @@ export const useLearningProgressStore = create<LearningProgressState>()(
       },
 
       /**
+       * Records the result of an incident attempt
+       * Uses DifficultyScaler to adjust the ELO-like rating and appends to history
+       */
+      recordIncidentResult: (templateId: string, score: number): void => {
+        set((state) => {
+          const scaler = new DifficultyScaler(state.incidentRating);
+          scaler.recordResult(score);
+
+          return {
+            incidentRating: scaler.getRating(),
+            incidentHistory: [
+              ...state.incidentHistory,
+              { templateId, score, date: Date.now() },
+            ],
+          };
+        });
+      },
+
+      /**
        * Resets all learning progress to initial state
        */
       resetProgress: (): void => {
@@ -506,6 +544,8 @@ export const useLearningProgressStore = create<LearningProgressState>()(
         tierProgress: state.tierProgress,
         explanationGateResults: state.explanationGateResults,
         reviewSchedule: state.reviewSchedule,
+        incidentRating: state.incidentRating,
+        incidentHistory: state.incidentHistory,
       }),
     },
   ),
