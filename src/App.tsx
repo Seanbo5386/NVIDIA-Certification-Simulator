@@ -29,6 +29,16 @@ const Documentation = lazy(() =>
 const About = lazy(() =>
   import("./components/About").then((m) => ({ default: m.About })),
 );
+const IncidentWorkspace = lazy(() =>
+  import("./components/IncidentWorkspace").then((m) => ({
+    default: m.IncidentWorkspace,
+  })),
+);
+const AfterActionReview = lazy(() =>
+  import("./components/AfterActionReview").then((m) => ({
+    default: m.AfterActionReview,
+  })),
+);
 import { StudyDashboard } from "./components/StudyDashboard";
 import { SpacedReviewDrill } from "./components/SpacedReviewDrill";
 import { TierUnlockNotificationContainer } from "./components/TierUnlockNotification";
@@ -40,6 +50,7 @@ import { ToolMasteryQuiz } from "./components/ToolMasteryQuiz";
 import { useSimulationStore } from "./store/simulationStore";
 import { useLearningProgressStore } from "./store/learningProgressStore";
 import { useMetricsSimulation } from "./hooks/useMetricsSimulation";
+import { useIncidentSession } from "./hooks/useIncidentSession";
 import { initializeScenario } from "./utils/scenarioLoader";
 import {
   Monitor,
@@ -117,6 +128,23 @@ function App() {
   // Activate metrics simulation when running
   useMetricsSimulation(isRunning);
 
+  // Incident session orchestrator
+  const incidentSession = useIncidentSession();
+  const {
+    incidentState,
+    situation: incidentSituation,
+    workflowPhases,
+    reviewData,
+    hintsUsed,
+    rootCauseOptions,
+    diagnosticPath,
+    startIncident,
+    submitDiagnosis,
+    abandonIncident,
+    requestHint,
+  } = incidentSession;
+  // incidentSession.recordCommand is available for Terminal integration (Task 15)
+
   // One-time cleanup of deprecated learning path localStorage keys
   useEffect(() => {
     localStorage.removeItem("ncp-aii-completed-lessons");
@@ -148,6 +176,14 @@ function App() {
       setShowLabWorkspace(true);
     }
   };
+
+  const handleStartIncident = useCallback(
+    (difficulty: string, domain?: number) => {
+      startIncident(difficulty, domain);
+      setCurrentView("simulator");
+    },
+    [startIncident],
+  );
 
   const handleBeginExam = (mode?: string) => {
     setExamMode(mode);
@@ -440,7 +476,10 @@ function App() {
 
         <Suspense fallback={<ViewFallback />}>
           {currentView === "labs" && (
-            <LabsAndScenariosView onStartScenario={handleStartScenario} />
+            <LabsAndScenariosView
+              onStartScenario={handleStartScenario}
+              onStartIncident={handleStartIncident}
+            />
           )}
 
           {currentView === "exams" && (
@@ -505,6 +544,45 @@ function App() {
           />
         )}
       </Suspense>
+
+      {/* Incident Workspace Overlay */}
+      {incidentState === "active" && (
+        <Suspense fallback={null}>
+          <IncidentWorkspace
+            situation={incidentSituation}
+            phaseHistory={workflowPhases}
+            rootCauseOptions={rootCauseOptions}
+            diagnosticPath={diagnosticPath}
+            onSubmitDiagnosis={submitDiagnosis}
+            onRequestHint={requestHint}
+            onClose={abandonIncident}
+            hintsUsed={hintsUsed}
+          />
+        </Suspense>
+      )}
+
+      {/* After-Action Review Overlay */}
+      {incidentState === "review" && reviewData && (
+        <Suspense fallback={null}>
+          <AfterActionReview
+            score={reviewData.score}
+            correctDiagnosis={reviewData.correctDiagnosis}
+            selectedRootCause={reviewData.selectedRootCause}
+            correctRootCause={reviewData.correctRootCause}
+            events={reviewData.events}
+            commands={reviewData.commands}
+            tip={reviewData.tip}
+            onReviewOptimalPath={() => {
+              /* TODO: launch as guided scenario */
+            }}
+            onRestart={() =>
+              handleStartIncident(reviewData.difficulty, reviewData.domain)
+            }
+            onClose={abandonIncident}
+          />
+        </Suspense>
+      )}
+
       {/* Spotlight Tour */}
       {activeTour && !showWelcome && (
         <SpotlightTour
