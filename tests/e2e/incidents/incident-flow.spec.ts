@@ -72,8 +72,6 @@ test.describe("Live Incidents", () => {
     await expect(rating).toBeVisible();
 
     // Domain filter dropdown should be visible
-    const domainFilter = page.locator('select[aria-label="Filter by domain"]');
-    // May or may not have aria-label, check for select in the section
     const anySelect = page.locator("select").first();
     await expect(anySelect).toBeVisible();
   });
