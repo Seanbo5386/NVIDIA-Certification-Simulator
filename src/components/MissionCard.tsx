@@ -123,222 +123,232 @@ export function MissionCard({
   return (
     <div
       data-testid="mission-card"
-      className="bg-gray-800 border-b border-gray-700 px-3 py-2 shrink-0 select-none"
+      className="bg-gray-800 border-b border-gray-700 shrink-0 select-none flex"
     >
-      {/* Row 1 — Header */}
-      <div className="flex items-center gap-2 mb-1">
-        <h3
-          className="text-sm font-semibold text-white truncate flex-1"
-          title={missionTitle}
-        >
-          {missionTitle}
-        </h3>
-        <span
-          className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${tierBadge.className}`}
-        >
-          {tierBadge.label}
-        </span>
-        <span className="text-xs text-gray-400 whitespace-nowrap">
-          Step {currentStepIndex + 1} of {totalSteps}
-        </span>
-        {/* Step dot indicators */}
-        <div className="flex gap-0.5">
-          {Array.from({ length: totalSteps }, (_, i) => (
-            <span
-              key={i}
-              className={`inline-block w-1.5 h-1.5 rounded-full ${
-                i < currentStepIndex
-                  ? "bg-nvidia-green"
-                  : i === currentStepIndex
-                    ? "ring-1 ring-nvidia-green bg-nvidia-green/40"
-                    : "bg-gray-600"
-              }`}
-            />
-          ))}
-        </div>
-        {/* Info popover */}
-        {(learningObjectives?.length || narrativeContext) && (
-          <div className="relative">
-            <button
-              onClick={() => setShowInfoPopover(!showInfoPopover)}
-              className="text-gray-400 hover:text-white transition-colors"
-              title="Mission info"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </button>
-            {showInfoPopover && (
-              <div className="absolute top-full right-0 mt-1 w-72 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-3 z-30">
-                {narrativeContext && (
-                  <p className="text-xs text-gray-300 mb-2">
-                    {narrativeContext}
-                  </p>
-                )}
-                {learningObjectives && learningObjectives.length > 0 && (
-                  <>
-                    <h4 className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">
-                      What You&apos;ll Learn
-                    </h4>
-                    <ul className="space-y-0.5">
-                      {learningObjectives.map((obj, idx) => (
-                        <li
-                          key={idx}
-                          className="text-[11px] text-gray-400 flex gap-1.5"
-                        >
-                          <span className="text-nvidia-green">•</span>
-                          {obj}
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Row 2 — Current Step Task */}
-      <p className="text-xs text-gray-300 leading-snug mb-1.5 line-clamp-2">
-        {currentStep.task || currentStep.description}
-      </p>
-
-      {/* Row 3 — Commands / Concept / Observe */}
-      {isCommandStep &&
-        currentStep.expectedCommands &&
-        currentStep.expectedCommands.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-1.5">
-            {currentStep.expectedCommands.map((cmd, idx) => {
-              const isExecuted = commandsExecuted.some((exe) =>
-                validateCommandExecuted(exe, [cmd]),
-              );
-              const isFlashing = flashingChip === idx;
-              return (
-                <button
-                  key={idx}
-                  onClick={(e) => !isExecuted && handleChipClick(cmd, idx, e)}
-                  disabled={isExecuted}
-                  className={`font-mono text-xs px-2 py-1 rounded border transition-all duration-200 ${
-                    isExecuted
-                      ? "bg-gray-900/50 text-green-500/60 border-green-900/50 cursor-default line-through"
-                      : isFlashing
-                        ? "bg-gray-900 text-green-400 border-green-500 shadow-[0_0_6px_rgba(118,185,0,0.4)]"
-                        : "bg-gray-900 text-gray-300 border-gray-600 hover:border-nvidia-green hover:text-nvidia-green cursor-pointer"
-                  }`}
-                  title={
-                    isExecuted ? "Executed" : "Click to paste into terminal"
-                  }
-                >
-                  <span className="mr-1.5">{isExecuted ? "✓" : "○"}</span>
-                  {cmd}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-      {isConceptStep && (
-        <p className="text-xs text-purple-300 bg-purple-900/20 rounded px-2 py-1.5 mb-1.5 line-clamp-3">
-          {currentStep.conceptText ||
-            currentStep.conceptContent ||
-            currentStep.description}
-        </p>
-      )}
-
-      {isObserveStep && currentStep.observeCommand && (
-        <div className="mb-1.5">
-          <button
-            onClick={() => onPasteCommand(currentStep.observeCommand!)}
-            className="font-mono text-xs bg-gray-900 text-blue-300 border border-blue-800 rounded px-2 py-1 hover:border-blue-500 cursor-pointer transition-colors"
-            title="Click to paste into terminal"
+      {/* Left content area */}
+      <div className="flex-1 min-w-0 px-3 py-2">
+        {/* Row 1 — Header */}
+        <div className="flex items-center gap-2 mb-1">
+          <h3
+            className="text-sm font-semibold text-white truncate flex-1"
+            title={missionTitle}
           >
-            $ {currentStep.observeCommand}
-          </button>
-        </div>
-      )}
-
-      {/* Quiz expansion */}
-      {!!currentStep.narrativeQuiz &&
-        onQuizComplete &&
-        (isStepCompleted || isConceptStep || isObserveStep) && (
-          <div className="mb-1.5">
-            <InlineQuiz
-              quiz={currentStep.narrativeQuiz as NarrativeQuiz}
-              onComplete={onQuizComplete}
-            />
-          </div>
-        )}
-
-      {/* Row 4 — Status Footer */}
-      <div className="flex items-center gap-2 text-[11px]">
-        {/* Objective progress */}
-        {totalObjectives > 0 && (
-          <span className="text-gray-400">
-            {passedCount}/{totalObjectives} objectives
+            {missionTitle}
+          </h3>
+          <span
+            className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${tierBadge.className}`}
+          >
+            {tierBadge.label}
           </span>
+          <span className="text-xs text-gray-400 whitespace-nowrap">
+            Step {currentStepIndex + 1} of {totalSteps}
+          </span>
+          {/* Step dot indicators */}
+          <div className="flex gap-0.5">
+            {Array.from({ length: totalSteps }, (_, i) => (
+              <span
+                key={i}
+                className={`inline-block w-1.5 h-1.5 rounded-full ${
+                  i < currentStepIndex
+                    ? "bg-nvidia-green"
+                    : i === currentStepIndex
+                      ? "ring-1 ring-nvidia-green bg-nvidia-green/40"
+                      : "bg-gray-600"
+                }`}
+              />
+            ))}
+          </div>
+          {/* Info popover */}
+          {(learningObjectives?.length || narrativeContext) && (
+            <div className="relative">
+              <button
+                onClick={() => setShowInfoPopover(!showInfoPopover)}
+                className="text-gray-400 hover:text-white transition-colors"
+                title="Mission info"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </button>
+              {showInfoPopover && (
+                <div className="absolute top-full right-0 mt-1 w-72 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-3 z-30">
+                  {narrativeContext && (
+                    <p className="text-xs text-gray-300 mb-2">
+                      {narrativeContext}
+                    </p>
+                  )}
+                  {learningObjectives && learningObjectives.length > 0 && (
+                    <>
+                      <h4 className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1">
+                        What You&apos;ll Learn
+                      </h4>
+                      <ul className="space-y-0.5">
+                        {learningObjectives.map((obj, idx) => (
+                          <li
+                            key={idx}
+                            className="text-[11px] text-gray-400 flex gap-1.5"
+                          >
+                            <span className="text-nvidia-green">•</span>
+                            {obj}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Row 2 — Current Step Task */}
+        <p className="text-xs text-gray-300 leading-snug mb-1.5 line-clamp-2">
+          {currentStep.task || currentStep.description}
+        </p>
+
+        {/* Row 3 — Commands / Concept / Observe */}
+        {isCommandStep &&
+          currentStep.expectedCommands &&
+          currentStep.expectedCommands.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-1.5">
+              {currentStep.expectedCommands.map((cmd, idx) => {
+                const isExecuted = commandsExecuted.some((exe) =>
+                  validateCommandExecuted(exe, [cmd]),
+                );
+                const isFlashing = flashingChip === idx;
+                return (
+                  <button
+                    key={idx}
+                    onClick={(e) => !isExecuted && handleChipClick(cmd, idx, e)}
+                    disabled={isExecuted}
+                    className={`font-mono text-xs px-2 py-1 rounded border transition-all duration-200 ${
+                      isExecuted
+                        ? "bg-gray-900/50 text-green-500/60 border-green-900/50 cursor-default line-through"
+                        : isFlashing
+                          ? "bg-gray-900 text-green-400 border-green-500 shadow-[0_0_6px_rgba(118,185,0,0.4)]"
+                          : "bg-gray-900 text-gray-300 border-gray-600 hover:border-nvidia-green hover:text-nvidia-green cursor-pointer"
+                    }`}
+                    title={
+                      isExecuted ? "Executed" : "Click to paste into terminal"
+                    }
+                  >
+                    <span className="mr-1.5">{isExecuted ? "✓" : "○"}</span>
+                    {cmd}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+        {isConceptStep && (
+          <p className="text-xs text-purple-300 bg-purple-900/20 rounded px-2 py-1.5 mb-1.5 line-clamp-3">
+            {currentStep.conceptText ||
+              currentStep.conceptContent ||
+              currentStep.description}
+          </p>
         )}
 
-        <div className="flex-1" />
-
-        {/* Hint button */}
-        {availableHintCount > 0 && !isStepCompleted && (
-          <div className="relative">
+        {isObserveStep && currentStep.observeCommand && (
+          <div className="mb-1.5">
             <button
-              onClick={() => {
-                if (revealedHintCount < availableHintCount) {
-                  onRevealHint();
-                }
-                setShowHintDropdown(!showHintDropdown);
-              }}
-              className="text-yellow-400 hover:text-yellow-300 transition-colors text-[11px]"
+              onClick={() => onPasteCommand(currentStep.observeCommand!)}
+              className="font-mono text-xs bg-gray-900 text-blue-300 border border-blue-800 rounded px-2 py-1 hover:border-blue-500 cursor-pointer transition-colors"
+              title="Click to paste into terminal"
             >
-              Hint ({revealedHintCount}/{availableHintCount})
+              $ {currentStep.observeCommand}
             </button>
-            {showHintDropdown && revealedHintCount > 0 && (
-              <div className="absolute bottom-full right-0 mb-1 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-2 z-20">
-                <ul className="space-y-1">
-                  {revealedHints.map((hint, idx) => (
-                    <li key={idx} className="text-[11px] text-gray-300">
-                      <span className="text-yellow-400 font-mono mr-1">
-                        {idx + 1}.
-                      </span>
-                      {hint}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
         )}
 
-        {/* Step complete / Next / Continue */}
-        {isStepCompleted ? (
-          <button
-            onClick={onNextStep}
-            className="bg-nvidia-green text-black text-sm font-bold px-4 py-1.5 rounded-md hover:bg-green-500 transition-colors shadow-[0_0_10px_rgba(118,185,0,0.5)] animate-pulse"
-          >
-            {currentStepIndex + 1 < totalSteps ? "Next →" : "Finish →"}
-          </button>
-        ) : (isConceptStep || isObserveStep) && !currentStep.narrativeQuiz ? (
-          <button
-            onClick={onContinue}
-            className="bg-green-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded hover:bg-green-700 transition-colors"
-          >
-            Continue
-          </button>
-        ) : null}
+        {/* Quiz expansion */}
+        {!!currentStep.narrativeQuiz &&
+          onQuizComplete &&
+          (isStepCompleted || isConceptStep || isObserveStep) && (
+            <div className="mb-1.5">
+              <InlineQuiz
+                quiz={currentStep.narrativeQuiz as NarrativeQuiz}
+                onComplete={onQuizComplete}
+              />
+            </div>
+          )}
+
+        {/* Row 4 — Status Footer */}
+        <div className="flex items-center gap-2 text-[11px]">
+          {/* Objective progress */}
+          {totalObjectives > 0 && (
+            <span className="text-gray-400">
+              {passedCount}/{totalObjectives} objectives
+            </span>
+          )}
+
+          <div className="flex-1" />
+
+          {/* Hint button */}
+          {availableHintCount > 0 && !isStepCompleted && (
+            <div className="relative">
+              <button
+                onClick={() => {
+                  if (revealedHintCount < availableHintCount) {
+                    onRevealHint();
+                  }
+                  setShowHintDropdown(!showHintDropdown);
+                }}
+                className="text-yellow-400 hover:text-yellow-300 transition-colors text-[11px]"
+              >
+                Hint ({revealedHintCount}/{availableHintCount})
+              </button>
+              {showHintDropdown && revealedHintCount > 0 && (
+                <div className="absolute bottom-full right-0 mb-1 w-56 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-2 z-20">
+                  <ul className="space-y-1">
+                    {revealedHints.map((hint, idx) => (
+                      <li key={idx} className="text-[11px] text-gray-300">
+                        <span className="text-yellow-400 font-mono mr-1">
+                          {idx + 1}.
+                        </span>
+                        {hint}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Continue button for concept/observe steps (inline, not the big side button) */}
+          {!isStepCompleted &&
+            (isConceptStep || isObserveStep) &&
+            !currentStep.narrativeQuiz && (
+              <button
+                onClick={onContinue}
+                className="bg-green-600 text-white text-[11px] font-semibold px-2.5 py-1 rounded hover:bg-green-700 transition-colors"
+              >
+                Continue
+              </button>
+            )}
+        </div>
       </div>
+      {/* end left content area */}
+
+      {/* Right column — full-height Next/Finish button */}
+      {isStepCompleted && (
+        <button
+          onClick={onNextStep}
+          className="bg-nvidia-green hover:bg-green-500 text-black text-lg font-bold px-5 flex items-center gap-1 transition-colors shadow-[inset_0_0_20px_rgba(0,0,0,0.1)] whitespace-nowrap"
+        >
+          {currentStepIndex + 1 < totalSteps ? "Next" : "Finish"}
+          <span className="text-xl">→</span>
+        </button>
+      )}
     </div>
   );
 }

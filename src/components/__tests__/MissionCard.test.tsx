@@ -143,7 +143,7 @@ describe("MissionCard", () => {
 
     it("shows Next button when step is completed", () => {
       render(<MissionCard {...defaultProps} isStepCompleted={true} />);
-      expect(screen.getByText("Next →")).toBeInTheDocument();
+      expect(screen.getByText("Next")).toBeInTheDocument();
     });
 
     it("shows Finish on last step", () => {
@@ -155,7 +155,7 @@ describe("MissionCard", () => {
           totalSteps={5}
         />,
       );
-      expect(screen.getByText("Finish →")).toBeInTheDocument();
+      expect(screen.getByText("Finish")).toBeInTheDocument();
     });
 
     it("calls onNextStep when Next is clicked", () => {
@@ -167,7 +167,7 @@ describe("MissionCard", () => {
           onNextStep={onNext}
         />,
       );
-      fireEvent.click(screen.getByText("Next →"));
+      fireEvent.click(screen.getByText("Next"));
       expect(onNext).toHaveBeenCalled();
     });
 
