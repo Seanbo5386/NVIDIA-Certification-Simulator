@@ -10,6 +10,8 @@
 
 import { useState, useCallback } from "react";
 import { validateCommandExecuted } from "@/utils/commandValidator";
+import { InlineQuiz } from "./InlineQuiz";
+import type { NarrativeQuiz } from "../types/scenarios";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -92,6 +94,7 @@ export function MissionCard({
   revealedHints,
   learningObjectives,
   narrativeContext,
+  onQuizComplete,
 }: MissionCardProps) {
   const [showHintDropdown, setShowHintDropdown] = useState(false);
   const [showInfoPopover, setShowInfoPopover] = useState(false);
@@ -262,6 +265,18 @@ export function MissionCard({
           </button>
         </div>
       )}
+
+      {/* Quiz expansion */}
+      {!!currentStep.narrativeQuiz &&
+        onQuizComplete &&
+        (isStepCompleted || isConceptStep || isObserveStep) && (
+          <div className="mb-1.5">
+            <InlineQuiz
+              quiz={currentStep.narrativeQuiz as NarrativeQuiz}
+              onComplete={onQuizComplete}
+            />
+          </div>
+        )}
 
       {/* Row 4 — Status Footer */}
       <div className="flex items-center gap-2 text-[11px]">

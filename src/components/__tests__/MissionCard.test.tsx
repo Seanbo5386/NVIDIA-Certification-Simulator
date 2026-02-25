@@ -10,6 +10,15 @@ vi.mock("../../utils/commandValidator", () => ({
   ),
 }));
 
+// Mock InlineQuiz
+vi.mock("../InlineQuiz", () => ({
+  InlineQuiz: ({ onComplete }: { onComplete: (c: boolean) => void }) => (
+    <div data-testid="inline-quiz">
+      <button onClick={() => onComplete(true)}>Answer Quiz</button>
+    </div>
+  ),
+}));
+
 const mockStep = {
   id: "step-1",
   title: "Check GPU Status",
@@ -254,6 +263,84 @@ describe("MissionCard", () => {
     it("does not show info icon without objectives or context", () => {
       render(<MissionCard {...defaultProps} />);
       expect(screen.queryByTitle("Mission info")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("quiz expansion", () => {
+    const quizStep = {
+      ...mockStep,
+      narrativeQuiz: {
+        question: "What does nvidia-smi show?",
+        options: ["GPU info", "CPU info"],
+        correctIndex: 0,
+        explanation: "nvidia-smi shows GPU information",
+      },
+    };
+
+    it("shows InlineQuiz when step is completed and has quiz", () => {
+      render(
+        <MissionCard
+          {...defaultProps}
+          currentStep={quizStep}
+          isStepCompleted={true}
+          onQuizComplete={vi.fn()}
+        />,
+      );
+      expect(screen.getByTestId("inline-quiz")).toBeInTheDocument();
+    });
+
+    it("does not show InlineQuiz before step completion for command steps", () => {
+      render(
+        <MissionCard
+          {...defaultProps}
+          currentStep={quizStep}
+          isStepCompleted={false}
+          onQuizComplete={vi.fn()}
+        />,
+      );
+      expect(screen.queryByTestId("inline-quiz")).not.toBeInTheDocument();
+    });
+
+    it("shows InlineQuiz immediately for concept steps with quiz", () => {
+      const conceptQuizStep = {
+        ...quizStep,
+        stepType: "concept" as const,
+        expectedCommands: [],
+      };
+      render(
+        <MissionCard
+          {...defaultProps}
+          currentStep={conceptQuizStep}
+          isStepCompleted={false}
+          onQuizComplete={vi.fn()}
+        />,
+      );
+      expect(screen.getByTestId("inline-quiz")).toBeInTheDocument();
+    });
+
+    it("does not show InlineQuiz when onQuizComplete is not provided", () => {
+      render(
+        <MissionCard
+          {...defaultProps}
+          currentStep={quizStep}
+          isStepCompleted={true}
+        />,
+      );
+      expect(screen.queryByTestId("inline-quiz")).not.toBeInTheDocument();
+    });
+
+    it("calls onQuizComplete when quiz is answered", () => {
+      const onQuiz = vi.fn();
+      render(
+        <MissionCard
+          {...defaultProps}
+          currentStep={quizStep}
+          isStepCompleted={true}
+          onQuizComplete={onQuiz}
+        />,
+      );
+      fireEvent.click(screen.getByText("Answer Quiz"));
+      expect(onQuiz).toHaveBeenCalledWith(true);
     });
   });
 });

@@ -357,6 +357,10 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({
                   revealedHints={revealedHintTexts}
                   learningObjectives={activeScenario!.learningObjectives}
                   narrativeContext={activeScenario!.narrative?.setting}
+                  onQuizComplete={(_correct) => {
+                    // Quiz answered — advance to next step
+                    completeScenarioStep(activeScenario!.id, currentStep.id);
+                  }}
                 />
               )}
               <Terminal className="flex-1" onReady={handleTerminalReady} />
@@ -594,6 +598,13 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({
                             activeScenario!.learningObjectives
                           }
                           narrativeContext={activeScenario!.narrative?.setting}
+                          onQuizComplete={(_correct) => {
+                            // Quiz answered — advance to next step
+                            completeScenarioStep(
+                              activeScenario!.id,
+                              currentStep.id,
+                            );
+                          }}
                         />
                       )}
                       <Terminal
