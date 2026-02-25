@@ -173,6 +173,37 @@ describe("MissionCard", () => {
       expect(screen.getByText("Continue")).toBeInTheDocument();
     });
 
+    it("calls onContinue when Continue button is clicked", () => {
+      const onContinue = vi.fn();
+      const conceptStep = {
+        ...mockStep,
+        stepType: "concept" as const,
+        expectedCommands: [],
+        narrativeQuiz: undefined,
+      };
+      render(
+        <MissionCard
+          {...defaultProps}
+          currentStep={conceptStep}
+          onContinue={onContinue}
+        />,
+      );
+      fireEvent.click(screen.getByText("Continue"));
+      expect(onContinue).toHaveBeenCalled();
+    });
+
+    it("shows Continue button for observe steps without quiz", () => {
+      const observeStep = {
+        ...mockStep,
+        stepType: "observe" as const,
+        observeCommand: "dmesg | grep -i gpu",
+        expectedCommands: [],
+        narrativeQuiz: undefined,
+      };
+      render(<MissionCard {...defaultProps} currentStep={observeStep} />);
+      expect(screen.getByText("Continue")).toBeInTheDocument();
+    });
+
     it("shows hint button with count", () => {
       render(
         <MissionCard
