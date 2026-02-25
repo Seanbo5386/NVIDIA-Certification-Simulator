@@ -4,7 +4,7 @@
 
 ![Version](https://img.shields.io/badge/version-1.2.0-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-3497_unit_|_307_E2E-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-3510_unit_|_307_E2E-brightgreen?style=for-the-badge)
 ![NVIDIA](https://img.shields.io/badge/NVIDIA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
 ![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
@@ -30,7 +30,7 @@ The NCP-AII certification exam tests hands-on datacenter skills — but most peo
 - **It feels real** — `nvidia-smi`, `ipmitool`, `dcgmi`, `ibstat`, and 60+ other commands produce output modeled after actual DGX hardware
 - **Scenarios tell a story** — You're not just running commands; you're responding to a 2AM GPU failure or debugging NCCL performance before a deadline
 - **Faults inject automatically** — When a scenario says "GPU 3 has an XID 48 error," the simulated cluster actually shows it in every tool
-- **Four DGX architectures** — Switch between A100, H100, H200, and B200 and watch every metric, topology, and output adapt
+- **Six DGX architectures** — Switch between A100, H100, H200, B200, GB200, and Vera Rubin VR200 and watch every metric, topology, and output adapt
 
 ---
 
@@ -41,10 +41,10 @@ The NCP-AII certification exam tests hands-on datacenter skills — but most peo
 | **Commands**      | 20 simulators, 229 CLI definitions across 17 categories                      |
 | **Scenarios**     | 32 story-driven labs across all 5 exam domains                               |
 | **Exam Prep**     | 199 practice questions + 60 tool selection + 150 deep mastery quizzes        |
-| **Architectures** | DGX A100, H100, H200, B200 (switchable from dashboard)                       |
+| **Architectures** | DGX A100, H100, H200, B200, GB200, VR200 (switchable from dashboard)         |
 | **Learning**      | 3-tier progression (Guided > Choice > Realistic) with SM-2 spaced repetition |
 | **Cloud Sync**    | Optional sign-in to save progress across devices (AWS Cognito)               |
-| **Tests**         | 3,497 unit + 307 E2E tests, 0 TypeScript errors, 0 lint warnings             |
+| **Tests**         | 3,510 unit + 307 E2E tests, 0 TypeScript errors, 0 lint warnings             |
 
 ---
 
@@ -79,12 +79,14 @@ Scenarios run in **sandboxed isolation** — faults and mutations never leak to 
 
 Switch architectures from the dashboard dropdown. Everything adapts — GPU specs, NVLink topology, InfiniBand rates, and all simulator output:
 
-| System   | GPUs        | Memory      | NVLink             | InfiniBand  |
-| -------- | ----------- | ----------- | ------------------ | ----------- |
-| DGX A100 | 8x A100     | 80GB HBM2e  | 3rd-gen (12 links) | HDR 200Gb/s |
-| DGX H100 | 8x H100 SXM | 80GB HBM3   | 4th-gen (18 links) | NDR 400Gb/s |
-| DGX H200 | 8x H200 SXM | 141GB HBM3e | 4th-gen (18 links) | NDR 400Gb/s |
-| DGX B200 | 8x B200     | 192GB HBM3e | 5th-gen (18 links) | NDR 400Gb/s |
+| System    | GPUs        | Memory      | NVLink             | Network       |
+| --------- | ----------- | ----------- | ------------------ | ------------- |
+| DGX A100  | 8x A100     | 80GB HBM2e  | 3rd-gen (12 links) | HDR 200Gb/s   |
+| DGX H100  | 8x H100 SXM | 80GB HBM3   | 4th-gen (18 links) | NDR 400Gb/s   |
+| DGX H200  | 8x H200 SXM | 141GB HBM3e | 4th-gen (18 links) | NDR 400Gb/s   |
+| DGX B200  | 8x B200     | 192GB HBM3e | 5th-gen (18 links) | NDR 400Gb/s   |
+| DGX GB200 | 8x GB200    | 192GB HBM3e | 5th-gen (18 links) | XDR 800Gb/s   |
+| DGX VR200 | 8x R200     | 288GB HBM4  | 6th-gen (18 links) | XDR2 1600Gb/s |
 
 ### Exam Dashboard
 
@@ -326,7 +328,7 @@ Sign in with email/password to sync progress across devices. Powered by AWS Ampl
 
 ```bash
 npm run test           # Watch mode
-npm run test:run       # Single run (3,497 unit tests)
+npm run test:run       # Single run (3,510 unit tests)
 npm run test:coverage  # With coverage report
 npm run lint           # ESLint (0 errors, 0 warnings)
 npx playwright test    # 307 E2E tests (commands, scenarios, visual regression)
@@ -374,13 +376,13 @@ src/
 - [x] 20 command simulators with 229 CLI definitions across 17 categories
 - [x] 32 narrative scenarios with story-driven learning across all 5 domains
 - [x] 199 exam questions, 60 tool selection quizzes, and 150 deep mastery quizzes
-- [x] Multi-architecture support (DGX A100, H100, H200, B200)
+- [x] Multi-architecture support (DGX A100, H100, H200, B200, GB200, VR200)
 - [x] User authentication and cloud sync (AWS Cognito + DynamoDB)
 - [x] Sandbox isolation with automatic per-step fault injection
 - [x] 3-tier learning progression with spaced repetition (SM-2)
 - [x] D3.js topology visualization (NVLink and InfiniBand fabric maps)
 - [x] Spotlight tour, data-driven CLI framework, tab completion
-- [x] CI/CD pipeline with 3,497 unit + 307 E2E tests, 0 TypeScript errors
+- [x] CI/CD pipeline with 3,510 unit + 307 E2E tests, 0 TypeScript errors
 - [x] Security hardening (secret scanning, error sanitization, rate limiting)
 - [x] Bundle splitting (main chunk reduced from 2,304 kB to 1,077 kB)
 - [x] E2E tests with Playwright (307 tests across 7 spec files)
@@ -389,7 +391,6 @@ src/
 
 ### Up Next
 
-- [ ] DGX GB200 architecture support
 - [ ] PWA / offline support for study on the go
 - [ ] Live incident engine improvements (sidebar visibility, hint penalties)
 
@@ -419,7 +420,7 @@ git push origin feature/your-feature
 
 ## Legal Disclaimer
 
-NVIDIA, the NVIDIA logo, DGX, DGX A100, DGX H100, DGX H200, DGX B200, A100, H100, H200, B200, NVLink, NVSwitch, InfiniBand, Mellanox, ConnectX, BlueField, CUDA, DCGM, NCCL, and NVSM are trademarks and/or registered trademarks of **NVIDIA Corporation** in the United States and other countries.
+NVIDIA, the NVIDIA logo, DGX, DGX A100, DGX H100, DGX H200, DGX B200, DGX GB200, A100, H100, H200, B200, GB200, Vera, Rubin, NVLink, NVSwitch, InfiniBand, Mellanox, ConnectX, BlueField, CUDA, DCGM, NCCL, and NVSM are trademarks and/or registered trademarks of **NVIDIA Corporation** in the United States and other countries.
 
 This project is an **independent, community-built educational tool** and is **not** developed, endorsed, certified, or affiliated with NVIDIA Corporation in any way. The NCP-AII certification exam is administered solely by NVIDIA, and this simulator makes no guarantees about exam content, accuracy, or outcomes.
 
