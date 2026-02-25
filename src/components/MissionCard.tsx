@@ -8,7 +8,7 @@
  * 4. Footer: objective progress + hint button + next/continue
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { validateCommandExecuted } from "@/utils/commandValidator";
 import { InlineQuiz } from "./InlineQuiz";
 import type { NarrativeQuiz } from "../types/scenarios";
@@ -99,6 +99,19 @@ export function MissionCard({
   const [showHintDropdown, setShowHintDropdown] = useState(false);
   const [showInfoPopover, setShowInfoPopover] = useState(false);
   const [flashingChip, setFlashingChip] = useState<number | null>(null);
+  const [isNew, setIsNew] = useState(true);
+  const [quizAnswered, setQuizAnswered] = useState(false);
+
+  // Brief glow on mount to guide the user's eyes to the mission card
+  useEffect(() => {
+    const timer = setTimeout(() => setIsNew(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Reset quiz state when step changes
+  useEffect(() => {
+    setQuizAnswered(false);
+  }, [currentStepIndex]);
 
   const stepType = currentStep.stepType || "command";
   const isCommandStep = stepType === "command";
@@ -123,18 +136,20 @@ export function MissionCard({
   return (
     <div
       data-testid="mission-card"
-      className="bg-gray-800 border-b border-gray-700 shrink-0 select-none flex"
+      className={`bg-gray-800 border-b shrink-0 select-none flex max-h-[40vh] transition-all duration-1000 ${
+        isNew
+          ? "border-nvidia-green shadow-[0_0_12px_rgba(118,185,0,0.35)]"
+          : "border-gray-700"
+      }`}
     >
       {/* Left content area */}
-      <div className="flex-1 min-w-0 px-3 py-2">
-        {/* Row 1 — Header */}
+      <div className="flex-1 min-w-0 px-3 py-2 overflow-y-auto">
+        {/* Row 1a — Title */}
+        <h3 className="text-sm font-semibold text-white mb-0.5">
+          {missionTitle}
+        </h3>
+        {/* Row 1b — Badge + step info */}
         <div className="flex items-center gap-2 mb-1">
-          <h3
-            className="text-sm font-semibold text-white truncate flex-1"
-            title={missionTitle}
-          >
-            {missionTitle}
-          </h3>
           <span
             className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${tierBadge.className}`}
           >
@@ -277,7 +292,10 @@ export function MissionCard({
             <div className="mb-1.5">
               <InlineQuiz
                 quiz={currentStep.narrativeQuiz as NarrativeQuiz}
-                onComplete={onQuizComplete}
+                onComplete={(correct) => {
+                  setQuizAnswered(true);
+                  onQuizComplete!(correct);
+                }}
               />
             </div>
           )}
@@ -340,7 +358,7 @@ export function MissionCard({
       {/* end left content area */}
 
       {/* Right column — full-height Next/Finish button */}
-      {isStepCompleted && (
+      {isStepCompleted && (!currentStep.narrativeQuiz || quizAnswered) && (
         <button
           onClick={onNextStep}
           className="bg-nvidia-green hover:bg-green-500 text-black text-lg font-bold px-5 flex items-center gap-1 transition-colors shadow-[inset_0_0_20px_rgba(0,0,0,0.1)] whitespace-nowrap"
