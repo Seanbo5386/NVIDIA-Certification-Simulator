@@ -50,6 +50,7 @@ const defaultMockState = {
   stepValidation: {},
   completeScenarioStep: vi.fn(),
   revealHint: vi.fn(),
+  updateValidationConfig: vi.fn(),
 };
 
 // Mock useSimulationStore - default: no active scenario

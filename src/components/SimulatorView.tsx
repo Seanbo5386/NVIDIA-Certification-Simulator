@@ -77,6 +77,20 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({
     (s) => s.completeScenarioStep,
   );
   const revealHint = useSimulationStore((s) => s.revealHint);
+  const updateValidationConfig = useSimulationStore(
+    (s) => s.updateValidationConfig,
+  );
+
+  // Disable auto-advance when MissionCard is managing step progression
+  // so the user controls advancement via "Next →" button
+  useEffect(() => {
+    if (activeScenario) {
+      updateValidationConfig({ autoAdvance: false });
+    }
+    return () => {
+      updateValidationConfig({ autoAdvance: true });
+    };
+  }, [activeScenario, updateValidationConfig]);
 
   // Paste callback ref — set by Terminal's onReady
   const pasteCommandRef = useRef<((cmd: string) => void) | null>(null);
@@ -241,7 +255,8 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({
       ? `${activeScenario.id}-${currentStep.id}`
       : "";
   const currentValidation = stepValidation[validationKey];
-  const isStepCompleted = currentStepProgress?.completed || false;
+  const isStepCompleted =
+    currentStepProgress?.completed || currentValidation?.passed || false;
 
   // Hint evaluation
   const hintEvaluation =
