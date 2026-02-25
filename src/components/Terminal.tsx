@@ -1266,11 +1266,12 @@ export const Terminal: React.FC<TerminalProps> = ({
     // Paste text into terminal input buffer (no execute, no newline)
     const pasteToInput = (text: string) => {
       if (!term || disposed) return;
-      // Feed characters through normal input pipeline so onData handler
-      // keeps currentLine in sync
-      for (const char of text) {
-        term.input(char);
-      }
+      // Write directly to terminal display and update currentLine manually.
+      // Using term.input() would trigger onData which also echoes via
+      // term.write(), causing double-display and doubled currentLine.
+      term.write(text);
+      currentLine += text;
+      setCurrentCommand(currentLine);
     };
 
     // Defer term.open() until container has non-zero dimensions to prevent
