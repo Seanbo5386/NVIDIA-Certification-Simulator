@@ -1,6 +1,6 @@
 # Data Center Lab Simulator — Roadmap
 
-_Last updated: February 2026 (v1.1.0)_
+_Last updated: February 2026 (v1.2.0)_
 
 ## Current State
 
@@ -8,12 +8,13 @@ The simulator is feature-complete for its core mission: browser-based NCP-AII ce
 
 | Metric              | Value                                                   |
 | ------------------- | ------------------------------------------------------- |
-| Version             | 1.1.0                                                   |
+| Version             | 1.2.0                                                   |
 | Command simulators  | 20 (229 CLI definitions across 17 categories)           |
 | Narrative scenarios | 32 story-driven labs across all 5 exam domains          |
 | Exam questions      | 199 practice + 60 tool selection + 150 deep mastery     |
-| Architectures       | DGX A100, H100, H200, B200                              |
-| Unit tests          | 3,200+ (0 TypeScript errors, 0 lint warnings)           |
+| Architectures       | DGX A100, H100, H200, B200, GB200, VR200                |
+| Unit tests          | 3,510 (0 TypeScript errors, 0 lint warnings)            |
+| E2E tests           | 307 Playwright tests across 3 viewports                  |
 | Authentication      | AWS Cognito (sign up, sign in, email verification)      |
 | Cloud sync          | Progress, quiz scores, and learning data across devices |
 | CI/CD               | GitHub Actions (lint, test, build)                      |
@@ -26,10 +27,10 @@ The simulator is feature-complete for its core mission: browser-based NCP-AII ce
 
 | Task                                 | Priority | Effort | Description                                                                                                    |
 | ------------------------------------ | -------- | ------ | -------------------------------------------------------------------------------------------------------------- |
-| Deploy Amplify backend to production | High     | Low    | Generate `amplify_outputs.json` in the CI build so auth works on dclabsim.com, not just locally                |
-| Bundle splitting                     | High     | Medium | Code-split simulator commands, exam questions, and scenario data with dynamic `import()` — main chunk is 2.3MB |
+| ~~Deploy Amplify backend to production~~ | ~~High~~ | ~~Low~~ | ✅ Done — Cognito auth and DynamoDB cloud sync live on dclabsim.com |
+| ~~Bundle splitting~~                 | ~~High~~ | ~~Medium~~ | ✅ Done — main chunk reduced from 2,304 kB to 1,077 kB via vendor chunks, React.lazy(), and dynamic JSON imports |
+| ~~DGX GB200 & VR200 architectures~~  | ~~Medium~~ | ~~Medium~~ | ✅ Done — GB200 (Blackwell Ultra) and VR200 (Vera Rubin) added to spec registry, factory, simulators, and UI |
 | Dependency updates                   | Medium   | Low    | Migrate `xterm` to `@xterm/xterm`, clear deprecated packages (90 npm audit findings, mostly transitive)        |
-| DGX GB200 architecture               | Medium   | Medium | Add to hardware spec registry — type already exists in `DGXSystemType` but no specs/factory support yet        |
 
 ---
 
@@ -39,7 +40,7 @@ The simulator is feature-complete for its core mission: browser-based NCP-AII ce
 
 | Task                        | Priority | Effort | Description                                                                            |
 | --------------------------- | -------- | ------ | -------------------------------------------------------------------------------------- |
-| E2E smoke tests             | High     | Medium | Playwright tests: load app, run nvidia-smi, start a scenario, complete a quiz, sign in |
+| ~~E2E smoke tests~~        | ~~High~~ | ~~Medium~~ | ✅ Done — 307 Playwright tests across 7 spec files (commands, scenarios, visual regression, missions) |
 | Error boundary improvements | Medium   | Low    | Graceful fallbacks for cloud sync failures, network issues                             |
 | Lighthouse CI               | Low      | Low    | Automated performance/accessibility scoring in CI pipeline                             |
 

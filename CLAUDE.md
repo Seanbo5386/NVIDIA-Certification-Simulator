@@ -58,7 +58,7 @@ The codebase has a comprehensive learning system that transforms step-following 
 - `src/data/commandFamilies.json` - 6 families with tools, taglines, best-for scenarios
 - `src/data/quizQuestions.json` - "Which tool?" quiz questions (4 per family)
 - `src/data/explanationGates.json` - Post-scenario conceptual checks (56 gates)
-- `src/data/narrativeScenarios.json` - 28 narrative scenarios with story-driven steps and quizzes
+- `src/data/narrativeScenarios.json` - 32 narrative scenarios with story-driven steps and quizzes
 
 #### Components
 
