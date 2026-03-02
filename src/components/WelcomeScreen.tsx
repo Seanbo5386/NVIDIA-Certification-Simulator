@@ -76,7 +76,12 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onClose }) => {
           </p>
         </div>
 
-        {/* 2. Stats Bar */}
+        {/* 2. Terminal Demo — center stage */}
+        <div className="px-6 pt-5 pb-3 flex-1 overflow-y-auto">
+          <TerminalDemo />
+        </div>
+
+        {/* 3. Stats Bar */}
         <div className="flex items-center justify-center gap-0 px-6 py-3 flex-shrink-0">
           <div className="flex items-center gap-0 divide-x divide-gray-700">
             <span className="px-5 text-center text-sm text-gray-400">
@@ -92,11 +97,6 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onClose }) => {
               400+ Questions
             </span>
           </div>
-        </div>
-
-        {/* 3. Terminal Demo — center stage */}
-        <div className="px-6 pt-3 pb-3 flex-1 overflow-y-auto">
-          <TerminalDemo />
         </div>
 
         {/* 4. Feature Pills */}
