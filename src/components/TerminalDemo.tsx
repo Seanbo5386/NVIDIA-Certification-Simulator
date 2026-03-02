@@ -4,7 +4,13 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // Types
 // ---------------------------------------------------------------------------
 
-type LineType = "briefing" | "narrative" | "prompt" | "command" | "output" | "blank";
+type LineType =
+  | "briefing"
+  | "narrative"
+  | "prompt"
+  | "command"
+  | "output"
+  | "blank";
 
 interface SequenceLine {
   type: LineType;
@@ -112,6 +118,7 @@ export const TerminalDemo: React.FC = () => {
   const [showCursor, setShowCursor] = useState(false);
   const [animationDone, setAnimationDone] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   const runSequence = useCallback(async (signal: AbortSignal) => {
     for (let i = 0; i < SEQUENCE.length; i++) {
@@ -154,6 +161,13 @@ export const TerminalDemo: React.FC = () => {
     setShowCursor(true);
     setAnimationDone(true);
   }, []);
+
+  // Auto-scroll terminal body to bottom as new lines appear
+  useEffect(() => {
+    if (bodyRef.current) {
+      bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
+    }
+  }, [lines, typingText]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -246,7 +260,7 @@ export const TerminalDemo: React.FC = () => {
   return (
     <div
       data-testid="terminal-demo"
-      className="rounded-lg border border-gray-700 bg-gray-950 overflow-hidden font-mono text-sm leading-relaxed"
+      className="rounded-lg border border-gray-700 bg-gray-950 overflow-hidden font-mono text-xs leading-relaxed"
     >
       {/* Title bar */}
       <div className="flex items-center gap-2 px-3 py-2 bg-gray-900 border-b border-gray-700">
@@ -259,7 +273,10 @@ export const TerminalDemo: React.FC = () => {
       </div>
 
       {/* Terminal body */}
-      <div className="p-4 max-h-[480px] overflow-hidden">
+      <div
+        ref={bodyRef}
+        className="p-4 max-h-[420px] overflow-y-auto scrollbar-thin"
+      >
         {lines.map((line, i) => renderLine(line, i))}
       </div>
 
