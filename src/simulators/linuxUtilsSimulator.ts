@@ -741,10 +741,30 @@ Feb 12 08:15:24 dgx-00 kernel: [234569.200] NVRM: GPU at 0000:07:00.0: GPU is lo
 
     const entries = directories[dirPath];
     if (!entries) {
-      // Generic listing for unknown directories
-      const genericOutput = longFormat
-        ? `total 0\ndrwxr-xr-x  2 root root 4096 Jan 10 12:00 .`
-        : ".  ..";
+      // Infer child directories from known paths to give a plausible listing
+      const prefix = dirPath === "/" ? "/" : dirPath + "/";
+      const children = new Set<string>();
+      for (const knownPath of Object.keys(directories)) {
+        if (knownPath.startsWith(prefix) && knownPath !== dirPath) {
+          const rest = knownPath.slice(prefix.length);
+          const firstSegment = rest.split("/")[0];
+          if (firstSegment) children.add(firstSegment);
+        }
+      }
+      if (children.size > 0) {
+        const names = [...children].sort();
+        if (longFormat) {
+          const lines = names.map(
+            (n) => `drwxr-xr-x  2 root root 4096 Jan 10 12:00 ${n}`,
+          );
+          return this.createSuccess(
+            [`total ${names.length * 4}`, ...lines].join("\n"),
+          );
+        }
+        return this.createSuccess(names.join("  "));
+      }
+      // Truly unknown directory — show empty
+      const genericOutput = longFormat ? "total 0" : "";
       return this.createSuccess(genericOutput);
     }
 
