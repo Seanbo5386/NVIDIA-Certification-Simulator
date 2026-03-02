@@ -3,6 +3,7 @@ import { Dashboard } from "./Dashboard";
 import { Terminal } from "./Terminal";
 import { FaultInjection } from "./FaultInjection";
 import { MissionCard } from "./MissionCard";
+import { MissionInstructionPanel } from "./MissionInstructionPanel";
 import { useSimulationStore } from "../store/simulationStore";
 import { HintManager } from "@/utils/hintManager";
 import {
@@ -17,6 +18,7 @@ import {
 
 interface SimulatorViewProps {
   className?: string;
+  missionMode?: boolean;
 }
 
 const STORAGE_KEY = "simulator-split-ratio";
@@ -39,6 +41,7 @@ const HANDLE_WIDTH = 28;
  */
 export const SimulatorView: React.FC<SimulatorViewProps> = ({
   className = "",
+  missionMode = false,
 }) => {
   // Load persisted ratio from localStorage
   const getInitialRatio = () => {
@@ -388,6 +391,57 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({
             </div>
           )}
         </div>
+      </div>
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Mission Mode layout: instruction panel on left, terminal on right
+  // ---------------------------------------------------------------------------
+  if (missionMode) {
+    return (
+      <div className={`flex ${className}`}>
+        {showMissionCard && currentStep && (
+          <div className="w-[35%] min-w-[300px] max-w-[480px] shrink-0">
+            <MissionInstructionPanel
+              missionTitle={activeScenario!.title}
+              tier={activeScenario!.tier}
+              currentStepIndex={currentStepIndex}
+              totalSteps={activeScenario!.steps.length}
+              currentStep={currentStep}
+              commandsExecuted={currentStepProgress?.commandsExecuted || []}
+              objectivesPassed={objectivesPassed}
+              isStepCompleted={isStepCompleted}
+              onPasteCommand={handlePasteCommand}
+              onNextStep={() => {
+                if (!progress?.completed) {
+                  completeScenarioStep(activeScenario!.id, currentStep.id);
+                }
+              }}
+              onContinue={() => {
+                completeScenarioStep(activeScenario!.id, currentStep.id);
+              }}
+              onRevealHint={() => {
+                if (hintEvaluation?.nextHint) {
+                  revealHint(
+                    activeScenario!.id,
+                    currentStep.id,
+                    hintEvaluation.nextHint.id,
+                  );
+                }
+              }}
+              availableHintCount={hintEvaluation?.totalCount || 0}
+              revealedHintCount={hintEvaluation?.revealedCount || 0}
+              revealedHints={revealedHintTexts}
+              learningObjectives={activeScenario!.learningObjectives}
+              narrativeContext={activeScenario!.narrative?.setting}
+              onQuizComplete={(_correct) => {
+                completeScenarioStep(activeScenario!.id, currentStep.id);
+              }}
+            />
+          </div>
+        )}
+        <Terminal className="flex-1" onReady={handleTerminalReady} />
       </div>
     );
   }

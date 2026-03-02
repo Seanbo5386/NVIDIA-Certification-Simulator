@@ -39,7 +39,9 @@ const AfterActionReview = lazy(() =>
     default: m.AfterActionReview,
   })),
 );
-import { NarrativeIntro } from "./components/NarrativeIntro";
+import { MissionBriefing } from "./components/MissionBriefing";
+import { MissionModeBar } from "./components/MissionModeBar";
+import { DashboardSlideOver } from "./components/DashboardSlideOver";
 import { NarrativeResolution } from "./components/NarrativeResolution";
 import { StudyDashboard } from "./components/StudyDashboard";
 import { SpacedReviewDrill } from "./components/SpacedReviewDrill";
@@ -134,6 +136,7 @@ function App() {
 
   // Narrative modal state for active scenarios
   const [showNarrativeIntro, setShowNarrativeIntro] = useState(true);
+  const [showDashboardSlideOver, setShowDashboardSlideOver] = useState(false);
   const scenarioProgressData = activeScenario
     ? scenarioProgress[activeScenario.id]
     : undefined;
@@ -151,6 +154,7 @@ function App() {
   useEffect(() => {
     if (activeScenario) {
       setShowNarrativeIntro(true);
+      setShowDashboardSlideOver(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally track by ID, not object reference
   }, [activeScenario?.id]);
@@ -205,6 +209,29 @@ function App() {
       setShowLabWorkspace(true);
     }
   };
+
+  const handleAbortMission = useCallback(() => {
+    if (
+      window.confirm(
+        "Abort this mission? Your progress on the current step will be lost.",
+      )
+    ) {
+      exitScenario();
+      setShowLabWorkspace(false);
+      setShowDashboardSlideOver(false);
+    }
+  }, [exitScenario]);
+
+  // Mission Mode derivations
+  const isMissionMode =
+    activeScenario != null &&
+    !showNarrativeIntro &&
+    !scenarioProgressData?.completed;
+
+  const missionProgress = activeScenario
+    ? scenarioProgress[activeScenario.id]
+    : undefined;
+  const missionStepIndex = missionProgress?.currentStepIndex ?? 0;
 
   const handleStartIncident = useCallback(
     (difficulty: string, domain?: number) => {
@@ -265,310 +292,338 @@ function App() {
 
   return (
     <div className="h-screen bg-gray-900 text-gray-100 flex flex-col overflow-hidden">
-      {/* Skip Link for Keyboard Navigation */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-nvidia-green focus:text-black focus:px-4 focus:py-2 focus:rounded"
-      >
-        Skip to main content
-      </a>
-
-      {/* Small screen warning */}
-      {!smallScreenDismissed && (
-        <div className="xl:hidden bg-yellow-900/80 border-b border-yellow-700 px-4 py-2 flex items-center justify-between text-xs text-yellow-200 flex-shrink-0">
-          <span>
-            Best experienced on a desktop (1280px+). Some layouts may not
-            display correctly on smaller screens.
-          </span>
-          <button
-            onClick={() => setSmallScreenDismissed(true)}
-            className="ml-3 p-0.5 hover:text-white flex-shrink-0"
-            aria-label="Dismiss screen size warning"
+      {isMissionMode ? (
+        <>
+          {/* Mission Mode layout: slim bar + instruction panel + terminal */}
+          <MissionModeBar
+            title={activeScenario!.title}
+            currentStep={missionStepIndex}
+            totalSteps={activeScenario!.steps.length}
+            tier={activeScenario!.tier}
+            onAbort={handleAbortMission}
+            onToggleDashboard={() => setShowDashboardSlideOver((v) => !v)}
+          />
+          <SimulatorView className="flex-1 h-full" missionMode={true} />
+          <DashboardSlideOver
+            isOpen={showDashboardSlideOver}
+            onClose={() => setShowDashboardSlideOver(false)}
+          />
+        </>
+      ) : (
+        <>
+          {/* Skip Link for Keyboard Navigation */}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-nvidia-green focus:text-black focus:px-4 focus:py-2 focus:rounded"
           >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+            Skip to main content
+          </a>
 
-      {/* Header + Nav scrollable wrapper */}
-      <div
-        className={`overflow-x-auto flex-shrink-0 transition-all duration-300 ${(showLabWorkspace && !activeScenario) || incidentState === "active" ? "xl:ml-[clamp(340px,30vw,560px)]" : ""}`}
-      >
-        <div className="min-w-max">
-          <header className="bg-black border-b border-gray-800 px-6 py-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-nvidia-green rounded-lg flex items-center justify-center">
-                    <span className="text-black font-bold text-xl">N</span>
+          {/* Small screen warning */}
+          {!smallScreenDismissed && (
+            <div className="xl:hidden bg-yellow-900/80 border-b border-yellow-700 px-4 py-2 flex items-center justify-between text-xs text-yellow-200 flex-shrink-0">
+              <span>
+                Best experienced on a desktop (1280px+). Some layouts may not
+                display correctly on smaller screens.
+              </span>
+              <button
+                onClick={() => setSmallScreenDismissed(true)}
+                className="ml-3 p-0.5 hover:text-white flex-shrink-0"
+                aria-label="Dismiss screen size warning"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Header + Nav scrollable wrapper */}
+          <div
+            className={`overflow-x-auto flex-shrink-0 transition-all duration-300 ${(showLabWorkspace && !activeScenario) || incidentState === "active" ? "xl:ml-[clamp(340px,30vw,560px)]" : ""}`}
+          >
+            <div className="min-w-max">
+              <header className="bg-black border-b border-gray-800 px-6 py-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-nvidia-green rounded-lg flex items-center justify-center">
+                        <span className="text-black font-bold text-xl">N</span>
+                      </div>
+                      <div>
+                        <h1 className="text-xl font-bold text-nvidia-green">
+                          Data Center Lab Simulator
+                        </h1>
+                        <p className="text-xs text-gray-400">
+                          NCP-AII Certification Training Environment
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-nvidia-green">
-                      Data Center Lab Simulator
-                    </h1>
-                    <p className="text-xs text-gray-400">
-                      NCP-AII Certification Training Environment
-                    </p>
+
+                  <div className="flex items-center gap-4">
+                    {/* Simulation controls */}
+                    <div
+                      data-tour="sim-controls"
+                      className="flex items-center gap-2 bg-gray-800 rounded-lg p-2"
+                    >
+                      <button
+                        onClick={isRunning ? stopSimulation : startSimulation}
+                        className={`p-2 rounded transition-colors ${
+                          isRunning
+                            ? "bg-red-600 hover:bg-red-700 text-white"
+                            : "bg-nvidia-green hover:bg-nvidia-darkgreen text-black"
+                        }`}
+                        title={
+                          isRunning ? "Pause Simulation" : "Start Simulation"
+                        }
+                      >
+                        {isRunning ? (
+                          <Pause className="w-4 h-4" />
+                        ) : (
+                          <Play className="w-4 h-4" />
+                        )}
+                      </button>
+                      <button
+                        onClick={resetSimulation}
+                        className="p-2 rounded hover:bg-gray-700 transition-colors text-gray-300"
+                        title="Reset Simulation"
+                      >
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Tour button */}
+                    <button
+                      onClick={handleStartTour}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-600 hover:border-nvidia-green text-gray-400 hover:text-nvidia-green text-sm transition-colors"
+                      title="Take a guided tour of this tab"
+                      data-testid="tour-help-btn"
+                    >
+                      <HelpCircle className="w-4 h-4" />
+                      <span>Tour</span>
+                    </button>
+
+                    <div data-tour="user-menu">
+                      <UserMenu
+                        isLoggedIn={isLoggedIn}
+                        syncStatus={syncStatus}
+                        userEmail={userEmail}
+                      />
+                    </div>
+
+                    <div className="text-right">
+                      <div className="text-sm font-medium text-nvidia-green">
+                        {cluster.name}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {cluster.nodes.length} nodes •{" "}
+                        {cluster.nodes.reduce(
+                          (sum, n) => sum + n.gpus.length,
+                          0,
+                        )}{" "}
+                        GPUs
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </header>
 
-              <div className="flex items-center gap-4">
-                {/* Simulation controls */}
-                <div
-                  data-tour="sim-controls"
-                  className="flex items-center gap-2 bg-gray-800 rounded-lg p-2"
-                >
+              {/* Navigation */}
+              <nav
+                role="tablist"
+                aria-label="Main navigation"
+                className="bg-gray-800 border-b border-gray-700 px-6"
+              >
+                <div className="flex gap-1">
                   <button
-                    onClick={isRunning ? stopSimulation : startSimulation}
-                    className={`p-2 rounded transition-colors ${
-                      isRunning
-                        ? "bg-red-600 hover:bg-red-700 text-white"
-                        : "bg-nvidia-green hover:bg-nvidia-darkgreen text-black"
+                    role="tab"
+                    id="tab-simulator"
+                    aria-selected={currentView === "simulator"}
+                    aria-controls="panel-simulator"
+                    onClick={() => setCurrentView("simulator")}
+                    className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                      currentView === "simulator"
+                        ? "border-nvidia-green text-nvidia-green"
+                        : "border-transparent text-gray-400 hover:text-gray-200"
                     }`}
-                    title={isRunning ? "Pause Simulation" : "Start Simulation"}
                   >
-                    {isRunning ? (
-                      <Pause className="w-4 h-4" />
-                    ) : (
-                      <Play className="w-4 h-4" />
+                    <Monitor className="w-4 h-4" />
+                    <span className="font-medium">Simulator</span>
+                  </button>
+                  <button
+                    role="tab"
+                    id="tab-labs"
+                    data-tour="tab-labs"
+                    aria-selected={currentView === "labs"}
+                    aria-controls="panel-labs"
+                    data-testid="nav-labs"
+                    onClick={() => setCurrentView("labs")}
+                    className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors relative ${
+                      currentView === "labs"
+                        ? "border-nvidia-green text-nvidia-green"
+                        : "border-transparent text-gray-400 hover:text-gray-200"
+                    }`}
+                  >
+                    <FlaskConical className="w-4 h-4" />
+                    <span className="font-medium">
+                      <span className="sm:hidden">Labs</span>
+                      <span className="hidden sm:inline">Labs & Scenarios</span>
+                    </span>
+                    {/* Review Notification Badge */}
+                    {dueReviewCount > 0 && (
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowSpacedReviewDrill(true);
+                        }}
+                        role="status"
+                        className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-full transition-colors shadow-md cursor-pointer"
+                        title={`${dueReviewCount} review${dueReviewCount > 1 ? "s" : ""} due`}
+                        aria-label={`${dueReviewCount} reviews due. Click to start review drill.`}
+                      >
+                        {dueReviewCount > 9 ? "9+" : dueReviewCount}
+                      </span>
                     )}
                   </button>
                   <button
-                    onClick={resetSimulation}
-                    className="p-2 rounded hover:bg-gray-700 transition-colors text-gray-300"
-                    title="Reset Simulation"
+                    role="tab"
+                    id="tab-exams"
+                    data-tour="tab-exams"
+                    aria-selected={currentView === "exams"}
+                    aria-controls="panel-exams"
+                    data-testid="nav-exams"
+                    onClick={() => setCurrentView("exams")}
+                    className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                      currentView === "exams"
+                        ? "border-nvidia-green text-nvidia-green"
+                        : "border-transparent text-gray-400 hover:text-gray-200"
+                    }`}
                   >
-                    <RotateCcw className="w-4 h-4" />
+                    <GraduationCap className="w-4 h-4" />
+                    <span className="font-medium">Exams</span>
+                  </button>
+                  <button
+                    role="tab"
+                    id="tab-reference"
+                    data-tour="tab-docs"
+                    aria-selected={currentView === "reference"}
+                    aria-controls="panel-reference"
+                    onClick={() => setCurrentView("reference")}
+                    className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                      currentView === "reference"
+                        ? "border-nvidia-green text-nvidia-green"
+                        : "border-transparent text-gray-400 hover:text-gray-200"
+                    }`}
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    <span className="font-medium">
+                      <span className="sm:hidden">Docs</span>
+                      <span className="hidden sm:inline">Documentation</span>
+                    </span>
+                  </button>
+                  <button
+                    role="tab"
+                    id="tab-about"
+                    data-tour="tab-about"
+                    aria-selected={currentView === "about"}
+                    aria-controls="panel-about"
+                    onClick={() => setCurrentView("about")}
+                    className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                      currentView === "about"
+                        ? "border-nvidia-green text-nvidia-green"
+                        : "border-transparent text-gray-400 hover:text-gray-200"
+                    }`}
+                  >
+                    <Info className="w-4 h-4" />
+                    <span className="font-medium">About</span>
                   </button>
                 </div>
+              </nav>
+            </div>
+            {/* min-w-max */}
+          </div>
+          {/* overflow-x-auto */}
 
-                {/* Tour button */}
-                <button
-                  onClick={handleStartTour}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-600 hover:border-nvidia-green text-gray-400 hover:text-nvidia-green text-sm transition-colors"
-                  title="Take a guided tour of this tab"
-                  data-testid="tour-help-btn"
-                >
-                  <HelpCircle className="w-4 h-4" />
-                  <span>Tour</span>
-                </button>
+          {/* Main Content */}
+          <main
+            id="main-content"
+            role="tabpanel"
+            aria-labelledby={`tab-${currentView}`}
+            className={`flex-1 h-0 flex flex-col overflow-hidden transition-all duration-300 ${(showLabWorkspace && !activeScenario) || incidentState === "active" ? "xl:ml-[clamp(340px,30vw,560px)]" : ""}`}
+          >
+            {currentView === "simulator" && (
+              <SimulatorView className="flex-1 h-full" />
+            )}
 
-                <div data-tour="user-menu">
-                  <UserMenu
-                    isLoggedIn={isLoggedIn}
-                    syncStatus={syncStatus}
-                    userEmail={userEmail}
+            <Suspense fallback={<ViewFallback />}>
+              {currentView === "labs" && (
+                <LabsAndScenariosView
+                  onStartScenario={handleStartScenario}
+                  onStartIncident={handleStartIncident}
+                />
+              )}
+
+              {currentView === "exams" && (
+                <ExamsView
+                  onBeginExam={handleBeginExam}
+                  onOpenExamGauntlet={() => setShowExamGauntlet(true)}
+                  onOpenToolQuiz={handleOpenToolQuiz}
+                  onOpenMasteryQuiz={handleOpenMasteryQuiz}
+                />
+              )}
+
+              {currentView === "reference" && <Documentation />}
+
+              {currentView === "about" && <About />}
+            </Suspense>
+          </main>
+
+          {/* Footer */}
+          <footer
+            className={`bg-black border-t border-gray-800 px-6 py-3 transition-all duration-300 ${(showLabWorkspace && !activeScenario) || incidentState === "active" ? "xl:ml-[clamp(340px,30vw,560px)]" : ""}`}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-gray-400">
+              <div className="whitespace-nowrap">v1.2.0</div>
+              <div className="flex items-center gap-2 sm:gap-4">
+                <span className="flex items-center gap-1">
+                  <span
+                    className={`w-2 h-2 rounded-full inline-block ${isRunning ? "bg-green-500" : "bg-gray-600"}`}
                   />
-                </div>
-
-                <div className="text-right">
-                  <div className="text-sm font-medium text-nvidia-green">
-                    {cluster.name}
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {cluster.nodes.length} nodes •{" "}
-                    {cluster.nodes.reduce((sum, n) => sum + n.gpus.length, 0)}{" "}
-                    GPUs
-                  </div>
-                </div>
+                  <span className="hidden sm:inline">
+                    {isRunning ? "Running" : "Idle"}
+                  </span>
+                </span>
+                <span className="hidden sm:inline">&bull;</span>
+                <span className="hidden sm:inline">
+                  NCP-AII Training Environment
+                </span>
               </div>
             </div>
-          </header>
-
-          {/* Navigation */}
-          <nav
-            role="tablist"
-            aria-label="Main navigation"
-            className="bg-gray-800 border-b border-gray-700 px-6"
-          >
-            <div className="flex gap-1">
-              <button
-                role="tab"
-                id="tab-simulator"
-                aria-selected={currentView === "simulator"}
-                aria-controls="panel-simulator"
-                onClick={() => setCurrentView("simulator")}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                  currentView === "simulator"
-                    ? "border-nvidia-green text-nvidia-green"
-                    : "border-transparent text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <Monitor className="w-4 h-4" />
-                <span className="font-medium">Simulator</span>
-              </button>
-              <button
-                role="tab"
-                id="tab-labs"
-                data-tour="tab-labs"
-                aria-selected={currentView === "labs"}
-                aria-controls="panel-labs"
-                data-testid="nav-labs"
-                onClick={() => setCurrentView("labs")}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors relative ${
-                  currentView === "labs"
-                    ? "border-nvidia-green text-nvidia-green"
-                    : "border-transparent text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <FlaskConical className="w-4 h-4" />
-                <span className="font-medium">
-                  <span className="sm:hidden">Labs</span>
-                  <span className="hidden sm:inline">Labs & Scenarios</span>
-                </span>
-                {/* Review Notification Badge */}
-                {dueReviewCount > 0 && (
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowSpacedReviewDrill(true);
-                    }}
-                    role="status"
-                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-full transition-colors shadow-md cursor-pointer"
-                    title={`${dueReviewCount} review${dueReviewCount > 1 ? "s" : ""} due`}
-                    aria-label={`${dueReviewCount} reviews due. Click to start review drill.`}
-                  >
-                    {dueReviewCount > 9 ? "9+" : dueReviewCount}
-                  </span>
-                )}
-              </button>
-              <button
-                role="tab"
-                id="tab-exams"
-                data-tour="tab-exams"
-                aria-selected={currentView === "exams"}
-                aria-controls="panel-exams"
-                data-testid="nav-exams"
-                onClick={() => setCurrentView("exams")}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                  currentView === "exams"
-                    ? "border-nvidia-green text-nvidia-green"
-                    : "border-transparent text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <GraduationCap className="w-4 h-4" />
-                <span className="font-medium">Exams</span>
-              </button>
-              <button
-                role="tab"
-                id="tab-reference"
-                data-tour="tab-docs"
-                aria-selected={currentView === "reference"}
-                aria-controls="panel-reference"
-                onClick={() => setCurrentView("reference")}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                  currentView === "reference"
-                    ? "border-nvidia-green text-nvidia-green"
-                    : "border-transparent text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <BookOpen className="w-4 h-4" />
-                <span className="font-medium">
-                  <span className="sm:hidden">Docs</span>
-                  <span className="hidden sm:inline">Documentation</span>
-                </span>
-              </button>
-              <button
-                role="tab"
-                id="tab-about"
-                data-tour="tab-about"
-                aria-selected={currentView === "about"}
-                aria-controls="panel-about"
-                onClick={() => setCurrentView("about")}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
-                  currentView === "about"
-                    ? "border-nvidia-green text-nvidia-green"
-                    : "border-transparent text-gray-400 hover:text-gray-200"
-                }`}
-              >
-                <Info className="w-4 h-4" />
-                <span className="font-medium">About</span>
-              </button>
+            <div className="text-center text-[10px] text-gray-600 mt-1">
+              Not affiliated with or endorsed by NVIDIA Corporation. All NVIDIA
+              trademarks are property of NVIDIA Corporation. For educational use
+              only.
             </div>
-          </nav>
-        </div>
-        {/* min-w-max */}
-      </div>
-      {/* overflow-x-auto */}
+          </footer>
 
-      {/* Main Content */}
-      <main
-        id="main-content"
-        role="tabpanel"
-        aria-labelledby={`tab-${currentView}`}
-        className={`flex-1 h-0 flex flex-col overflow-hidden transition-all duration-300 ${(showLabWorkspace && !activeScenario) || incidentState === "active" ? "xl:ml-[clamp(340px,30vw,560px)]" : ""}`}
-      >
-        {currentView === "simulator" && (
-          <SimulatorView className="flex-1 h-full" />
-        )}
+          {/* Lab Workspace Overlay — hidden during active scenarios (MissionCard takes over) */}
+          <Suspense fallback={null}>
+            {showLabWorkspace && !activeScenario && (
+              <LabWorkspace onClose={() => setShowLabWorkspace(false)} />
+            )}
+          </Suspense>
+        </>
+      )}
 
-        <Suspense fallback={<ViewFallback />}>
-          {currentView === "labs" && (
-            <LabsAndScenariosView
-              onStartScenario={handleStartScenario}
-              onStartIncident={handleStartIncident}
-            />
-          )}
-
-          {currentView === "exams" && (
-            <ExamsView
-              onBeginExam={handleBeginExam}
-              onOpenExamGauntlet={() => setShowExamGauntlet(true)}
-              onOpenToolQuiz={handleOpenToolQuiz}
-              onOpenMasteryQuiz={handleOpenMasteryQuiz}
-            />
-          )}
-
-          {currentView === "reference" && <Documentation />}
-
-          {currentView === "about" && <About />}
-        </Suspense>
-      </main>
-
-      {/* Footer */}
-      <footer
-        className={`bg-black border-t border-gray-800 px-6 py-3 transition-all duration-300 ${(showLabWorkspace && !activeScenario) || incidentState === "active" ? "xl:ml-[clamp(340px,30vw,560px)]" : ""}`}
-      >
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-gray-400">
-          <div className="whitespace-nowrap">v1.2.0</div>
-          <div className="flex items-center gap-2 sm:gap-4">
-            <span className="flex items-center gap-1">
-              <span
-                className={`w-2 h-2 rounded-full inline-block ${isRunning ? "bg-green-500" : "bg-gray-600"}`}
-              />
-              <span className="hidden sm:inline">
-                {isRunning ? "Running" : "Idle"}
-              </span>
-            </span>
-            <span className="hidden sm:inline">•</span>
-            <span className="hidden sm:inline">
-              NCP-AII Training Environment
-            </span>
-          </div>
-        </div>
-        <div className="text-center text-[10px] text-gray-600 mt-1">
-          Not affiliated with or endorsed by NVIDIA Corporation. All NVIDIA
-          trademarks are property of NVIDIA Corporation. For educational use
-          only.
-        </div>
-      </footer>
-
-      {/* Lab Workspace Overlay — hidden during active scenarios (MissionCard takes over) */}
-      <Suspense fallback={null}>
-        {showLabWorkspace && !activeScenario && (
-          <LabWorkspace onClose={() => setShowLabWorkspace(false)} />
-        )}
-      </Suspense>
-
-      {/* Narrative Intro Modal (missions) */}
+      {/* Mission Briefing (replaces NarrativeIntro for narrative missions) */}
       {activeScenario &&
         isNarrative &&
         showNarrativeIntro &&
         !scenarioProgressData?.completed && (
-          <NarrativeIntro
+          <MissionBriefing
             title={activeScenario.title}
             narrative={activeScenario.narrative!}
+            tier={activeScenario.tier}
+            estimatedTime={activeScenario.estimatedTime}
             onBegin={() => setShowNarrativeIntro(false)}
             skippable={activeScenario.skippable}
             onSkip={() => {
