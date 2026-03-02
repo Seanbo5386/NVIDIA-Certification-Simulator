@@ -20,19 +20,21 @@ interface SequenceLine {
 }
 
 // ---------------------------------------------------------------------------
-// Sequence data
+// Sequence data — full terminal (wide screens)
 // ---------------------------------------------------------------------------
 
+// Every line is exactly 75 characters (3-column format matching real nvidia-smi)
 const NVIDIA_SMI_OUTPUT = [
-  "+-------------------------------------------------------------------------+",
-  "| GPU  Name         Persistence-M | Bus-Id        Disp. | Volatile ECC  |",
-  "| Fan  Temp   Perf  Pwr:Usage/Cap |         Memory-Usage | GPU-Util      |",
-  "|=========================================================================|",
-  "|  0   A100-SXM4-80GB    On       | 00000000:07:00.0 Off |            0  |",
-  "| N/A   34C    P0    72W / 400W   |    521MiB / 81920MiB |     0%        |",
-  "|  3   A100-SXM4-80GB    On       | 00000000:BD:00.0 Off |            8  |",
-  "| N/A   91C    P0   389W / 400W   |  79872MiB / 81920MiB |    97%        |",
-  "+-------------------------------------------------------------------------+",
+  "+---------------------------------+----------------------+----------------+",
+  "| GPU  Name        Persistence-M  | Bus-Id        Disp.A | Volatile ECC   |",
+  "| Fan  Temp  Perf  Pwr:Usage/Cap  |      Memory-Usage    | GPU-Util       |",
+  "|=================================+======================+================|",
+  "|   0  A100-SXM4-80GB        On   | 00000000:07:00.0 Off |              0 |",
+  "| N/A   34C    P0    72W / 400W   |    521MiB / 81920MiB |      0%        |",
+  "+---------------------------------+----------------------+----------------+",
+  "|   3  A100-SXM4-80GB        On   | 00000000:BD:00.0 Off |              8 |",
+  "| N/A   85C    P0   389W / 400W   |  79872MiB / 81920MiB |     97%        |",
+  "+---------------------------------+----------------------+----------------+",
 ];
 
 const DCGMI_OUTPUT = [
@@ -82,6 +84,41 @@ const SEQUENCE: SequenceLine[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Sequence data — compact diagnostic scan (narrow screens)
+// ---------------------------------------------------------------------------
+
+const COMPACT_SEQUENCE: SequenceLine[] = [
+  { type: "briefing", text: "[SYSTEM DIAGNOSTIC]", delay: 400 },
+  { type: "narrative", text: "DGX SuperPOD — Node 3", delay: 300 },
+  { type: "blank", text: "", delay: 600 },
+  { type: "output", text: "\u25B8 GPU fabric ............. OK", delay: 500 },
+  { type: "output", text: "\u25B8 NVLink mesh ............ OK", delay: 400 },
+  { type: "output", text: "\u25B8 InfiniBand ............. OK", delay: 400 },
+  { type: "output", text: "\u25B8 NCCL all-reduce ........ OK", delay: 400 },
+  { type: "output", text: "\u25B8 Thermal sensors ........ WARN", delay: 600 },
+  { type: "output", text: "\u25B8 ECC memory check ....... FAIL", delay: 800 },
+  { type: "blank", text: "", delay: 400 },
+  { type: "output", text: "  \u2514\u2500 GPU 3: XID Error 63", delay: 500 },
+  {
+    type: "output",
+    text: "  \u2514\u2500 Uncorrectable ECC \u00D7 8",
+    delay: 400,
+  },
+  { type: "output", text: "  \u2514\u2500 Row remap required", delay: 400 },
+  { type: "blank", text: "", delay: 600 },
+  {
+    type: "briefing",
+    text: "\u26A0 Diagnosis: Hardware fault on GPU 3",
+    delay: 500,
+  },
+  { type: "blank", text: "", delay: 400 },
+  { type: "prompt", text: "root@dgx-00:~# ", delay: 300 },
+];
+
+/** Minimum viewport width (px) for the full terminal demo */
+const WIDE_BREAKPOINT = 640;
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -117,50 +154,68 @@ export const TerminalDemo: React.FC = () => {
   const [typingText, setTypingText] = useState<string | null>(null);
   const [showCursor, setShowCursor] = useState(false);
   const [animationDone, setAnimationDone] = useState(false);
+  const [isCompact, setIsCompact] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const runSequence = useCallback(async (signal: AbortSignal) => {
-    for (let i = 0; i < SEQUENCE.length; i++) {
-      const line = SEQUENCE[i];
+  // Detect whether we should use compact mode based on container width
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
 
-      // Wait the delay before showing this line
-      if (line.delay > 0) {
-        await sleep(line.delay, signal);
-      }
+    const check = () => setIsCompact(el.clientWidth < WIDE_BREAKPOINT);
+    check();
 
-      if (line.type === "command") {
-        // Typing animation: character by character
-        for (let c = 0; c <= line.text.length; c++) {
-          setTypingText(line.text.slice(0, c));
-          if (c < line.text.length) {
-            await sleep(CHAR_DELAY, signal);
-          }
-        }
-        // After typing is done, commit the command line by appending the
-        // typed text to the previous prompt line and clear typing state
-        setLines((prev) => {
-          const updated = [...prev];
-          const lastIdx = updated.length - 1;
-          if (lastIdx >= 0 && updated[lastIdx].type === "prompt") {
-            updated[lastIdx] = {
-              ...updated[lastIdx],
-              text: updated[lastIdx].text + line.text,
-            };
-          }
-          return updated;
-        });
-        setTypingText(null);
-      } else {
-        // Show the full line at once
-        setLines((prev) => [...prev, { type: line.type, text: line.text }]);
-      }
-    }
-
-    // Animation complete — show blinking cursor on final prompt
-    setShowCursor(true);
-    setAnimationDone(true);
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
+
+  const runSequence = useCallback(
+    async (signal: AbortSignal, seq: SequenceLine[]) => {
+      for (let i = 0; i < seq.length; i++) {
+        const line = seq[i];
+
+        // Wait the delay before showing this line
+        if (line.delay > 0) {
+          await sleep(line.delay, signal);
+        }
+
+        if (line.type === "command") {
+          // Typing animation: character by character
+          for (let c = 0; c <= line.text.length; c++) {
+            setTypingText(line.text.slice(0, c));
+            if (c < line.text.length) {
+              await sleep(CHAR_DELAY, signal);
+            }
+          }
+          // After typing is done, commit the command line by appending the
+          // typed text to the previous prompt line and clear typing state
+          setLines((prev) => {
+            const updated = [...prev];
+            const lastIdx = updated.length - 1;
+            if (lastIdx >= 0 && updated[lastIdx].type === "prompt") {
+              updated[lastIdx] = {
+                ...updated[lastIdx],
+                text: updated[lastIdx].text + line.text,
+              };
+            }
+            return updated;
+          });
+          setTypingText(null);
+        } else {
+          // Show the full line at once
+          setLines((prev) => [...prev, { type: line.type, text: line.text }]);
+        }
+      }
+
+      // Animation complete — show blinking cursor on final prompt
+      setShowCursor(true);
+      setAnimationDone(true);
+    },
+    [],
+  );
 
   // Auto-scroll terminal body to bottom as new lines appear
   useEffect(() => {
@@ -169,13 +224,20 @@ export const TerminalDemo: React.FC = () => {
     }
   }, [lines, typingText]);
 
+  // Start the animation sequence (restarts when compact mode changes)
   useEffect(() => {
+    // Reset state for new run
+    setLines([]);
+    setTypingText(null);
+    setShowCursor(false);
+    setAnimationDone(false);
+
     const controller = new AbortController();
     abortRef.current = controller;
 
-    runSequence(controller.signal).catch((err) => {
+    const seq = isCompact ? COMPACT_SEQUENCE : SEQUENCE;
+    runSequence(controller.signal, seq).catch((err) => {
       if (err?.name !== "AbortError") {
-        // Unexpected error — log but don't crash
         console.error("TerminalDemo animation error:", err);
       }
     });
@@ -183,7 +245,7 @@ export const TerminalDemo: React.FC = () => {
     return () => {
       controller.abort();
     };
-  }, [runSequence]);
+  }, [runSequence, isCompact]);
 
   // -----------------------------------------------------------------------
   // Render helpers
@@ -204,7 +266,9 @@ export const TerminalDemo: React.FC = () => {
 
     if (line.type === "narrative") {
       // First narrative line (title) is white+bold, rest are gray
-      const isTitle = line.text === "The Midnight Deployment";
+      const isTitle =
+        line.text === "The Midnight Deployment" ||
+        line.text === "DGX SuperPOD \u2014 Node 3";
       return (
         <div
           key={index}
@@ -242,6 +306,36 @@ export const TerminalDemo: React.FC = () => {
     }
 
     if (line.type === "output") {
+      // In compact mode, colorize OK / WARN / FAIL status text
+      if (isCompact) {
+        const failMatch = line.text.match(/^(.+)(FAIL)$/);
+        const warnMatch = line.text.match(/^(.+)(WARN)$/);
+        const okMatch = line.text.match(/^(.+)(OK)$/);
+        if (failMatch) {
+          return (
+            <div key={index} className="text-gray-400 whitespace-pre">
+              {failMatch[1]}
+              <span className="text-red-400 font-bold">{failMatch[2]}</span>
+            </div>
+          );
+        }
+        if (warnMatch) {
+          return (
+            <div key={index} className="text-gray-400 whitespace-pre">
+              {warnMatch[1]}
+              <span className="text-yellow-400 font-bold">{warnMatch[2]}</span>
+            </div>
+          );
+        }
+        if (okMatch) {
+          return (
+            <div key={index} className="text-gray-400 whitespace-pre">
+              {okMatch[1]}
+              <span style={{ color: "#76B900" }}>{okMatch[2]}</span>
+            </div>
+          );
+        }
+      }
       return (
         <div key={index} className="text-gray-400 whitespace-pre">
           {line.text}
@@ -259,6 +353,7 @@ export const TerminalDemo: React.FC = () => {
 
   return (
     <div
+      ref={containerRef}
       data-testid="terminal-demo"
       className="rounded-lg border border-gray-700 bg-gray-950 overflow-hidden font-mono text-xs leading-relaxed"
     >

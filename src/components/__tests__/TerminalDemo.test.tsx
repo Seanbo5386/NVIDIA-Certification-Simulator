@@ -2,6 +2,13 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { TerminalDemo } from "../TerminalDemo";
 
+// Mock ResizeObserver (not available in jsdom)
+(globalThis as Record<string, unknown>).ResizeObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 describe("TerminalDemo", () => {
   it("renders the terminal container", () => {
     render(<TerminalDemo />);

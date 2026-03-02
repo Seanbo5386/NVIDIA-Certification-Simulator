@@ -6,6 +6,13 @@ import { WelcomeScreen } from "../WelcomeScreen";
 // Mocks
 // ============================================================================
 
+// Mock ResizeObserver (not available in jsdom)
+(globalThis as Record<string, unknown>).ResizeObserver = class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 // Mock lucide-react icons explicitly to avoid SVG rendering issues in jsdom
 vi.mock("lucide-react", () => {
   const createIcon = (name: string) => {
