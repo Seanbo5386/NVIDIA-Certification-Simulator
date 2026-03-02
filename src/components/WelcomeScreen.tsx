@@ -4,11 +4,11 @@ import {
   Monitor,
   BookOpen,
   Cpu,
-  ShieldCheck,
-  Activity,
   ArrowRight,
+  Cloud,
 } from "lucide-react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
+import { TerminalDemo } from "./TerminalDemo";
 
 interface WelcomeScreenProps {
   onClose: () => void;
@@ -51,8 +51,8 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onClose }) => {
         aria-labelledby="welcome-dialog-title"
         className={`relative z-10 w-full max-w-5xl max-h-[90vh] bg-gray-900/90 border border-gray-700/50 rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-700 delay-100 flex flex-col ${isVisible ? "translate-y-0 scale-100" : "translate-y-10 scale-95"}`}
       >
-        {/* Header Section — compact to maximize content area */}
-        <div className="relative overflow-hidden bg-gradient-to-r from-black to-gray-900 px-6 py-4 text-center border-b border-gray-800 flex-shrink-0">
+        {/* 1. Header Section — compact */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-black to-gray-900 px-6 py-3 text-center border-b border-gray-800 flex-shrink-0">
           {/* Decorative NVIDIA Green Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-1 bg-nvidia-green shadow-[0_0_20px_rgba(118,185,0,0.6)]" />
 
@@ -76,66 +76,59 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onClose }) => {
           </p>
         </div>
 
-        {/* Content Section */}
-        <div className="p-5 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 overflow-y-auto flex-1">
-          {/* Left Column: Mission & Description */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-3 mb-2">
-              <ShieldCheck className="w-6 h-6 text-nvidia-green" />
-              <h3 className="text-xl font-semibold text-white">
-                NCP-AII Certification Ready
-              </h3>
-            </div>
-            <p className="text-gray-300 leading-relaxed text-base">
-              Designed specifically for the{" "}
-              <strong>
-                NVIDIA Certified Professional - AI Infrastructure (NCP-AII)
-              </strong>{" "}
-              exam. This simulator provides a comprehensive platform to practice
-              system administration, troubleshooting, and optimization tasks
-              without needing physical hardware.
-            </p>
+        {/* 2. Terminal Demo — center stage */}
+        <div className="px-6 pt-5 pb-3 flex-1 overflow-y-auto">
+          <TerminalDemo />
+        </div>
 
-            <div className="flex items-center gap-3 mt-8 mb-2">
-              <Activity className="w-6 h-6 text-nvidia-green" />
-              <h3 className="text-xl font-semibold text-white">
-                Interactive Experience
-              </h3>
-            </div>
-            <p className="text-gray-300 leading-relaxed text-base">
-              Interact with a full-stack simulation of a DGX H100 SuperPOD. From
-              managing physical connections to configuring complex workloads
-              with Slurm and Kubernetes, every aspect is simulated with high
-              fidelity.
-            </p>
-          </div>
-
-          {/* Right Column: Key Features Grid */}
-          <div className="grid grid-cols-1 gap-4">
-            <FeatureCard
-              icon={<Terminal className="w-6 h-6 text-black" />}
-              title="Full CLI Simulation"
-              description="Master essential tools: nvidia-smi, ipmitool, nvsm, cmsh, and mlxconfig with realistic outputs and behavior."
-            />
-            <FeatureCard
-              icon={<Cpu className="w-6 h-6 text-black" />}
-              title="Fault Injection Labs"
-              description="Diagnose and resolve critical hardware failures like XID errors, thermal throttling, and network link drops."
-            />
-            <FeatureCard
-              icon={<Monitor className="w-6 h-6 text-black" />}
-              title="Real-time Telemetry"
-              description="Visualize GPU utilization, memory bandwidth, and power consumption across the entire cluster."
-            />
-            <FeatureCard
-              icon={<BookOpen className="w-6 h-6 text-black" />}
-              title="Guided Scenarios"
-              description="Step-by-step labs covering all 5 certification domains, from initial bring-up to advanced troubleshooting."
-            />
+        {/* 3. Stats Bar */}
+        <div className="flex items-center justify-center gap-0 px-6 py-3 flex-shrink-0">
+          <div className="flex items-center gap-0 divide-x divide-gray-700">
+            <span className="px-5 text-center text-sm text-gray-400">
+              32 Missions
+            </span>
+            <span className="px-5 text-center text-sm text-gray-400">
+              229 Commands
+            </span>
+            <span className="px-5 text-center text-sm text-gray-400">
+              6 Architectures
+            </span>
+            <span className="px-5 text-center text-sm text-gray-400">
+              400+ Questions
+            </span>
           </div>
         </div>
 
-        {/* Footer / Action */}
+        {/* 4. Feature Pills */}
+        <div className="flex items-center justify-center gap-2 px-6 py-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 bg-gray-800/50 rounded-full px-3 py-1.5">
+            <Terminal className="w-4 h-4 text-nvidia-green" />
+            <span className="text-gray-300 text-sm">CLI Simulation</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-gray-800/50 rounded-full px-3 py-1.5">
+            <Cpu className="w-4 h-4 text-nvidia-green" />
+            <span className="text-gray-300 text-sm">Fault Injection</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-gray-800/50 rounded-full px-3 py-1.5">
+            <Monitor className="w-4 h-4 text-nvidia-green" />
+            <span className="text-gray-300 text-sm">Telemetry</span>
+          </div>
+          <div className="flex items-center gap-1.5 bg-gray-800/50 rounded-full px-3 py-1.5">
+            <BookOpen className="w-4 h-4 text-nvidia-green" />
+            <span className="text-gray-300 text-sm">Guided Scenarios</span>
+          </div>
+        </div>
+
+        {/* 5. Sign-up CTA */}
+        <div className="flex items-center justify-center gap-1.5 px-6 py-2 flex-shrink-0">
+          <Cloud className="w-4 h-4 text-gray-400" />
+          <p className="text-sm text-gray-400">
+            <span className="text-nvidia-green">Sign up</span> to save your
+            progress across devices
+          </p>
+        </div>
+
+        {/* 6. Enter Button */}
         <div className="bg-gray-900 border-t border-gray-800 p-3 flex justify-center flex-shrink-0">
           <button
             onClick={handleClose}
@@ -152,20 +145,3 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onClose }) => {
     </div>
   );
 };
-
-// Helper Component for Features
-const FeatureCard: React.FC<{
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}> = ({ icon, title, description }) => (
-  <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-800/50 hover:bg-gray-800 transition-colors border border-transparent hover:border-gray-700 group">
-    <div className="flex-shrink-0 w-12 h-12 bg-nvidia-green rounded-lg flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-      {icon}
-    </div>
-    <div>
-      <h4 className="text-white font-bold text-lg mb-1">{title}</h4>
-      <p className="text-gray-400 text-sm leading-snug">{description}</p>
-    </div>
-  </div>
-);
