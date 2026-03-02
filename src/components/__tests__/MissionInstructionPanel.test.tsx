@@ -29,7 +29,7 @@ const defaultProps: MissionInstructionPanelProps = {
     id: "step-2",
     situation:
       "GPU 3 is showing degraded performance with rising temperatures.",
-    task: "Run DCGM diagnostics to identify the root cause of the performance degradation.",
+    task: "Run DCGM diagnostics to identify the root cause.",
     expectedCommands: ["dcgmi diag -r 1", "nvidia-smi -q -d TEMPERATURE"],
     objectives: ["Run diagnostic level 1", "Check GPU temperatures"],
     hints: ["Try running dcgmi diag first", "Look at the ECC error counts"],
@@ -60,9 +60,7 @@ describe("MissionInstructionPanel", () => {
   it("renders the task text in full", () => {
     render(<MissionInstructionPanel {...defaultProps} />);
     expect(
-      screen.getByText(
-        "Run DCGM diagnostics to identify the root cause of the performance degradation.",
-      ),
+      screen.getByText("Run DCGM diagnostics to identify the root cause."),
     ).toBeInTheDocument();
   });
 
@@ -104,16 +102,16 @@ describe("MissionInstructionPanel", () => {
     render(
       <MissionInstructionPanel {...defaultProps} isStepCompleted={true} />,
     );
-    expect(
-      screen.getByRole("button", { name: /Next/ }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Next/ })).toBeInTheDocument();
   });
 
   it("does not show Next button when step is not completed", () => {
     render(
       <MissionInstructionPanel {...defaultProps} isStepCompleted={false} />,
     );
-    expect(screen.queryByRole("button", { name: /Next/ })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Next/ }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows "Finish" instead of "Next" on last step', () => {
@@ -125,9 +123,7 @@ describe("MissionInstructionPanel", () => {
         totalSteps={5}
       />,
     );
-    expect(
-      screen.getByRole("button", { name: /Finish/ }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Finish/ })).toBeInTheDocument();
   });
 
   it("renders hint button with count", () => {
@@ -138,8 +134,6 @@ describe("MissionInstructionPanel", () => {
 
   it("renders panel container with data-testid", () => {
     render(<MissionInstructionPanel {...defaultProps} />);
-    expect(
-      screen.getByTestId("mission-instruction-panel"),
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("mission-instruction-panel")).toBeInTheDocument();
   });
 });
