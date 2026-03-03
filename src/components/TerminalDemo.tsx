@@ -370,7 +370,7 @@ export const TerminalDemo: React.FC = () => {
       {/* Terminal body */}
       <div
         ref={bodyRef}
-        className="p-4 max-h-[420px] overflow-y-auto scrollbar-thin"
+        className="p-4 h-[420px] overflow-y-auto scrollbar-thin"
       >
         {lines.map((line, i) => renderLine(line, i))}
       </div>
