@@ -684,6 +684,58 @@ describe("UserMenu", () => {
     expect(screen.getByText("Code sent — check your email")).toBeDisabled();
   });
 
+  // --- Verification/reset code validation ---
+
+  it("rejects non-6-digit verification codes", async () => {
+    mockSignUp.mockResolvedValueOnce({});
+    render(<UserMenu isLoggedIn={false} syncStatus="idle" />);
+    fireEvent.click(screen.getByText("Sign in"));
+    fireEvent.click(screen.getByText("Sign up"));
+    fireEvent.change(screen.getByPlaceholderText("Email"), {
+      target: { value: "test@test.com" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("Password (8+ characters)"), {
+      target: { value: "Test1234!" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Sign up" }));
+    await waitFor(() =>
+      expect(screen.getByText("Check your email")).toBeInTheDocument(),
+    );
+    fireEvent.change(screen.getByPlaceholderText("Verification code"), {
+      target: { value: "abc" },
+    });
+    fireEvent.submit(screen.getByText("Verify & sign in").closest("form")!);
+    await waitFor(() =>
+      expect(screen.getByText("Code must be 6 digits.")).toBeInTheDocument(),
+    );
+    expect(mockConfirmSignUp).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-6-digit reset codes", async () => {
+    mockResetPassword.mockResolvedValueOnce({});
+    render(<UserMenu isLoggedIn={false} syncStatus="idle" />);
+    fireEvent.click(screen.getByText("Sign in"));
+    fireEvent.click(screen.getByText("Forgot password?"));
+    fireEvent.change(screen.getByPlaceholderText("Email"), {
+      target: { value: "test@test.com" },
+    });
+    fireEvent.submit(screen.getByText("Send reset code").closest("form")!);
+    await waitFor(() =>
+      expect(screen.getByText("Enter new password")).toBeInTheDocument(),
+    );
+    fireEvent.change(screen.getByPlaceholderText("Reset code"), {
+      target: { value: "12345" },
+    });
+    fireEvent.change(screen.getByPlaceholderText("New password"), {
+      target: { value: "Test1234!" },
+    });
+    fireEvent.submit(screen.getByText("Reset password").closest("form")!);
+    await waitFor(() =>
+      expect(screen.getByText("Code must be 6 digits.")).toBeInTheDocument(),
+    );
+    expect(mockConfirmResetPassword).not.toHaveBeenCalled();
+  });
+
   // --- Success toasts (Task 7) ---
 
   it("fires success toast on sign in", async () => {
