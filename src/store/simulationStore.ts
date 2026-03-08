@@ -368,6 +368,13 @@ export const useSimulationStore = create<SimulationState>()(
       loadScenario: (scenario) => {
         set((state) => {
           state.activeScenario = scenario;
+          // Clear stale validation results for this scenario
+          for (const key of Object.keys(state.stepValidation)) {
+            if (key.startsWith(scenario.id + "-")) {
+              delete state.stepValidation[key];
+            }
+          }
+          state.quizResults = {};
           state.scenarioProgress[scenario.id] = {
             scenarioId: scenario.id,
             startTime: Date.now(),

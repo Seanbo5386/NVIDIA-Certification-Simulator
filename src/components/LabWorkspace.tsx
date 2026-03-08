@@ -219,6 +219,9 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
       return;
     }
 
+    // Guard: only advance if the current step is actually completed
+    if (!currentStepProgress?.completed) return;
+
     if (currentStepIndex < activeScenario.steps.length - 1) {
       completeScenarioStep(activeScenario.id, currentStep.id);
     } else {
