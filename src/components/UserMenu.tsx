@@ -269,6 +269,10 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!/^\d{6}$/.test(confirmCode)) {
+      setError("Code must be 6 digits.");
+      return;
+    }
     setLoading(true);
     try {
       await confirmSignUp({ username: email, confirmationCode: confirmCode });
@@ -322,6 +326,10 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
   const handleConfirmResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!/^\d{6}$/.test(resetCode)) {
+      setError("Code must be 6 digits.");
+      return;
+    }
     const validation = validatePassword(newPassword);
     if (!validation.isValid) {
       setError("Password requirements not met.");
@@ -527,6 +535,8 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
                     placeholder="Verification code"
                     value={confirmCode}
                     onChange={(e) => setConfirmCode(e.target.value)}
+                    inputMode="numeric"
+                    maxLength={6}
                     className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm text-white placeholder-gray-500 focus:border-nvidia-green focus:outline-none"
                     required
                   />
@@ -609,6 +619,8 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
                     placeholder="Reset code"
                     value={resetCode}
                     onChange={(e) => setResetCode(e.target.value)}
+                    inputMode="numeric"
+                    maxLength={6}
                     className="w-full px-3 py-2 bg-gray-900 border border-gray-600 rounded text-sm text-white placeholder-gray-500 focus:border-nvidia-green focus:outline-none"
                     required
                   />
