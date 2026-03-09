@@ -21,18 +21,14 @@
   <rect width="960" height="420" fill="#0D1117" rx="12"/>
 
   <!-- Status bar background -->
-  <rect width="960" height="52" fill="#161B22" rx="12"/>
-  <rect y="12" width="960" height="40" fill="#161B22"/>
+  <rect width="960" height="40" fill="#161B22" rx="12"/>
+  <rect y="12" width="960" height="28" fill="#161B22"/>
 
   <!-- Status bar: left text -->
   <text x="20" y="26" fill="#C9D1D9" font-family="Consolas, 'Courier New', monospace" font-size="13" font-weight="bold">DGX SuperPOD</text>
 
   <!-- Status bar: center stats -->
-  <text x="400" y="26" fill="#8B949E" font-family="Consolas, 'Courier New', monospace" font-size="11" text-anchor="middle">
-    <tspan>8 Nodes</tspan>
-    <tspan dx="8">&#x2022;</tspan>
-    <tspan dx="8">64 GPUs</tspan>
-  </text>
+  <text x="400" y="26" fill="#8B949E" font-family="Consolas, 'Courier New', monospace" font-size="11" text-anchor="middle">8 Nodes / 64 GPUs</text>
 
   <!-- Status bar: healthy indicator -->
   <g class="status-healthy">
