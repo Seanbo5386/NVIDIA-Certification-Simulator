@@ -144,7 +144,7 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
     }
     return 5;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [domainProgress, examAttempts]);
+  }, [domainProgress]);
 
   // Calculate improvement trend
   const improvementTrend = useMemo((): TrendPoint[] => {

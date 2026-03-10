@@ -374,9 +374,7 @@ export const useSimulationStore = create<SimulationState>()(
       // Scenario & Lab actions
       loadScenario: (scenario) => {
         // Snapshot current cluster for restore on scenario exit
-        const snapshot = JSON.parse(
-          JSON.stringify(get().cluster),
-        ) as ClusterConfig;
+        const snapshot = structuredClone(get().cluster);
 
         set((state) => {
           state._clusterSnapshot = snapshot;
@@ -493,9 +491,7 @@ export const useSimulationStore = create<SimulationState>()(
           state.activeScenario = null;
           state.quizResults = {};
           if (snapshot) {
-            state.cluster = JSON.parse(
-              JSON.stringify(snapshot),
-            ) as ClusterConfig;
+            state.cluster = structuredClone(snapshot);
           }
           state._clusterSnapshot = null;
         });
