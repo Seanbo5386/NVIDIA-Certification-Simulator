@@ -1332,18 +1332,18 @@ export const Terminal: React.FC<TerminalProps> = ({
 
     // Expose reset callback for architecture changes
     resetTerminalRef.current = () => {
+      const { cluster: newCluster } = useSimulationStore.getState();
+      const newNode = newCluster.nodes[0]?.id || "dgx-00";
       term.reset();
       currentLine = "";
       setCommandHistory([]);
       setHistoryIndex(-1);
-      const newNode =
-        useSimulationStore.getState().cluster.nodes[0]?.id || "dgx-00";
       setConnectedNode(newNode);
       currentContext.current.currentNode = newNode;
       currentContext.current.currentPath = "/root";
       currentContext.current.history = [];
       currentContext.current.scenarioContext = undefined;
-      currentContext.current.cluster = useSimulationStore.getState().cluster;
+      currentContext.current.cluster = newCluster;
       term.write(generateWelcomeMessage(term.cols));
       prompt();
     };
