@@ -491,7 +491,7 @@ export const useSimulationStore = create<SimulationState>()(
           state.activeScenario = null;
           state.quizResults = {};
           if (snapshot) {
-            state.cluster = structuredClone(snapshot);
+            state.cluster = snapshot;
           }
           state._clusterSnapshot = null;
         });
