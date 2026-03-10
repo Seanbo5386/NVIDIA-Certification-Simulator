@@ -83,6 +83,9 @@ interface SimulationState {
   scenarioProgress: Record<string, ScenarioProgress>;
   completedScenarios: string[];
 
+  /** @internal snapshot of cluster before scenario entry */
+  _clusterSnapshot: ClusterConfig | null;
+
   // Exam state
   activeExam: ExamState | null;
 
@@ -159,7 +162,8 @@ interface SimulationState {
     questionId: string,
     answer: number | number[] | string,
   ) => void;
-  endExam: () => ExamBreakdown | null;
+  toggleQuestionFlag: (questionId: string) => void;
+  endExam: (breakdown: ExamBreakdown) => ExamBreakdown | null;
   exitExam: () => void;
 
   // Simulation lifecycle
@@ -193,6 +197,9 @@ export const useSimulationStore = create<SimulationState>()(
       activeLabId: null,
       scenarioProgress: {},
       completedScenarios: [],
+
+      // Cluster snapshot for scenario restore
+      _clusterSnapshot: null as ClusterConfig | null,
 
       // Exam state
       activeExam: null,
@@ -366,7 +373,11 @@ export const useSimulationStore = create<SimulationState>()(
 
       // Scenario & Lab actions
       loadScenario: (scenario) => {
+        // Snapshot current cluster for restore on scenario exit
+        const snapshot = structuredClone(get().cluster);
+
         set((state) => {
+          state._clusterSnapshot = snapshot;
           state.activeScenario = scenario;
           // Clear stale validation results for this scenario
           for (const key of Object.keys(state.stepValidation)) {
@@ -474,14 +485,20 @@ export const useSimulationStore = create<SimulationState>()(
       },
 
       exitScenario: () => {
-        set({ activeScenario: null, quizResults: {} });
-        // Clean up sandbox context (dynamic import to avoid circular deps)
-        Promise.all([
-          import("@/store/scenarioContext"),
-          import("@/utils/scenarioLoader"),
-        ]).then(([{ scenarioContextManager }, { clearAllFaults }]) => {
+        const snapshot = get()._clusterSnapshot;
+
+        set((state) => {
+          state.activeScenario = null;
+          state.quizResults = {};
+          if (snapshot) {
+            state.cluster = snapshot;
+          }
+          state._clusterSnapshot = null;
+        });
+
+        // Clean up sandbox contexts (dynamic import to avoid circular deps)
+        import("@/store/scenarioContext").then(({ scenarioContextManager }) => {
           scenarioContextManager.clearAll();
-          clearAllFaults();
         });
       },
 
@@ -617,58 +634,20 @@ export const useSimulationStore = create<SimulationState>()(
           }
         }),
 
-      endExam: () => {
+      toggleQuestionFlag: (questionId) =>
+        set((state) => {
+          if (!state.activeExam) return;
+          const idx = state.activeExam.flaggedQuestions.indexOf(questionId);
+          if (idx >= 0) {
+            state.activeExam.flaggedQuestions.splice(idx, 1);
+          } else {
+            state.activeExam.flaggedQuestions.push(questionId);
+          }
+        }),
+
+      endExam: (breakdown: ExamBreakdown) => {
         const currentState = get();
         if (!currentState.activeExam) return null;
-
-        // This will be implemented with actual scoring logic
-        // For now, return a placeholder breakdown
-        const breakdown: ExamBreakdown = {
-          totalPoints: 35,
-          earnedPoints: 0,
-          percentage: 0,
-          byDomain: {
-            domain1: {
-              domainName: "Platform Bring-Up",
-              questionsTotal: 10,
-              questionsCorrect: 0,
-              percentage: 0,
-              weight: 31,
-            },
-            domain2: {
-              domainName: "Accelerator Configuration",
-              questionsTotal: 2,
-              questionsCorrect: 0,
-              percentage: 0,
-              weight: 5,
-            },
-            domain3: {
-              domainName: "Base Infrastructure",
-              questionsTotal: 6,
-              questionsCorrect: 0,
-              percentage: 0,
-              weight: 19,
-            },
-            domain4: {
-              domainName: "Validation & Testing",
-              questionsTotal: 11,
-              questionsCorrect: 0,
-              percentage: 0,
-              weight: 33,
-            },
-            domain5: {
-              domainName: "Troubleshooting",
-              questionsTotal: 4,
-              questionsCorrect: 0,
-              percentage: 0,
-              weight: 12,
-            },
-          },
-          questionResults: [],
-          timeSpent: Math.floor(
-            (Date.now() - currentState.activeExam.startTime) / 1000,
-          ),
-        };
 
         set((state) => {
           if (state.activeExam) {

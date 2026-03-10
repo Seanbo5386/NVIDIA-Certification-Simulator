@@ -14,9 +14,21 @@ import {
 
 const CHANGELOG = [
   {
+    version: "v1.2.2",
+    title: "Audit Fixes & Scoring Pipeline",
+    current: true,
+    highlights: [
+      "Exam scoring pipeline: real breakdown persisted and recorded in analytics",
+      "Fixed readiness benchmark showing inflated percentiles (6500% → 65%)",
+      "Scenario sandbox: snapshot/restore cluster instead of resetting to defaults",
+      "Terminal scenario context rebinds on scenario start/stop",
+      "Removed gauntlet self-certification (Mark Complete without validation)",
+      "Question flagging now persists to store",
+    ],
+  },
+  {
     version: "v1.2.1",
     title: "Polish & Security",
-    current: true,
     highlights: [
       "Security & Privacy section with AWS hosting details",
       "Terminal session persistence across tab switches",

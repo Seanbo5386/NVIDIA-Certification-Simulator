@@ -122,6 +122,9 @@ export const Terminal: React.FC<TerminalProps> = ({
   const selectedNode = useSimulationStore((state) => state.selectedNode);
   const cluster = useSimulationStore((state) => state.cluster);
   const systemType = useSimulationStore((state) => state.systemType);
+  const activeScenarioId = useSimulationStore(
+    (state) => state.activeScenario?.id ?? null,
+  );
   const initialNode = selectedNode || cluster.nodes[0]?.id || "dgx-00";
   const [connectedNode, setConnectedNode] = useState<string>(initialNode);
 
@@ -235,7 +238,7 @@ export const Terminal: React.FC<TerminalProps> = ({
 
       logger.debug("Terminal: Cleared scenario context");
     }
-  }, [cluster]);
+  }, [cluster, activeScenarioId]);
 
   useEffect(() => {
     if (!terminalRef.current) return;
