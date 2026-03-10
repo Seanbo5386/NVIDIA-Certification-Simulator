@@ -2,9 +2,9 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.2.1-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.2.2-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-3510_unit_|_307_E2E-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-3616_unit_|_307_E2E-brightgreen?style=for-the-badge)
 ![NVIDIA](https://img.shields.io/badge/NVIDIA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
 ![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
@@ -381,6 +381,15 @@ src/
 ---
 
 ## Roadmap
+
+### Completed (v1.2.2)
+
+- [x] Exam scoring pipeline: real breakdown persisted and recorded in analytics
+- [x] Fixed readiness benchmark inflated percentiles (was multiplying 0-100 score by 100)
+- [x] Scenario sandbox: snapshot/restore cluster on exit instead of resetting to defaults
+- [x] Terminal scenario context rebinds on scenario start/stop
+- [x] Removed gauntlet Mark Complete (was self-certification without validation)
+- [x] Question flagging wired to store action
 
 ### Completed (v1.2.1)
 
