@@ -17,6 +17,76 @@ function expandShellSubstitutions(cmd: string): string {
   return cmd.replace(/\$\([^)]+\)/g, "12345");
 }
 
+/**
+ * Tokenize a command string, respecting quoted substrings.
+ * e.g. "scontrol update reason='BMC firmware update'" →
+ *   ["scontrol", "update", "reason='BMC firmware update'"]
+ */
+function tokenizeCommand(cmd: string): string[] {
+  const tokens: string[] = [];
+  let current = "";
+  let inQuote: string | null = null;
+
+  for (let i = 0; i < cmd.length; i++) {
+    const ch = cmd[i];
+    if (inQuote) {
+      current += ch;
+      if (ch === inQuote) {
+        inQuote = null;
+      }
+    } else if (ch === "'" || ch === '"') {
+      inQuote = ch;
+      current += ch;
+    } else if (/\s/.test(ch)) {
+      if (current) {
+        tokens.push(current);
+        current = "";
+      }
+    } else {
+      current += ch;
+    }
+  }
+  if (current) tokens.push(current);
+  return tokens;
+}
+
+/**
+ * Extract the "command key" — the leading non-flag, non-argument tokens
+ * that identify the command + subcommand. Stops at flags (-/--), key=value
+ * args, quoted strings, numbers, or pipes.
+ *
+ * Examples:
+ *   ["scontrol", "update", "nodename=dgx-01", ...] → ["scontrol", "update"]
+ *   ["dcgmi", "diag", "-r", "1"] → ["dcgmi", "diag"]
+ *   ["nvidia-smi", "-q", "-i", "6"] → ["nvidia-smi"]
+ *   ["ipmitool", "mc", "info"] → ["ipmitool", "mc", "info"]
+ *   ["nvidia-smi", "|", "grep", "GPU"] → ["nvidia-smi"]
+ */
+function extractCommandKey(tokens: string[]): string[] {
+  const key: string[] = [];
+  for (const token of tokens) {
+    if (
+      token.startsWith("-") ||
+      token.includes("=") ||
+      token.startsWith("'") ||
+      token.startsWith('"') ||
+      /^\d+$/.test(token) ||
+      token === "|"
+    ) {
+      break;
+    }
+    key.push(token);
+  }
+  return key.length > 0 ? key : [tokens[0]];
+}
+
+/**
+ * Escape special regex characters in a string.
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export class ScenarioValidator {
   /**
    * Validates a command execution against scenario step requirements
@@ -137,25 +207,24 @@ export class ScenarioValidator {
         switch (rule.type) {
           case "command-executed":
             type = "command";
-            // Create more flexible patterns for command matching
+            // Create flexible patterns for command matching
             if (commandsToValidate && commandsToValidate.length > 0) {
-              // Build regex that matches the base command more intelligently
               const patterns = commandsToValidate.map((rawCmd) => {
-                // Expand shell substitutions before building regex
                 const cmd = expandShellSubstitutions(rawCmd);
-                // Split command into parts for better matching
-                const parts = cmd.trim().split(/\s+/);
-                const baseCmd = parts[0];
+                // Strip everything after pipe for matching the primary command
+                const primaryCmd = cmd.split("|")[0].trim();
+                const tokens = tokenizeCommand(primaryCmd);
 
-                // Create pattern that matches the base command with optional flags
-                // This prevents "sinfo help" from matching when we want "sinfo"
-                if (parts.length === 1) {
-                  // Single word command - match it as a standalone command or with flags
-                  return `^${baseCmd}(?:\\s+(?:-[\\w]+|--[\\w-]+))*$`;
-                } else {
-                  // Multi-part command - be more specific
-                  return `^${cmd.replace(/\s+/g, "\\s+")}`;
+                if (tokens.length === 1) {
+                  // Single word command - match standalone or with any flags/args
+                  return `^${escapeRegex(tokens[0])}\\b`;
                 }
+
+                // Extract command key (command + subcommand words)
+                // e.g. ["scontrol", "update"] or ["dcgmi", "diag"]
+                const key = extractCommandKey(tokens);
+                const keyPattern = key.map(escapeRegex).join("\\s+");
+                return `^${keyPattern}\\b`;
               });
               commandPattern = patterns.join("|");
             } else {
@@ -297,41 +366,46 @@ export class ScenarioValidator {
       const notExecuted: string[] = [];
 
       for (const expected of expectedCommands) {
-        // Create a flexible pattern for matching
         // Expand shell substitutions so "$(pgrep hpl)" normalizes to "12345"
         const expectedNormalized = expandShellSubstitutions(
           expected.trim().toLowerCase(),
         );
-        const expectedParts = expectedNormalized.split(/\s+/);
-        const baseCmd = expectedParts[0];
+        // Tokenize respecting quotes so "reason='BMC firmware update'" stays as one token
+        const expectedTokens = tokenizeCommand(expectedNormalized);
+        const expectedKey = extractCommandKey(expectedTokens);
 
         // Check if any command in history matches this expected command
         const wasExecuted = allCommands.some((cmd) => {
           const cmdNormalized = expandShellSubstitutions(
             cmd.trim().toLowerCase(),
           );
-          const cmdParts = cmdNormalized.split(/\s+/);
+          const cmdTokens = tokenizeCommand(cmdNormalized);
+          const cmdKey = extractCommandKey(cmdTokens);
 
-          // Base command must match
-          if (cmdParts[0] !== baseCmd) return false;
+          // Command key must match (e.g. ["scontrol", "update"])
+          if (expectedKey.length !== cmdKey.length) return false;
+          for (let i = 0; i < expectedKey.length; i++) {
+            if (cmdKey[i] !== expectedKey[i]) return false;
+          }
 
-          // For commands with specific flags/args, check key parts are present
-          if (expectedParts.length > 1) {
-            // Check if the command contains key expected parts (flexible matching)
-            // This handles cases like "nvidia-smi --query-gpu=temperature" matching
-            // "nvidia-smi --query-gpu=temperature.gpu --format=csv"
-            for (let i = 1; i < expectedParts.length; i++) {
-              const part = expectedParts[i];
-              // Skip checking very generic flags
-              if (part === "--format=csv" || part === "-i") continue;
-              // For query-style flags, check the key prefix matches
-              if (part.includes("=")) {
-                const prefix = part.split("=")[0];
-                if (!cmdNormalized.includes(prefix)) return false;
-              } else if (!cmdNormalized.includes(part)) {
-                return false;
-              }
+          // For commands with flags/args beyond the key, check key parts are present
+          for (let i = expectedKey.length; i < expectedTokens.length; i++) {
+            const token = expectedTokens[i];
+            // Skip generic/common flags
+            if (token === "--format=csv" || token === "-i") continue;
+            // For key=value args, check the key prefix exists (flexible on value)
+            if (
+              token.includes("=") &&
+              !token.startsWith("'") &&
+              !token.startsWith('"')
+            ) {
+              const prefix = token.split("=")[0];
+              if (!cmdNormalized.includes(prefix)) return false;
+            } else if (token.startsWith("-")) {
+              // Flags: check the flag exists in the command
+              if (!cmdNormalized.includes(token)) return false;
             }
+            // Skip quoted values and positional args — too restrictive to check
           }
 
           return true;
