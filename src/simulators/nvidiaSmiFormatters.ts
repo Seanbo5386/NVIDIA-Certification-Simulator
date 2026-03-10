@@ -23,7 +23,7 @@ export function formatDisplayMemory(gpu: GPU, node?: DGXNode): string {
 }
 
 export function formatDisplayUtilization(gpu: GPU, _node?: DGXNode): string {
-  const memUtil = Math.round((gpu.memoryUsed / gpu.memoryTotal) * 100);
+  const memUtil = gpu.memoryTotal > 0 ? Math.round((gpu.memoryUsed / gpu.memoryTotal) * 100) : 0;
   let output = `    Utilization\n`;
   output += `        Gpu                               : ${Math.round(gpu.utilization)} %\n`;
   output += `        Memory                            : ${memUtil} %\n`;
