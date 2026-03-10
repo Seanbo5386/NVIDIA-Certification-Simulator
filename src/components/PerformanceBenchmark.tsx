@@ -7,10 +7,18 @@
  * - Improvement percentile over time
  */
 
-import React, { useMemo } from 'react';
-import { TrendingUp, TrendingDown, Target, Award, AlertTriangle, CheckCircle, BarChart2 } from 'lucide-react';
-import { useLearningStore } from '@/store/learningStore';
-import type { DomainId } from '@/types/scenarios';
+import React, { useMemo } from "react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Award,
+  AlertTriangle,
+  CheckCircle,
+  BarChart2,
+} from "lucide-react";
+import { useLearningStore } from "@/store/learningStore";
+import type { DomainId } from "@/types/scenarios";
 
 interface PerformanceBenchmarkProps {
   className?: string;
@@ -52,11 +60,11 @@ const BENCHMARK_DATA = {
 };
 
 const DOMAIN_LABELS: Record<DomainId, string> = {
-  domain1: 'Platform Bring-Up',
-  domain2: 'Accelerator Configuration',
-  domain3: 'Base Infrastructure',
-  domain4: 'Validation & Testing',
-  domain5: 'Troubleshooting',
+  domain1: "Platform Bring-Up",
+  domain2: "Accelerator Configuration",
+  domain3: "Base Infrastructure",
+  domain4: "Validation & Testing",
+  domain5: "Troubleshooting",
 };
 
 interface DomainComparison {
@@ -65,7 +73,7 @@ interface DomainComparison {
   userScore: number;
   benchmarkScore: number;
   percentile: number;
-  status: 'above' | 'average' | 'below';
+  status: "above" | "average" | "below";
   gap: number;
 }
 
@@ -77,17 +85,21 @@ interface TrendPoint {
 }
 
 export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
-  className = '',
+  className = "",
 }) => {
-  const { domainProgress, examAttempts, getReadinessScore } = useLearningStore();
+  const { domainProgress, examAttempts, getReadinessScore } =
+    useLearningStore();
 
   // Calculate user's score per domain
   const domainComparisons = useMemo((): DomainComparison[] => {
     return Object.entries(domainProgress).map(([domainId, progress]) => {
       const id = domainId as DomainId;
-      const userScore = progress.questionsAttempted > 0
-        ? Math.round((progress.questionsCorrect / progress.questionsAttempted) * 100)
-        : 0;
+      const userScore =
+        progress.questionsAttempted > 0
+          ? Math.round(
+              (progress.questionsCorrect / progress.questionsAttempted) * 100,
+            )
+          : 0;
 
       const benchmarkScore = BENCHMARK_DATA.domainAverages[id];
       const stdDev = BENCHMARK_DATA.domainStdDev[id];
@@ -95,13 +107,19 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
 
       // Calculate percentile using normal distribution approximation
       const zScore = (userScore - benchmarkScore) / stdDev;
-      const percentile = Math.round(Math.min(99, Math.max(1,
-        50 + 34.1 * Math.sign(zScore) * Math.min(Math.abs(zScore), 2)
-      )));
+      const percentile = Math.round(
+        Math.min(
+          99,
+          Math.max(
+            1,
+            50 + 34.1 * Math.sign(zScore) * Math.min(Math.abs(zScore), 2),
+          ),
+        ),
+      );
 
-      let status: 'above' | 'average' | 'below' = 'average';
-      if (gap > stdDev * 0.5) status = 'above';
-      else if (gap < -stdDev * 0.5) status = 'below';
+      let status: "above" | "average" | "below" = "average";
+      if (gap > stdDev * 0.5) status = "above";
+      else if (gap < -stdDev * 0.5) status = "below";
 
       return {
         domainId: id,
@@ -115,10 +133,9 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
     });
   }, [domainProgress]);
 
-  // Calculate overall percentile
+  // Calculate overall percentile (getReadinessScore returns 0-100)
   const overallPercentile = useMemo(() => {
-    const readinessScore = getReadinessScore();
-    const score = readinessScore * 100;
+    const score = getReadinessScore();
 
     for (const bp of BENCHMARK_DATA.percentileBreakpoints) {
       if (score >= bp.score) {
@@ -126,7 +143,8 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
       }
     }
     return 5;
-  }, [getReadinessScore]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [domainProgress, examAttempts]);
 
   // Calculate improvement trend
   const improvementTrend = useMemo((): TrendPoint[] => {
@@ -154,18 +172,22 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
   }, [examAttempts]);
 
   // Find weak areas (below average)
-  const weakAreas = domainComparisons.filter(d => d.status === 'below');
-  const strongAreas = domainComparisons.filter(d => d.status === 'above');
+  const weakAreas = domainComparisons.filter((d) => d.status === "below");
+  const strongAreas = domainComparisons.filter((d) => d.status === "above");
 
   // Calculate improvement from first to last attempt
-  const improvementDelta = improvementTrend.length >= 2
-    ? improvementTrend[improvementTrend.length - 1].score - improvementTrend[0].score
-    : 0;
+  const improvementDelta =
+    improvementTrend.length >= 2
+      ? improvementTrend[improvementTrend.length - 1].score -
+        improvementTrend[0].score
+      : 0;
 
-  const readinessScore = getReadinessScore() * 100;
+  const readinessScore = getReadinessScore();
 
   return (
-    <div className={`bg-gray-800 rounded-lg p-4 border border-gray-700 ${className}`}>
+    <div
+      className={`bg-gray-800 rounded-lg p-4 border border-gray-700 ${className}`}
+    >
       <div className="flex items-center gap-2 mb-4">
         <BarChart2 className="w-5 h-5 text-nvidia-green" />
         <h3 className="text-lg font-semibold text-gray-200">
@@ -178,7 +200,9 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-gray-400">Your Overall Percentile</span>
           <div className="flex items-center gap-2">
-            {overallPercentile >= 75 && <Award className="w-5 h-5 text-yellow-400" />}
+            {overallPercentile >= 75 && (
+              <Award className="w-5 h-5 text-yellow-400" />
+            )}
             <span className="text-2xl font-bold text-nvidia-green">
               {overallPercentile}th
             </span>
@@ -201,7 +225,11 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
         </div>
 
         <p className="text-sm text-gray-400 mt-3">
-          You're performing better than <span className="text-nvidia-green font-medium">{overallPercentile}%</span> of users.
+          You're performing better than{" "}
+          <span className="text-nvidia-green font-medium">
+            {overallPercentile}%
+          </span>{" "}
+          of users.
           {readinessScore >= 70 && (
             <span className="text-green-400"> You're on track to pass!</span>
           )}
@@ -210,23 +238,36 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
 
       {/* Domain Comparison */}
       <div className="mb-6">
-        <h4 className="text-sm font-semibold text-gray-300 mb-3">Domain Comparison vs. Average</h4>
+        <h4 className="text-sm font-semibold text-gray-300 mb-3">
+          Domain Comparison vs. Average
+        </h4>
         <div className="space-y-3">
           {domainComparisons.map((domain) => (
             <div key={domain.domainId} className="p-3 bg-gray-900 rounded-lg">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  {domain.status === 'above' && <TrendingUp className="w-4 h-4 text-green-400" />}
-                  {domain.status === 'below' && <TrendingDown className="w-4 h-4 text-red-400" />}
-                  {domain.status === 'average' && <Target className="w-4 h-4 text-yellow-400" />}
+                  {domain.status === "above" && (
+                    <TrendingUp className="w-4 h-4 text-green-400" />
+                  )}
+                  {domain.status === "below" && (
+                    <TrendingDown className="w-4 h-4 text-red-400" />
+                  )}
+                  {domain.status === "average" && (
+                    <Target className="w-4 h-4 text-yellow-400" />
+                  )}
                   <span className="text-sm text-gray-200">{domain.label}</span>
                 </div>
-                <span className={`text-sm font-medium ${
-                  domain.status === 'above' ? 'text-green-400' :
-                  domain.status === 'below' ? 'text-red-400' :
-                  'text-yellow-400'
-                }`}>
-                  {domain.gap > 0 ? '+' : ''}{domain.gap}%
+                <span
+                  className={`text-sm font-medium ${
+                    domain.status === "above"
+                      ? "text-green-400"
+                      : domain.status === "below"
+                        ? "text-red-400"
+                        : "text-yellow-400"
+                  }`}
+                >
+                  {domain.gap > 0 ? "+" : ""}
+                  {domain.gap}%
                 </span>
               </div>
 
@@ -239,9 +280,11 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
                 {/* User score bar */}
                 <div
                   className={`h-full rounded-full transition-all ${
-                    domain.status === 'above' ? 'bg-green-500' :
-                    domain.status === 'below' ? 'bg-red-500' :
-                    'bg-yellow-500'
+                    domain.status === "above"
+                      ? "bg-green-500"
+                      : domain.status === "below"
+                        ? "bg-red-500"
+                        : "bg-yellow-500"
                   }`}
                   style={{ width: `${Math.min(100, domain.userScore)}%` }}
                 />
@@ -262,13 +305,17 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
         <div className="mb-6 p-3 bg-red-900/30 border border-red-700 rounded-lg">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-4 h-4 text-red-400" />
-            <span className="text-sm font-semibold text-red-200">Areas Needing Improvement</span>
+            <span className="text-sm font-semibold text-red-200">
+              Areas Needing Improvement
+            </span>
           </div>
           <ul className="text-sm text-red-200 space-y-1">
             {weakAreas.map((area) => (
               <li key={area.domainId} className="flex items-center gap-2">
                 <span>• {area.label}</span>
-                <span className="text-red-400">({area.gap}% below average)</span>
+                <span className="text-red-400">
+                  ({area.gap}% below average)
+                </span>
               </li>
             ))}
           </ul>
@@ -283,13 +330,17 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
         <div className="mb-6 p-3 bg-green-900/30 border border-green-700 rounded-lg">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="w-4 h-4 text-green-400" />
-            <span className="text-sm font-semibold text-green-200">Your Strengths</span>
+            <span className="text-sm font-semibold text-green-200">
+              Your Strengths
+            </span>
           </div>
           <ul className="text-sm text-green-200 space-y-1">
             {strongAreas.map((area) => (
               <li key={area.domainId} className="flex items-center gap-2">
                 <span>• {area.label}</span>
-                <span className="text-green-400">(+{area.gap}% above average)</span>
+                <span className="text-green-400">
+                  (+{area.gap}% above average)
+                </span>
               </li>
             ))}
           </ul>
@@ -299,7 +350,9 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
       {/* Improvement Trend */}
       {improvementTrend.length >= 2 && (
         <div className="mb-6">
-          <h4 className="text-sm font-semibold text-gray-300 mb-3">Your Improvement Over Time</h4>
+          <h4 className="text-sm font-semibold text-gray-300 mb-3">
+            Your Improvement Over Time
+          </h4>
           <div className="p-3 bg-gray-900 rounded-lg">
             <div className="flex items-center gap-2 mb-3">
               {improvementDelta > 0 ? (
@@ -309,12 +362,17 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
               ) : (
                 <Target className="w-5 h-5 text-yellow-400" />
               )}
-              <span className={`text-lg font-bold ${
-                improvementDelta > 0 ? 'text-green-400' :
-                improvementDelta < 0 ? 'text-red-400' :
-                'text-yellow-400'
-              }`}>
-                {improvementDelta > 0 ? '+' : ''}{improvementDelta}%
+              <span
+                className={`text-lg font-bold ${
+                  improvementDelta > 0
+                    ? "text-green-400"
+                    : improvementDelta < 0
+                      ? "text-red-400"
+                      : "text-yellow-400"
+                }`}
+              >
+                {improvementDelta > 0 ? "+" : ""}
+                {improvementDelta}%
               </span>
               <span className="text-sm text-gray-400">improvement</span>
             </div>
@@ -322,28 +380,33 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
             {/* Simple trend visualization */}
             <div className="flex items-end gap-2 h-20">
               {improvementTrend.map((point, idx) => (
-                <div
-                  key={idx}
-                  className="flex-1 flex flex-col items-center"
-                >
+                <div key={idx} className="flex-1 flex flex-col items-center">
                   <div
                     className="w-full bg-nvidia-green rounded-t transition-all"
                     style={{ height: `${point.score * 0.8}%` }}
                     title={`Attempt ${point.attempt}: ${point.score}%`}
                   />
-                  <span className="text-xs text-gray-500 mt-1">{point.attempt}</span>
+                  <span className="text-xs text-gray-500 mt-1">
+                    {point.attempt}
+                  </span>
                 </div>
               ))}
             </div>
 
             <div className="flex justify-between text-xs text-gray-500 mt-2">
               <span>First: {improvementTrend[0].score}%</span>
-              <span>Latest: {improvementTrend[improvementTrend.length - 1].score}%</span>
+              <span>
+                Latest: {improvementTrend[improvementTrend.length - 1].score}%
+              </span>
             </div>
 
             {improvementDelta > 0 && (
               <p className="text-xs text-green-400 mt-2">
-                Your improvement rate is {improvementDelta > BENCHMARK_DATA.avgImprovementPerAttempt ? 'above' : 'near'} average!
+                Your improvement rate is{" "}
+                {improvementDelta > BENCHMARK_DATA.avgImprovementPerAttempt
+                  ? "above"
+                  : "near"}{" "}
+                average!
               </p>
             )}
           </div>
@@ -352,21 +415,29 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
 
       {/* Pass Prediction */}
       <div className="p-3 bg-gray-900 rounded-lg">
-        <h4 className="text-sm font-semibold text-gray-300 mb-2">Exam Pass Prediction</h4>
+        <h4 className="text-sm font-semibold text-gray-300 mb-2">
+          Exam Pass Prediction
+        </h4>
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0">
             <div
               className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                readinessScore >= 75 ? 'bg-green-900/50 border-2 border-green-500' :
-                readinessScore >= 50 ? 'bg-yellow-900/50 border-2 border-yellow-500' :
-                'bg-red-900/50 border-2 border-red-500'
+                readinessScore >= 75
+                  ? "bg-green-900/50 border-2 border-green-500"
+                  : readinessScore >= 50
+                    ? "bg-yellow-900/50 border-2 border-yellow-500"
+                    : "bg-red-900/50 border-2 border-red-500"
               }`}
             >
-              <span className={`text-lg font-bold ${
-                readinessScore >= 75 ? 'text-green-400' :
-                readinessScore >= 50 ? 'text-yellow-400' :
-                'text-red-400'
-              }`}>
+              <span
+                className={`text-lg font-bold ${
+                  readinessScore >= 75
+                    ? "text-green-400"
+                    : readinessScore >= 50
+                      ? "text-yellow-400"
+                      : "text-red-400"
+                }`}
+              >
                 {Math.round(readinessScore)}%
               </span>
             </div>
@@ -374,13 +445,14 @@ export const PerformanceBenchmark: React.FC<PerformanceBenchmarkProps> = ({
           <div className="flex-1">
             <p className="text-sm text-gray-300">
               {readinessScore >= 75
-                ? 'High likelihood of passing the exam!'
+                ? "High likelihood of passing the exam!"
                 : readinessScore >= 50
-                ? 'Moderate likelihood. Keep practicing!'
-                : 'More study needed before taking the exam.'}
+                  ? "Moderate likelihood. Keep practicing!"
+                  : "More study needed before taking the exam."}
             </p>
             <p className="text-xs text-gray-500 mt-1">
-              Based on your performance compared to {BENCHMARK_DATA.passRate * 100}% pass rate.
+              Based on your performance compared to{" "}
+              {BENCHMARK_DATA.passRate * 100}% pass rate.
             </p>
           </div>
         </div>

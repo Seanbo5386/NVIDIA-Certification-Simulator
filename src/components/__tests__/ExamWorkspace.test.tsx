@@ -48,6 +48,7 @@ const mockQuestions: ExamQuestion[] = [
 
 const mockStartExam = vi.fn();
 const mockSubmitExamAnswer = vi.fn();
+const mockToggleQuestionFlag = vi.fn();
 const mockEndExam = vi.fn();
 const mockExitExam = vi.fn();
 
@@ -58,9 +59,19 @@ vi.mock("@/store/simulationStore", () => ({
     activeExam: mockActiveExam,
     startExam: mockStartExam,
     submitExamAnswer: mockSubmitExamAnswer,
+    toggleQuestionFlag: mockToggleQuestionFlag,
     endExam: mockEndExam,
     exitExam: mockExitExam,
   })),
+}));
+
+const mockAddExamAttempt = vi.fn();
+
+vi.mock("@/store/learningStore", () => ({
+  useLearningStore: vi.fn((selector?: unknown) => {
+    const state = { addExamAttempt: mockAddExamAttempt };
+    return typeof selector === "function" ? selector(state) : state;
+  }),
 }));
 
 // ============================================================================

@@ -256,26 +256,6 @@ export const ExamGauntlet: React.FC<ExamGauntletProps> = ({
     [scenarios, onLaunchScenario],
   );
 
-  const handleMarkComplete = useCallback(
-    (index: number) => {
-      setScenarios((prev) =>
-        prev.map((s, i) => (i === index ? { ...s, completed: true } : s)),
-      );
-
-      // Auto-advance to next incomplete scenario
-      const nextIncompleteIndex = scenarios.findIndex(
-        (s, i) => i > index && !s.completed,
-      );
-      if (nextIncompleteIndex !== -1) {
-        setCurrentScenarioIndex(nextIncompleteIndex);
-      }
-
-      // Close active scenario view
-      setActiveScenario(null);
-    },
-    [scenarios],
-  );
-
   const handleFinishExam = useCallback(() => {
     const timeTaken = Math.floor((Date.now() - startTime) / 1000);
 
@@ -539,14 +519,8 @@ export const ExamGauntlet: React.FC<ExamGauntletProps> = ({
 
                 <div className="flex gap-3">
                   <button
-                    onClick={() => handleMarkComplete(currentScenarioIndex)}
-                    className="flex-1 py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-colors"
-                  >
-                    Mark Complete
-                  </button>
-                  <button
                     onClick={handleCloseScenario}
-                    className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                    className="flex-1 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
                   >
                     Back to List
                   </button>
@@ -595,17 +569,6 @@ export const ExamGauntlet: React.FC<ExamGauntletProps> = ({
                           className="text-sm px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors"
                         >
                           Launch
-                        </button>
-                      )}
-                      {!scenario.completed && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleMarkComplete(index);
-                          }}
-                          className="text-sm px-3 py-1 bg-green-600 hover:bg-green-500 text-white rounded transition-colors"
-                        >
-                          Mark Complete
                         </button>
                       )}
                     </div>

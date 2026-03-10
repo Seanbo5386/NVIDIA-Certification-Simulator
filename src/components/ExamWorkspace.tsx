@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSimulationStore } from "@/store/simulationStore";
+import { useLearningStore } from "@/store/learningStore";
 import {
   X,
   Clock,
@@ -78,8 +79,15 @@ export function ExamWorkspace({
   onClose,
   mode = "full-practice",
 }: ExamWorkspaceProps) {
-  const { activeExam, startExam, submitExamAnswer, endExam, exitExam } =
-    useSimulationStore();
+  const {
+    activeExam,
+    startExam,
+    submitExamAnswer,
+    endExam,
+    exitExam,
+    toggleQuestionFlag,
+  } = useSimulationStore();
+  const addExamAttempt = useLearningStore((state) => state.addExamAttempt);
   const [questions, setQuestions] = useState<ExamQuestion[]>([]);
   const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
   const examConfig = createExamConfig(mode as ExamMode);
@@ -136,19 +144,8 @@ export function ExamWorkspace({
 
   const handleToggleFlag = () => {
     if (!activeExam) return;
-
     const currentQuestion = questions[currentQuestionIdx];
-    const newFlagged = [...activeExam.flaggedQuestions];
-
-    if (newFlagged.includes(currentQuestion.id)) {
-      const idx = newFlagged.indexOf(currentQuestion.id);
-      newFlagged.splice(idx, 1);
-    } else {
-      newFlagged.push(currentQuestion.id);
-    }
-
-    // Update store (we'd need to add this action)
-    // For now, track locally
+    toggleQuestionFlag(currentQuestion.id);
   };
 
   const handleSubmitExam = () => {
@@ -162,8 +159,9 @@ export function ExamWorkspace({
     // Update breakdown with actual time spent
     breakdown.timeSpent = examTimer?.getTimeElapsed() || 0;
 
-    // End exam in store
-    endExam();
+    // End exam in store and record attempt
+    endExam(breakdown);
+    addExamAttempt(breakdown);
 
     setShowResults(true);
   };
