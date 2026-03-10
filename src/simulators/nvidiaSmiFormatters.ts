@@ -27,8 +27,8 @@ export function formatDisplayUtilization(gpu: GPU, _node?: DGXNode): string {
   let output = `    Utilization\n`;
   output += `        Gpu                               : ${Math.round(gpu.utilization)} %\n`;
   output += `        Memory                            : ${memUtil} %\n`;
-  output += `        Encoder                           : ${Math.floor(Math.random() * 5)} %\n`;
-  output += `        Decoder                           : ${Math.floor(Math.random() * 3)} %\n`;
+  output += `        Encoder                           : 0 %\n`;
+  output += `        Decoder                           : 0 %\n`;
   output += `        JPEG                              : 0 %\n`;
   output += `        OFA                               : 0 %\n`;
   return output;
@@ -71,7 +71,7 @@ export function formatDisplayPower(gpu: GPU, _node?: DGXNode): string {
   const powerDraw = Math.round(gpu.powerDraw);
   const powerLimit = Math.round(gpu.powerLimit);
   const minLimit = Math.round(gpu.powerLimit * 0.5);
-  const isSXM = gpu.type?.includes("SXM") || false;
+  const isSXM = gpu.name?.includes("SXM") || false;
   const maxLimit = isSXM ? powerLimit : Math.round(gpu.powerLimit * 1.05);
   let output = `    GPU Power Readings\n`;
   output += `        Power Management                  : Supported\n`;
@@ -170,10 +170,7 @@ export function formatDisplaySupportedClocks(
   return output;
 }
 
-export function formatDisplayPageRetirement(
-  gpu: GPU,
-  _node?: DGXNode,
-): string {
+export function formatDisplayPageRetirement(gpu: GPU, _node?: DGXNode): string {
   const sbePagesRetired = Math.floor(gpu.eccErrors.aggregated.singleBit / 10);
   const dbePagesRetired = gpu.eccErrors.aggregated.doubleBit;
   const pendingRetirement = gpu.eccErrors.doubleBit > 0 ? "Yes" : "No";
@@ -250,6 +247,7 @@ export const DISPLAY_FORMATTERS: Record<string, DisplayFormatter> = {
   TEMPERATURE: formatDisplayTemperature,
   POWER: formatDisplayPower,
   CLOCKS: formatDisplayClocks,
+  CLOCK: formatDisplayClocks,
   COMPUTE: formatDisplayCompute,
   PIDS: formatDisplayPids,
   PERFORMANCE: formatDisplayPerformance,

@@ -8,28 +8,34 @@ import {
   DISPLAY_FORMATTERS,
 } from "../nvidiaSmiFormatters";
 
-const makeGpu = (overrides?: Partial<GPU>): GPU =>
-  ({
-    id: 0,
-    type: "NVIDIA A100-SXM4-80GB",
-    memoryTotal: 81920,
-    memoryUsed: 40960,
-    utilization: 50,
-    temperature: 45,
-    powerDraw: 300,
-    powerLimit: 400,
-    clocksSM: 1410,
-    clocksMem: 1593,
-    eccEnabled: true,
-    eccErrors: {
-      singleBit: 0,
-      doubleBit: 0,
-      aggregated: { singleBit: 0, doubleBit: 0 },
-    },
-    migMode: false,
-    xidErrors: [],
-    ...overrides,
-  }) as unknown as GPU;
+const makeGpu = (overrides?: Partial<GPU>): GPU => ({
+  id: 0,
+  uuid: "GPU-00000000-0000-0000-0000-000000000000",
+  name: "NVIDIA A100-SXM4-80GB",
+  type: "A100-80GB",
+  pciAddress: "0000:01:00.0",
+  memoryTotal: 81920,
+  memoryUsed: 40960,
+  utilization: 50,
+  temperature: 45,
+  powerDraw: 300,
+  powerLimit: 400,
+  clocksSM: 1410,
+  clocksMem: 1593,
+  eccEnabled: true,
+  eccErrors: {
+    singleBit: 0,
+    doubleBit: 0,
+    aggregated: { singleBit: 0, doubleBit: 0 },
+  },
+  migMode: false,
+  migInstances: [],
+  nvlinks: [],
+  healthStatus: "OK",
+  xidErrors: [],
+  persistenceMode: false,
+  ...overrides,
+});
 
 describe("nvidiaSmiFormatters", () => {
   describe("formatDisplayMemory", () => {
@@ -115,6 +121,7 @@ describe("nvidiaSmiFormatters", () => {
       "TEMPERATURE",
       "POWER",
       "CLOCKS",
+      "CLOCK",
       "COMPUTE",
       "PIDS",
       "PERFORMANCE",
@@ -129,8 +136,8 @@ describe("nvidiaSmiFormatters", () => {
       "RESET_STATUS",
     ];
 
-    it("contains all 18 expected keys", () => {
-      expect(Object.keys(DISPLAY_FORMATTERS)).toHaveLength(18);
+    it("contains all 19 expected keys (including CLOCK alias)", () => {
+      expect(Object.keys(DISPLAY_FORMATTERS)).toHaveLength(19);
       for (const key of expectedKeys) {
         expect(DISPLAY_FORMATTERS).toHaveProperty(key);
       }
