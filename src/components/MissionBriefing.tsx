@@ -90,9 +90,15 @@ export function MissionBriefing({
     setPhase(4);
   }, [narrative.hook]);
 
-  const handleDialogClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-  }, []);
+  const handleDialogClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (phase < 4) {
+        handleBackdropClick();
+      }
+    },
+    [phase, handleBackdropClick],
+  );
 
   const tierInfo = tier ? tierConfig[tier] : null;
 

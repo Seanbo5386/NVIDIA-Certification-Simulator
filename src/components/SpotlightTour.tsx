@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import type { TourStep } from "../data/tourSteps";
@@ -78,12 +78,26 @@ export const SpotlightTour: React.FC<SpotlightTourProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
+  // Filter to only steps whose target elements exist in the DOM at mount time.
+  // This prevents showing "Step 3 of 9" on mobile where some elements are hidden.
+  const visibleSteps = useMemo(
+    () => steps.filter((s) => document.querySelector(s.selector)),
+    [steps],
+  );
+
   useFocusTrap(containerRef, {
     isActive: true,
     onEscape: onComplete,
   });
 
-  const currentStep = steps[currentIndex];
+  // If no steps are visible, complete immediately
+  useEffect(() => {
+    if (visibleSteps.length === 0) {
+      onComplete();
+    }
+  }, [visibleSteps.length, onComplete]);
+
+  const currentStep = visibleSteps[currentIndex];
 
   // Find target element and track its position
   const updateTargetRect = useCallback(() => {
@@ -152,36 +166,17 @@ export const SpotlightTour: React.FC<SpotlightTourProps> = ({
     };
   }, [currentStep, updateTargetRect]);
 
-  // Skip steps whose target element is not found
-  useEffect(() => {
-    if (!currentStep) return;
-    if (targetRect !== null) return; // target found, nothing to skip
-
-    // Wait a moment for DOM to render
-    const timer = setTimeout(() => {
-      const el = document.querySelector(currentStep.selector);
-      if (!el) {
-        // Skip this step
-        if (currentIndex < steps.length - 1) {
-          setCurrentIndex((i) => i + 1);
-        } else {
-          onComplete();
-        }
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [currentStep, targetRect, currentIndex, steps.length, onComplete]);
-
   const handleNext = () => {
-    if (currentIndex < steps.length - 1) {
+    if (currentIndex < visibleSteps.length - 1) {
       setCurrentIndex((i) => i + 1);
     } else {
       onComplete();
     }
   };
 
-  const isLastStep = currentIndex === steps.length - 1;
+  if (!currentStep) return null;
+
+  const isLastStep = currentIndex === visibleSteps.length - 1;
 
   // Compute tooltip position
   const tooltipHeight = tooltipRef.current?.offsetHeight ?? 160;
@@ -250,7 +245,7 @@ export const SpotlightTour: React.FC<SpotlightTourProps> = ({
       >
         {/* Step counter */}
         <div className="text-xs font-semibold text-nvidia-green mb-2">
-          Step {currentIndex + 1} of {steps.length}
+          Step {currentIndex + 1} of {visibleSteps.length}
         </div>
 
         {/* Title */}

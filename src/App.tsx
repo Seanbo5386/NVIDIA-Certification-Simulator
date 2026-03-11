@@ -185,8 +185,11 @@ function App() {
   }, [currentView]);
 
   const handleTourComplete = useCallback(() => {
+    if (activeTour) {
+      localStorage.setItem(`ncp-aii-tour-${activeTour}-seen`, "true");
+    }
     setActiveTour(null);
-  }, []);
+  }, [activeTour]);
 
   const handleStartScenario = async (scenarioId: string) => {
     const success = await initializeScenario(scenarioId);
@@ -513,6 +516,12 @@ function App() {
           onClose={() => {
             localStorage.setItem("ncp-aii-welcome-dismissed", "true");
             setShowWelcome(false);
+            // Auto-start the simulator tour for first-time users
+            if (
+              localStorage.getItem("ncp-aii-tour-simulator-seen") !== "true"
+            ) {
+              setTimeout(() => setActiveTour("simulator"), 600);
+            }
           }}
         />
       )}
