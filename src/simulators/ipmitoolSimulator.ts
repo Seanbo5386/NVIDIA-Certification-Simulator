@@ -316,6 +316,24 @@ export class IpmitoolSimulator extends BaseSimulator {
 
   /**
    * Get sensor thresholds based on sensor type/name
+   * Derive a human-readable sensor type from its unit string.
+   */
+  private getSensorType(sensor: BMCSensor): string {
+    switch (sensor.unit) {
+      case "degrees C":
+        return "Temperature";
+      case "Watts":
+        return "Power";
+      case "RPM":
+        return "Fan";
+      case "Volts":
+        return "Voltage";
+      default:
+        return "Threshold";
+    }
+  }
+
+  /**
    * Per spec: Use 'na' for non-applicable thresholds
    */
   private getSensorThresholds(sensor: BMCSensor): {
@@ -445,7 +463,7 @@ export class IpmitoolSimulator extends BaseSimulator {
         `Locating sensor record...\n` +
         `Sensor ID              : ${sensor.name} (0x${sensorIdx.toString(16).padStart(2, "0")})\n` +
         ` Entity ID             : 3.0\n` +
-        ` Sensor Type (Analog)  : ${sensor.type}\n` +
+        ` Sensor Type (Analog)  : ${this.getSensorType(sensor)}\n` +
         ` Sensor Reading        : ${sensor.reading} (+/- 0) ${sensor.unit}\n` +
         ` Status                : ${sensor.status}\n` +
         ` Lower Non-Recoverable : ${thresholds.lnr}\n` +
@@ -722,11 +740,13 @@ export class IpmitoolSimulator extends BaseSimulator {
       const filterType = parsed.subcommands[2];
       if (!filterType) {
         // List available sensor types
-        const types = [...new Set(node.bmc.sensors.map((s) => s.type))];
+        const types = [
+          ...new Set(node.bmc.sensors.map((s) => this.getSensorType(s))),
+        ];
         return this.createSuccess(types.join("\n") + "\n");
       }
       const filtered = node.bmc.sensors.filter(
-        (s) => s.type.toLowerCase() === filterType.toLowerCase(),
+        (s) => this.getSensorType(s).toLowerCase() === filterType.toLowerCase(),
       );
       if (filtered.length === 0) {
         return this.createSuccess("");
@@ -756,7 +776,7 @@ export class IpmitoolSimulator extends BaseSimulator {
       const output =
         `Sensor ID              : ${sensor.name}\n` +
         ` Entity ID             : 3.0\n` +
-        ` Sensor Type (Analog)  : ${sensor.type}\n` +
+        ` Sensor Type (Analog)  : ${this.getSensorType(sensor)}\n` +
         ` Sensor Reading        : ${sensor.reading} ${sensor.unit}\n` +
         ` Status                : ${sensor.status}\n`;
       return this.createSuccess(output);
@@ -1033,7 +1053,7 @@ export class IpmitoolSimulator extends BaseSimulator {
     if (subsubcommand === "sensors") {
       let output = `Record ID  : Sensor Name         | Reading     | Status\n`;
       node.bmc.sensors.forEach((sensor, idx) => {
-        output += `${String(idx + 1).padStart(9)}  : ${sensor.name.padEnd(20)}| ${String(sensor.reading).padStart(11)} ${sensor.unit} | ${sensor.status}\n`;
+        output += `${String(idx + 1).padStart(9)}  : ${sensor.name.padEnd(20)} | ${String(sensor.reading).padStart(11)} ${sensor.unit} | ${sensor.status}\n`;
       });
       return this.createSuccess(output);
     }

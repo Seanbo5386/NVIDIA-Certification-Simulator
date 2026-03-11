@@ -185,8 +185,11 @@ function App() {
   }, [currentView]);
 
   const handleTourComplete = useCallback(() => {
+    if (activeTour) {
+      localStorage.setItem(`ncp-aii-tour-${activeTour}-seen`, "true");
+    }
     setActiveTour(null);
-  }, []);
+  }, [activeTour]);
 
   const handleStartScenario = async (scenarioId: string) => {
     const success = await initializeScenario(scenarioId);

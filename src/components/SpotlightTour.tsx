@@ -82,8 +82,7 @@ export const SpotlightTour: React.FC<SpotlightTourProps> = ({
   // This prevents showing "Step 3 of 9" on mobile where some elements are hidden.
   const visibleSteps = useMemo(
     () => steps.filter((s) => document.querySelector(s.selector)),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [], // Only compute once at mount — layout won't change during the tour
+    [steps],
   );
 
   useFocusTrap(containerRef, {

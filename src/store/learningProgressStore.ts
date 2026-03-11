@@ -545,7 +545,7 @@ export const useLearningProgressStore = create<LearningProgressState>()(
           if (!("incidentRating" in state)) state.incidentRating = 1000;
           if (!("incidentHistory" in state)) state.incidentHistory = [];
         }
-        return state as LearningProgressState;
+        return state as unknown as LearningProgressState;
       },
       partialize: (state) => ({
         toolsUsed: state.toolsUsed,

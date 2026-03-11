@@ -93,14 +93,11 @@ export function MissionBriefing({
   const handleDialogClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      // Skip typing animation on click anywhere in the dialog
       if (phase < 4) {
-        setSkippedAnimation(true);
-        setTypedHook(narrative.hook);
-        setPhase(4);
+        handleBackdropClick();
       }
     },
-    [phase, narrative.hook],
+    [phase, handleBackdropClick],
   );
 
   const tierInfo = tier ? tierConfig[tier] : null;
