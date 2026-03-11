@@ -424,6 +424,49 @@ export class IpmitoolSimulator extends BaseSimulator {
       return this.createSuccess(this.formatSensorList(node.bmc.sensors));
     }
 
+    if (subsubcommand === "get") {
+      const sensorName =
+        parsed.positionalArgs.join(" ") ||
+        parsed.subcommands.slice(2).join(" ");
+      if (!sensorName) {
+        return this.createError(
+          "sensor get: Missing sensor name\nUsage: ipmitool sensor get <sensor_name>",
+        );
+      }
+      const sensor = node.bmc.sensors.find(
+        (s) => s.name.toLowerCase() === sensorName.toLowerCase(),
+      );
+      if (!sensor) {
+        return this.createError(`Sensor "${sensorName}" not found`);
+      }
+      const thresholds = this.getSensorThresholds(sensor);
+      const sensorIdx = node.bmc.sensors.indexOf(sensor);
+      const output =
+        `Locating sensor record...\n` +
+        `Sensor ID              : ${sensor.name} (0x${sensorIdx.toString(16).padStart(2, "0")})\n` +
+        ` Entity ID             : 3.0\n` +
+        ` Sensor Type (Analog)  : ${sensor.type}\n` +
+        ` Sensor Reading        : ${sensor.reading} (+/- 0) ${sensor.unit}\n` +
+        ` Status                : ${sensor.status}\n` +
+        ` Lower Non-Recoverable : ${thresholds.lnr}\n` +
+        ` Lower Critical        : ${thresholds.lc}\n` +
+        ` Lower Non-Critical    : ${thresholds.lnc}\n` +
+        ` Upper Non-Critical    : ${thresholds.unc}\n` +
+        ` Upper Critical        : ${thresholds.uc}\n` +
+        ` Upper Non-Recoverable : ${thresholds.unr}\n`;
+      return this.createSuccess(output);
+    }
+
+    if (subsubcommand === "thresh") {
+      const sensorName = parsed.subcommands[2];
+      if (!sensorName) {
+        return this.createError(
+          "sensor thresh: Missing sensor name\nUsage: ipmitool sensor thresh <sensor_name> <threshold> <value>",
+        );
+      }
+      return this.createSuccess(`Sensor threshold set for "${sensorName}"`);
+    }
+
     return this.createError(
       "sensor: Missing or invalid subcommand\nUsage: ipmitool sensor [list|get|thresh]",
     );
@@ -463,6 +506,25 @@ export class IpmitoolSimulator extends BaseSimulator {
         `    IPMB Event Receiver\n` +
         `    Chassis Device\n`;
       return this.createSuccess(output);
+    }
+
+    if (subsubcommand === "guid") {
+      // Derive a deterministic GUID from the node ID
+      const hash = node.id.replace(/[^a-f0-9]/gi, "").padEnd(32, "0");
+      const guid =
+        `System GUID  : ${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}\n` +
+        `Timestamp    : 01/01/2024 00:00:00\n`;
+      return this.createSuccess(guid);
+    }
+
+    if (subsubcommand === "reset") {
+      const action = parsed.subcommands[2];
+      if (action === "cold" || action === "warm") {
+        return this.createSuccess(`Sent ${action} reset command to MC`);
+      }
+      return this.createError(
+        "mc reset: Missing reset type\nUsage: ipmitool mc reset [cold|warm]",
+      );
     }
 
     return this.createError(
@@ -608,6 +670,16 @@ export class IpmitoolSimulator extends BaseSimulator {
       );
     }
 
+    if (subsubcommand === "enable" || subsubcommand === "disable") {
+      const userId = parsed.subcommands[2];
+      if (!userId) {
+        return this.createError(
+          `user ${subsubcommand}: Missing user ID\nUsage: ipmitool user ${subsubcommand} <user_id>`,
+        );
+      }
+      return this.createSuccess("");
+    }
+
     return this.createError(
       "user: Missing or invalid subcommand\nUsage: ipmitool user [list|set|enable|disable]",
     );
@@ -632,6 +704,61 @@ export class IpmitoolSimulator extends BaseSimulator {
       node.bmc.sensors.forEach((sensor) => {
         output += `${sensor.name.padEnd(20)} | ${sensor.reading.toFixed(2)} ${sensor.unit} | ${sensor.status}\n`;
       });
+      return this.createSuccess(output);
+    }
+
+    if (subsubcommand === "info") {
+      const output =
+        `SDR Version          : 0x51\n` +
+        `Record Count         : ${node.bmc.sensors.length}\n` +
+        `Free Space           : 8192 bytes\n` +
+        `Most recent Addition : 01/01/2024 00:00:00\n` +
+        `Most recent Erase    : 01/01/2024 00:00:00\n` +
+        `SDR overflow         : no\n`;
+      return this.createSuccess(output);
+    }
+
+    if (subsubcommand === "type") {
+      const filterType = parsed.subcommands[2];
+      if (!filterType) {
+        // List available sensor types
+        const types = [...new Set(node.bmc.sensors.map((s) => s.type))];
+        return this.createSuccess(types.join("\n") + "\n");
+      }
+      const filtered = node.bmc.sensors.filter(
+        (s) => s.type.toLowerCase() === filterType.toLowerCase(),
+      );
+      if (filtered.length === 0) {
+        return this.createSuccess("");
+      }
+      let output = "";
+      filtered.forEach((sensor) => {
+        output += `${sensor.name.padEnd(20)} | ${sensor.reading.toFixed(2)} ${sensor.unit} | ${sensor.status}\n`;
+      });
+      return this.createSuccess(output);
+    }
+
+    if (subsubcommand === "get") {
+      const sensorName =
+        parsed.positionalArgs.join(" ") ||
+        parsed.subcommands.slice(2).join(" ");
+      if (!sensorName) {
+        return this.createError(
+          "sdr get: Missing sensor name\nUsage: ipmitool sdr get <sensor_name>",
+        );
+      }
+      const sensor = node.bmc.sensors.find(
+        (s) => s.name.toLowerCase() === sensorName.toLowerCase(),
+      );
+      if (!sensor) {
+        return this.createError(`Sensor "${sensorName}" not found`);
+      }
+      const output =
+        `Sensor ID              : ${sensor.name}\n` +
+        ` Entity ID             : 3.0\n` +
+        ` Sensor Type (Analog)  : ${sensor.type}\n` +
+        ` Sensor Reading        : ${sensor.reading} ${sensor.unit}\n` +
+        ` Status                : ${sensor.status}\n`;
       return this.createSuccess(output);
     }
 
@@ -784,7 +911,11 @@ export class IpmitoolSimulator extends BaseSimulator {
 
     const subsubcommand = parsed.subcommands[1];
 
-    if (subsubcommand === "print" || !subsubcommand) {
+    if (
+      subsubcommand === "print" ||
+      subsubcommand === "list" ||
+      !subsubcommand
+    ) {
       const output =
         `FRU Device Description : Builtin FRU Device (ID 0)\n` +
         `Board Mfg Date        : Mon Jan  1 00:00:00 2024\n` +
@@ -896,6 +1027,14 @@ export class IpmitoolSimulator extends BaseSimulator {
         `    Supported DCMI version:           1.5\n` +
         `    Power management support available\n` +
         `    Platform management device available\n`;
+      return this.createSuccess(output);
+    }
+
+    if (subsubcommand === "sensors") {
+      let output = `Record ID  : Sensor Name         | Reading     | Status\n`;
+      node.bmc.sensors.forEach((sensor, idx) => {
+        output += `${String(idx + 1).padStart(9)}  : ${sensor.name.padEnd(20)}| ${String(sensor.reading).padStart(11)} ${sensor.unit} | ${sensor.status}\n`;
+      });
       return this.createSuccess(output);
     }
 
