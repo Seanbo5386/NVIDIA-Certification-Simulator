@@ -112,7 +112,7 @@ describe("RecentExamHistory", () => {
       familyQuizScores: {
         "gpu-monitoring": {
           passed: false,
-          score: 50,
+          score: 5,
           attempts: 1,
           lastAttemptDate: Date.now(),
         },

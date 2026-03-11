@@ -17,6 +17,18 @@ vi.mock("../../../store/learningStore", () => ({
   ),
 }));
 
+const mockProgressState = {
+  familyQuizScores: {},
+  masteryQuizScores: {},
+};
+
+vi.mock("../../../store/learningProgressStore", () => ({
+  useLearningProgressStore: vi.fn(
+    (selector?: (s: typeof mockProgressState) => unknown) =>
+      selector ? selector(mockProgressState) : mockProgressState,
+  ),
+}));
+
 vi.mock("lucide-react", async () => {
   const actual = await vi.importActual("lucide-react");
   const stub = (props: Record<string, unknown>) => <svg {...props} />;
@@ -53,10 +65,10 @@ describe("ExamReadinessHero", () => {
     render(<ExamReadinessHero />);
     // 2 exams + 1 gauntlet = 3 total
     expect(screen.getByText("3")).toBeInTheDocument();
-    // avg of 80 and 60 = 70%
+    // avg of (80 + 60 + 70) / 3 = 70%
     expect(screen.getByText("70%")).toBeInTheDocument();
-    // 1 of 2 exams passed (80% >= 70) = 50%
-    expect(screen.getByText("50%")).toBeInTheDocument();
+    // 2 of 3 >= 70% (80, 70 pass; 60 fails) = 67%
+    expect(screen.getByText("67%")).toBeInTheDocument();
     // streak
     expect(screen.getByText("3d")).toBeInTheDocument();
     // 7200s = 2h 0m

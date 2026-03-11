@@ -6,6 +6,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useLearningStore } from "@/store/learningStore";
+import { useLearningProgressStore } from "@/store/learningProgressStore";
 
 function formatStudyTime(totalSeconds: number): string {
   if (totalSeconds < 60) return `${totalSeconds}s`;
@@ -38,22 +39,59 @@ export function ExamReadinessHero() {
     (s) => s.totalStudyTimeSeconds,
   );
 
-  const totalExams = examAttempts.length + gauntletAttempts.length;
+  // Include Tool Selection and Deep Mastery quizzes in stats
+  const familyQuizScores = useLearningProgressStore((s) => s.familyQuizScores);
+  const masteryQuizScores = useLearningProgressStore(
+    (s) => s.masteryQuizScores,
+  );
+
+  // Build unified list of all quiz/exam scores with pass status
+  // Each quiz type has its own pass threshold (exams/gauntlets: 70%, Tool Selection: 80%, Deep Mastery: 75%)
+  const allAttempts: { percentage: number; passed: boolean }[] = [];
+
+  // Full exam attempts (pass threshold: 70%)
+  for (const a of examAttempts) {
+    allAttempts.push({ percentage: a.percentage, passed: a.percentage >= 70 });
+  }
+  // Gauntlet attempts (pass threshold: 70%)
+  for (const a of gauntletAttempts) {
+    const pct =
+      a.totalQuestions > 0 ? Math.round((a.score / a.totalQuestions) * 100) : 0;
+    allAttempts.push({ percentage: pct, passed: pct >= 70 });
+  }
+  // Tool Selection quizzes (pass threshold: 80%, stored as `passed` flag)
+  for (const result of Object.values(familyQuizScores)) {
+    if (result.lastAttemptDate) {
+      allAttempts.push({
+        percentage: result.score * 10,
+        passed: result.passed,
+      });
+    }
+  }
+  // Deep Mastery quizzes (pass threshold: 75%, stored as `passed` flag)
+  for (const result of Object.values(masteryQuizScores)) {
+    if (result.lastAttemptDate) {
+      const pct =
+        result.totalQuestions > 0
+          ? Math.round((result.bestScore / result.totalQuestions) * 100)
+          : 0;
+      allAttempts.push({ percentage: pct, passed: result.passed });
+    }
+  }
+
+  const totalExams = allAttempts.length;
 
   const avgScore =
-    examAttempts.length > 0
+    totalExams > 0
       ? Math.round(
-          examAttempts.reduce((sum, a) => sum + a.percentage, 0) /
-            examAttempts.length,
+          allAttempts.reduce((sum, a) => sum + a.percentage, 0) / totalExams,
         )
       : 0;
 
   const passRate =
-    examAttempts.length > 0
+    totalExams > 0
       ? Math.round(
-          (examAttempts.filter((a) => a.percentage >= 70).length /
-            examAttempts.length) *
-            100,
+          (allAttempts.filter((a) => a.passed).length / totalExams) * 100,
         )
       : 0;
 
@@ -93,12 +131,12 @@ export function ExamReadinessHero() {
           <StatChip
             icon={<BarChart3 className="w-4 h-4" />}
             label="Avg Score"
-            value={examAttempts.length > 0 ? `${avgScore}%` : "--"}
+            value={totalExams > 0 ? `${avgScore}%` : "--"}
           />
           <StatChip
             icon={<CheckCircle className="w-4 h-4" />}
             label="Pass Rate"
-            value={examAttempts.length > 0 ? `${passRate}%` : "--"}
+            value={totalExams > 0 ? `${passRate}%` : "--"}
           />
           <StatChip
             icon={<Flame className="w-4 h-4" />}
