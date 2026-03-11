@@ -219,6 +219,27 @@ function App() {
     : undefined;
   const missionStepIndex = missionProgress?.currentStepIndex ?? 0;
 
+  // Check if the current step has faults that visually affect the dashboard
+  const DASHBOARD_FAULT_TYPES = new Set([
+    "xid-error",
+    "thermal",
+    "ecc-error",
+    "nvlink-failure",
+    "gpu-hang",
+    "power",
+    "memory-full",
+    "driver-error",
+    "pcie-error",
+    "allocate-job",
+    "set-slurm-state",
+    "add-node",
+  ]);
+  const currentStepFaults = activeScenario?.steps[missionStepIndex]?.autoFaults;
+  const scenarioFaults = activeScenario?.faults;
+  const hasDashboardUpdate =
+    !!currentStepFaults?.some((f) => DASHBOARD_FAULT_TYPES.has(f.type)) ||
+    !!scenarioFaults?.some((f) => DASHBOARD_FAULT_TYPES.has(f.type));
+
   const handleStartIncident = useCallback(
     (difficulty: string, domain?: number) => {
       startIncident(difficulty, domain);
@@ -289,6 +310,7 @@ function App() {
             onAbort={handleAbortMission}
             onToggleDashboard={() => setShowDashboardSlideOver((v) => !v)}
             isDashboardActive={showDashboardSlideOver}
+            hasDashboardUpdate={hasDashboardUpdate && !showDashboardSlideOver}
           />
           <SimulatorView
             className="flex-1 h-full"

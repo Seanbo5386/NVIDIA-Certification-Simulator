@@ -8,6 +8,7 @@ export interface MissionModeBarProps {
   onAbort: () => void;
   onToggleDashboard: () => void;
   isDashboardActive?: boolean;
+  hasDashboardUpdate?: boolean;
 }
 
 const tierConfig: Record<1 | 2 | 3, { label: string; className: string }> = {
@@ -38,6 +39,7 @@ export function MissionModeBar({
   onAbort,
   onToggleDashboard,
   isDashboardActive = false,
+  hasDashboardUpdate = false,
 }: MissionModeBarProps) {
   const displayStep = currentStep + 1;
   const { label, className: badgeClass } = tier
@@ -99,14 +101,16 @@ export function MissionModeBar({
       {/* Divider */}
       <div className="w-px h-5 bg-gray-700" />
 
-      {/* Cluster dashboard toggle */}
+      {/* Cluster/Terminal toggle pill */}
       <button
         onClick={onToggleDashboard}
         aria-label="Toggle cluster dashboard"
-        className={`flex items-center gap-1.5 transition-colors text-sm ${
+        className={`relative flex items-center gap-1.5 text-sm px-3 py-1 rounded-full border transition-all ${
           isDashboardActive
-            ? "text-nvidia-green"
-            : "text-gray-400 hover:text-white"
+            ? "bg-nvidia-green/20 text-nvidia-green border-nvidia-green/50"
+            : hasDashboardUpdate
+              ? "bg-yellow-900/40 text-yellow-300 border-yellow-500/60 animate-pulse"
+              : "bg-gray-800 text-gray-300 border-gray-600 hover:border-gray-400 hover:text-white"
         }`}
       >
         {isDashboardActive ? (
@@ -114,9 +118,10 @@ export function MissionModeBar({
         ) : (
           <BarChart3 className="w-4 h-4" />
         )}
-        <span className="hidden sm:inline">
-          {isDashboardActive ? "Terminal" : "Cluster"}
-        </span>
+        <span>{isDashboardActive ? "Terminal" : "Cluster"}</span>
+        {hasDashboardUpdate && !isDashboardActive && (
+          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-yellow-400 rounded-full border border-black" />
+        )}
       </button>
     </div>
   );
