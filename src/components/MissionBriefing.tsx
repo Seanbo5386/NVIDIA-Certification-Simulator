@@ -90,9 +90,18 @@ export function MissionBriefing({
     setPhase(4);
   }, [narrative.hook]);
 
-  const handleDialogClick = useCallback((e: React.MouseEvent) => {
-    e.stopPropagation();
-  }, []);
+  const handleDialogClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      // Skip typing animation on click anywhere in the dialog
+      if (phase < 4) {
+        setSkippedAnimation(true);
+        setTypedHook(narrative.hook);
+        setPhase(4);
+      }
+    },
+    [phase, narrative.hook],
+  );
 
   const tierInfo = tier ? tierConfig[tier] : null;
 
