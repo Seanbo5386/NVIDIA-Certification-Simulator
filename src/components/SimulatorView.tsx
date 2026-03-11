@@ -403,7 +403,7 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({
   if (missionMode) {
     return (
       <div className={`flex ${className}`}>
-        {showMissionCard && currentStep && !showDashboard && (
+        {showMissionCard && currentStep && (
           <div className="w-[35%] min-w-[300px] max-w-[480px] shrink-0">
             <MissionInstructionPanel
               missionTitle={activeScenario!.title}
@@ -443,15 +443,13 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({
             />
           </div>
         )}
-        {showDashboard && (
+        {showDashboard ? (
           <div className="flex-1 overflow-auto p-4 bg-gray-900">
             <Dashboard />
           </div>
+        ) : (
+          <Terminal className="flex-1" onReady={handleTerminalReady} />
         )}
-        <Terminal
-          className={`flex-1 ${showDashboard ? "hidden" : ""}`}
-          onReady={handleTerminalReady}
-        />
       </div>
     );
   }
