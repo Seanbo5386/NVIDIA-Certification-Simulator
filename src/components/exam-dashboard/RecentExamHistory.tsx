@@ -73,7 +73,7 @@ export function RecentExamHistory({ maxItems = 5 }: RecentExamHistoryProps) {
       entries.push({
         type: "quiz",
         label: `${name} — Tool Selection`,
-        score: result.score,
+        score: result.score * 10,
         passed: result.passed,
         sortKey: result.lastAttemptDate,
       });
