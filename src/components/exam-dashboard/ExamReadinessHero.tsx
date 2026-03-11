@@ -45,52 +45,53 @@ export function ExamReadinessHero() {
     (s) => s.masteryQuizScores,
   );
 
-  // Build unified list of all quiz/exam scores as percentages
-  const quizPercentages: { percentage: number }[] = [];
+  // Build unified list of all quiz/exam scores with pass status
+  // Each quiz type has its own pass threshold (exams/gauntlets: 70%, Tool Selection: 80%, Deep Mastery: 75%)
+  const allAttempts: { percentage: number; passed: boolean }[] = [];
 
-  // Full exam attempts
+  // Full exam attempts (pass threshold: 70%)
   for (const a of examAttempts) {
-    quizPercentages.push({ percentage: a.percentage });
+    allAttempts.push({ percentage: a.percentage, passed: a.percentage >= 70 });
   }
-  // Gauntlet attempts
+  // Gauntlet attempts (pass threshold: 70%)
   for (const a of gauntletAttempts) {
     const pct =
       a.totalQuestions > 0 ? Math.round((a.score / a.totalQuestions) * 100) : 0;
-    quizPercentages.push({ percentage: pct });
+    allAttempts.push({ percentage: pct, passed: pct >= 70 });
   }
-  // Tool Selection quizzes (score is raw 0-10)
+  // Tool Selection quizzes (pass threshold: 80%, stored as `passed` flag)
   for (const result of Object.values(familyQuizScores)) {
     if (result.lastAttemptDate) {
-      quizPercentages.push({ percentage: result.score * 10 });
+      allAttempts.push({
+        percentage: result.score * 10,
+        passed: result.passed,
+      });
     }
   }
-  // Deep Mastery quizzes
+  // Deep Mastery quizzes (pass threshold: 75%, stored as `passed` flag)
   for (const result of Object.values(masteryQuizScores)) {
     if (result.lastAttemptDate) {
       const pct =
         result.totalQuestions > 0
           ? Math.round((result.bestScore / result.totalQuestions) * 100)
           : 0;
-      quizPercentages.push({ percentage: pct });
+      allAttempts.push({ percentage: pct, passed: result.passed });
     }
   }
 
-  const totalExams = quizPercentages.length;
+  const totalExams = allAttempts.length;
 
   const avgScore =
     totalExams > 0
       ? Math.round(
-          quizPercentages.reduce((sum, a) => sum + a.percentage, 0) /
-            totalExams,
+          allAttempts.reduce((sum, a) => sum + a.percentage, 0) / totalExams,
         )
       : 0;
 
   const passRate =
     totalExams > 0
       ? Math.round(
-          (quizPercentages.filter((a) => a.percentage >= 70).length /
-            totalExams) *
-            100,
+          (allAttempts.filter((a) => a.passed).length / totalExams) * 100,
         )
       : 0;
 
