@@ -250,7 +250,6 @@ export const Terminal: React.FC<TerminalProps> = ({
 
       logger.debug("Terminal: Cleared scenario context");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-run when scenario changes, not on every cluster mutation
   }, [activeScenarioId]);
 
   useEffect(() => {
