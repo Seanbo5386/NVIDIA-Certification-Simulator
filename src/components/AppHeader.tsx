@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Monitor,
   BookOpen,
@@ -9,8 +10,10 @@ import {
   HelpCircle,
   Info,
   X,
+  MessageSquare,
 } from "lucide-react";
 import { UserMenu } from "./UserMenu";
+import { FeedbackModal } from "./FeedbackModal";
 import type { ClusterConfig } from "../types/hardware";
 import type { SyncStatus } from "../hooks/useCloudSync";
 
@@ -53,6 +56,8 @@ export function AppHeader({
   onDismissSmallScreen,
   sidebarOpen,
 }: AppHeaderProps) {
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+
   return (
     <>
       {/* Skip Link for Keyboard Navigation */}
@@ -116,9 +121,7 @@ export function AppHeader({
                         ? "bg-red-600 hover:bg-red-700 text-white"
                         : "bg-nvidia-green hover:bg-nvidia-darkgreen text-black"
                     }`}
-                    title={
-                      isRunning ? "Pause Simulation" : "Start Simulation"
-                    }
+                    title={isRunning ? "Pause Simulation" : "Start Simulation"}
                   >
                     {isRunning ? (
                       <Pause className="w-4 h-4" />
@@ -135,23 +138,33 @@ export function AppHeader({
                   </button>
                 </div>
 
-                {/* Tour button */}
-                <button
-                  onClick={onStartTour}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-600 hover:border-nvidia-green text-gray-400 hover:text-nvidia-green text-sm transition-colors"
-                  title="Take a guided tour of this tab"
-                  data-testid="tour-help-btn"
-                >
-                  <HelpCircle className="w-4 h-4" />
-                  <span>Tour</span>
-                </button>
-
-                <div data-tour="user-menu">
-                  <UserMenu
-                    isLoggedIn={isLoggedIn}
-                    syncStatus={syncStatus}
-                    userEmail={userEmail}
-                  />
+                {/* Button group: Tour / Feedback / Sign In */}
+                <div className="flex items-center gap-1.5 bg-gray-800/50 rounded-lg p-1">
+                  <button
+                    onClick={onStartTour}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-gray-400 hover:text-nvidia-green hover:bg-gray-700/50 text-sm transition-colors"
+                    title="Take a guided tour of this tab"
+                    data-testid="tour-help-btn"
+                  >
+                    <HelpCircle className="w-4 h-4" />
+                    <span>Tour</span>
+                  </button>
+                  <button
+                    onClick={() => setFeedbackOpen(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-gray-400 hover:text-nvidia-green hover:bg-gray-700/50 text-sm transition-colors"
+                    title="Send feedback"
+                    data-testid="feedback-btn"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Feedback</span>
+                  </button>
+                  <div data-tour="user-menu">
+                    <UserMenu
+                      isLoggedIn={isLoggedIn}
+                      syncStatus={syncStatus}
+                      userEmail={userEmail}
+                    />
+                  </div>
                 </div>
 
                 <div className="text-right">
@@ -160,10 +173,7 @@ export function AppHeader({
                   </div>
                   <div className="text-xs text-gray-400">
                     {cluster.nodes.length} nodes •{" "}
-                    {cluster.nodes.reduce(
-                      (sum, n) => sum + n.gpus.length,
-                      0,
-                    )}{" "}
+                    {cluster.nodes.reduce((sum, n) => sum + n.gpus.length, 0)}{" "}
                     GPUs
                   </div>
                 </div>
@@ -286,6 +296,12 @@ export function AppHeader({
         {/* min-w-max */}
       </div>
       {/* overflow-x-auto */}
+
+      <FeedbackModal
+        isOpen={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        isLoggedIn={isLoggedIn}
+      />
     </>
   );
 }
