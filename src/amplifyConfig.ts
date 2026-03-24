@@ -11,16 +11,10 @@ const outputsModule = modules["../amplify_outputs.json"] as
   | { default: Record<string, unknown> }
   | undefined;
 
-/** Whether Amplify was successfully configured with a valid outputs file. */
-export const amplifyConfigured = !!outputsModule;
-
 if (outputsModule) {
   Amplify.configure(outputsModule.default);
-} else if (import.meta.env.DEV) {
-  // Log a single clear message in development instead of letting Amplify
-  // spam multiple "has not been configured" warnings on every auth call.
-  console.info(
-    "[DC-Sim] Amplify outputs not found — auth and cloud sync disabled. " +
-      "Run `npx ampx sandbox` to enable.",
+} else {
+  console.warn(
+    "[Amplify] amplify_outputs.json not found. Auth and cloud sync disabled.",
   );
 }

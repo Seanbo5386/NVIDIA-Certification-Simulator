@@ -48,7 +48,6 @@ import { TierUnlockNotificationContainer } from "./components/TierUnlockNotifica
 import { FaultToastContainer } from "./components/FaultToast";
 import { SyncToast } from "./components/SyncToast";
 import { AuthToast } from "./components/AuthToast";
-import { ConfirmModal } from "./components/ConfirmModal";
 import { ExamGauntlet } from "./components/ExamGauntlet";
 import { WhichToolQuiz } from "./components/WhichToolQuiz";
 import { ToolMasteryQuiz } from "./components/ToolMasteryQuiz";
@@ -200,17 +199,16 @@ function App() {
     }
   };
 
-  const [showAbortConfirm, setShowAbortConfirm] = useState(false);
-
   const handleAbortMission = useCallback(() => {
-    setShowAbortConfirm(true);
-  }, []);
-
-  const confirmAbortMission = useCallback(() => {
-    setShowAbortConfirm(false);
-    exitScenario();
-    setShowLabWorkspace(false);
-    setShowDashboardSlideOver(false);
+    if (
+      window.confirm(
+        "Abort this mission? Your progress on the current step will be lost.",
+      )
+    ) {
+      exitScenario();
+      setShowLabWorkspace(false);
+      setShowDashboardSlideOver(false);
+    }
   }, [exitScenario]);
 
   // Mission Mode derivations
@@ -593,16 +591,6 @@ function App() {
 
       {/* Auth Toast Notifications */}
       <AuthToast />
-
-      {/* Abort Mission Confirmation Modal */}
-      <ConfirmModal
-        open={showAbortConfirm}
-        message="Abort this mission? Your progress on the current step will be lost."
-        confirmLabel="Abort Mission"
-        cancelLabel="Keep Going"
-        onConfirm={confirmAbortMission}
-        onCancel={() => setShowAbortConfirm(false)}
-      />
     </div>
   );
 }

@@ -254,7 +254,7 @@ export function About() {
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
               {[
-                { label: "Scenarios", value: "32" },
+                { label: "Scenarios", value: "28" },
                 { label: "Domains", value: "5" },
                 { label: "Exam Questions", value: "150+" },
                 { label: "Command Families", value: "6" },
