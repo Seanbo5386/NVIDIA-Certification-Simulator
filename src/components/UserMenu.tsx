@@ -58,6 +58,8 @@ interface UserMenuProps {
   isLoggedIn: boolean;
   syncStatus: SyncStatus;
   userEmail?: string;
+  openSignIn?: boolean;
+  onSignInOpened?: () => void;
 }
 
 type AuthView =
@@ -133,7 +135,13 @@ function PasswordInput({
   );
 }
 
-export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
+export function UserMenu({
+  isLoggedIn,
+  syncStatus,
+  userEmail,
+  openSignIn,
+  onSignInOpened,
+}: UserMenuProps) {
   const [authView, setAuthView] = useState<AuthView>("closed");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -155,6 +163,14 @@ export function UserMenu({ isLoggedIn, syncStatus, userEmail }: UserMenuProps) {
       if (resendTimerRef.current) clearTimeout(resendTimerRef.current);
     };
   }, []);
+
+  // Allow external trigger to open sign-in modal
+  useEffect(() => {
+    if (openSignIn && authView === "closed") {
+      setAuthView("signIn");
+      onSignInOpened?.();
+    }
+  }, [openSignIn, authView, onSignInOpened]);
 
   const handleClose = useCallback(() => {
     setEmail("");

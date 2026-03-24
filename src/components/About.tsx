@@ -147,7 +147,7 @@ const CHANGELOG = [
     version: "v0.7.0",
     title: "Narrative Scenarios",
     highlights: [
-      "28 story-driven scenarios across all 5 domains",
+      "32 story-driven scenarios across all 5 domains",
       "NarrativeIntro mission briefing screen",
       "InlineQuiz for in-scenario knowledge checks",
       "NarrativeResolution with debrief and scoring",

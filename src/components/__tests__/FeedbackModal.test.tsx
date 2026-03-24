@@ -40,6 +40,7 @@ describe("FeedbackModal", () => {
     isOpen: true,
     onClose: vi.fn(),
     isLoggedIn: true,
+    onSignInClick: vi.fn(),
   };
 
   beforeEach(() => {
@@ -130,8 +131,9 @@ describe("FeedbackModal", () => {
     fireEvent.click(screen.getByRole("button", { name: /submit/i }));
 
     await waitFor(() => {
-      expect(screen.queryByText(/thank you/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
     });
+    expect(screen.queryByText(/thank you/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /submit/i })).not.toBeDisabled();
   });
 
@@ -143,11 +145,12 @@ describe("FeedbackModal", () => {
     expect(screen.getByRole("textbox")).toBeDisabled();
   });
 
-  it("closes modal when sign-in button clicked (unauthenticated)", () => {
+  it("closes modal and triggers sign-in when sign-in button clicked", () => {
     render(<FeedbackModal {...defaultProps} isLoggedIn={false} />);
     const signInBtn = screen.getByRole("button", { name: /sign in/i });
     fireEvent.click(signInBtn);
     expect(defaultProps.onClose).toHaveBeenCalled();
+    expect(defaultProps.onSignInClick).toHaveBeenCalled();
   });
 
   it("calls onClose when backdrop is clicked", () => {

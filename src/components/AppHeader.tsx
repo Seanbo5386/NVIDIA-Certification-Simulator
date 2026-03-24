@@ -57,6 +57,7 @@ export function AppHeader({
   sidebarOpen,
 }: AppHeaderProps) {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [triggerSignIn, setTriggerSignIn] = useState(false);
 
   return (
     <>
@@ -163,6 +164,8 @@ export function AppHeader({
                       isLoggedIn={isLoggedIn}
                       syncStatus={syncStatus}
                       userEmail={userEmail}
+                      openSignIn={triggerSignIn}
+                      onSignInOpened={() => setTriggerSignIn(false)}
                     />
                   </div>
                 </div>
@@ -301,6 +304,7 @@ export function AppHeader({
         isOpen={feedbackOpen}
         onClose={() => setFeedbackOpen(false)}
         isLoggedIn={isLoggedIn}
+        onSignInClick={() => setTriggerSignIn(true)}
       />
     </>
   );

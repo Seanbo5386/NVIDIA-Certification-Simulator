@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { X, MessageSquare, Send, Loader2 } from "lucide-react";
 import { generateClient } from "aws-amplify/data";
+import type { Schema } from "../../amplify/data/resource";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 
-const client = generateClient<any>();
+const client = generateClient<Schema>();
 
 type Category = "general" | "bug" | "success";
 
@@ -16,25 +17,27 @@ const CATEGORIES: { value: Category; label: string }[] = [
 const PLACEHOLDERS: Record<Category, string> = {
   general: "What could we do better?",
   bug: "Describe what happened and what you expected",
-  success:
-    "Did this help you pass the NCP-AII? We'd love to hear about it!",
+  success: "Did this help you pass the NCP-AII? We'd love to hear about it!",
 };
 
 interface FeedbackModalProps {
   isOpen: boolean;
   onClose: () => void;
   isLoggedIn: boolean;
+  onSignInClick?: () => void;
 }
 
 export function FeedbackModal({
   isOpen,
   onClose,
   isLoggedIn,
+  onSignInClick,
 }: FeedbackModalProps) {
   const [category, setCategory] = useState<Category>("general");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState("");
   const modalRef = useRef<HTMLDivElement>(null);
 
   useFocusTrap(modalRef, { isActive: isOpen, onEscape: onClose });
@@ -45,6 +48,7 @@ export function FeedbackModal({
       setCategory("general");
       setMessage("");
       setSubmitted(false);
+      setError("");
     }
   }, [isOpen]);
 
@@ -53,6 +57,7 @@ export function FeedbackModal({
   const handleSubmit = async () => {
     if (!message.trim() || submitting) return;
     setSubmitting(true);
+    setError("");
     try {
       await client.models.Feedback.create({
         category,
@@ -63,7 +68,7 @@ export function FeedbackModal({
         onClose();
       }, 1500);
     } catch {
-      // Silently fail — user can retry
+      setError("Something went wrong — please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -102,11 +107,14 @@ export function FeedbackModal({
           {!isLoggedIn && (
             <div className="bg-gray-800 border border-gray-600 rounded-lg p-3 text-sm text-gray-300">
               <p>
-                Please sign in to submit feedback — accounts help us
-                prevent spam and follow up if needed.
+                Please sign in to submit feedback — accounts help us prevent
+                spam and follow up if needed.
               </p>
               <button
-                onClick={onClose}
+                onClick={() => {
+                  onClose();
+                  onSignInClick?.();
+                }}
                 className="mt-2 px-3 py-1.5 bg-nvidia-green text-black rounded-lg text-sm font-medium hover:bg-nvidia-darkgreen transition-colors"
               >
                 Sign In
@@ -142,6 +150,11 @@ export function FeedbackModal({
             maxLength={2000}
             className="w-full bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-nvidia-green resize-none disabled:opacity-50 disabled:cursor-not-allowed"
           />
+
+          {/* Error message */}
+          {error && (
+            <div className="text-center text-red-400 text-sm">{error}</div>
+          )}
 
           {/* Submit / Success */}
           {submitted ? (
