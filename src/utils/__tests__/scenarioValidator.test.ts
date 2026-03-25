@@ -177,14 +177,14 @@ describe("ScenarioValidator - command matching", () => {
       expect(r.passed).toBe(true);
     });
 
-    it("matches without the pipe", () => {
+    it("rejects command without pipe when expected command has pipe", () => {
       const r = ScenarioValidator.validateCommand(
         "nvidia-smi",
         "GPU 0: NVIDIA A100",
         step,
         ctx,
       );
-      expect(r.passed).toBe(true);
+      expect(r.passed).toBe(false);
     });
   });
 
