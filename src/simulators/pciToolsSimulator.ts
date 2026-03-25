@@ -397,6 +397,21 @@ Jan 15 08:00:06 ${node.hostname} slurmd[2341]: slurmd: slurmd version 23.02.6 st
 Jan 15 08:00:06 ${node.hostname} slurmd[2341]: slurmd: Slurmd started with gres/gpu count: 8
 Jan 15 08:00:07 ${node.hostname} systemd[1]: Started Slurm node daemon.`);
       }
+      if (unitFlag === "opensmd" || unitFlag === "opensm") {
+        return this.createSuccess(
+          `-- Logs begin at Mon 2024-01-15 00:00:00 UTC --\n` +
+            `Jan 15 08:00:01 ${node.hostname} opensmd[1234]: OpenSM 5.18.0\n` +
+            `Jan 15 08:00:01 ${node.hostname} opensmd[1234]: Reading Cached IB FDB\n` +
+            `Jan 15 08:00:02 ${node.hostname} opensmd[1234]: SM port is GUID 0x0002c903000a0001\n` +
+            `Jan 15 08:00:02 ${node.hostname} opensmd[1234]: Routing engine: minhop\n` +
+            `Jan 15 08:00:03 ${node.hostname} opensmd[1234]: Heavy sweep completed in 0.42 seconds\n` +
+            `Jan 15 08:00:03 ${node.hostname} opensmd[1234]: All 32 ports initialized\n` +
+            `Jan 15 08:05:00 ${node.hostname} opensmd[1234]: Subnet change detected, starting heavy sweep\n` +
+            `Jan 15 08:05:01 ${node.hostname} opensmd[1234]: WARNING: link on port 7 lid 15 has errors above threshold\n` +
+            `Jan 15 08:05:02 ${node.hostname} opensmd[1234]: Re-routing around degraded link\n` +
+            `Jan 15 08:05:02 ${node.hostname} opensmd[1234]: Heavy sweep completed in 1.87 seconds`,
+        );
+      }
     }
 
     // Filter by priority (-p)

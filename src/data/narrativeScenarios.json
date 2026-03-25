@@ -222,9 +222,9 @@
             "The pipe | sends nvidia-smi output to grep"
           ],
           "validation": {
-            "type": "command",
+            "type": "output",
             "command": "nvidia-smi",
-            "pattern": "grep"
+            "pattern": "GPU"
           }
         },
         {
@@ -265,9 +265,9 @@
             "sinfo shows all nodes, grep filters to idle ones"
           ],
           "validation": {
-            "type": "command",
+            "type": "output",
             "command": "sinfo",
-            "pattern": "grep"
+            "pattern": "idle"
           }
         },
         {
@@ -297,9 +297,9 @@
             "Each line represents a queued or running job"
           ],
           "validation": {
-            "type": "command",
+            "type": "output",
             "command": "squeue",
-            "pattern": "wc"
+            "pattern": "\\d+"
           }
         },
         {
@@ -918,7 +918,7 @@
             "Should see nvidia, nvidia_uvm, etc."
           ],
           "validation": {
-            "type": "command",
+            "type": "output",
             "command": "lsmod",
             "pattern": "nvidia"
           },
@@ -945,9 +945,9 @@
             "Check module load time"
           ],
           "validation": {
-            "type": "command",
+            "type": "output",
             "command": "dmesg",
-            "pattern": "NVRM|nvidia|GPU"
+            "pattern": "nvrm|NVRM"
           }
         },
         {
@@ -4773,7 +4773,7 @@
             "Should see nvidia, nvidia_uvm, nvidia_modeset"
           ],
           "validation": {
-            "type": "command",
+            "type": "output",
             "command": "lsmod",
             "pattern": "nvidia"
           },
@@ -4816,7 +4816,7 @@
             "Look for warnings or errors"
           ],
           "validation": {
-            "type": "command",
+            "type": "output",
             "command": "dmesg",
             "pattern": "nvidia|NVIDIA"
           }
