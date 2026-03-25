@@ -69,8 +69,11 @@ vi.mock("../InlineQuiz", () => ({
 }));
 
 // Mock utilities
+const mockGetAvailableHints = vi.fn(() => null);
 vi.mock("@/utils/hintManager", () => ({
-  HintManager: { getAvailableHints: () => null },
+  HintManager: {
+    getAvailableHints: (...args: unknown[]) => mockGetAvailableHints(...args),
+  },
 }));
 vi.mock("@/utils/commandValidator", () => ({
   validateCommandExecuted: () => false,
@@ -476,5 +479,106 @@ describe("LabWorkspace Step Types", () => {
 
     // Quiz should NOT be visible since command step is not completed
     expect(screen.queryByTestId("inline-quiz")).not.toBeInTheDocument();
+  });
+
+  // --------------------------------------------------------------------------
+  // Show Answer button
+  // --------------------------------------------------------------------------
+
+  it("does NOT show Show Answer button when enhanced hints remain unrevealed", () => {
+    currentMockStore = makeMockStore({ stepType: "command" });
+    mockGetAvailableHints.mockReturnValue({
+      availableHints: [],
+      nextHint: { id: "h2", level: 2, message: "hint 2" },
+      allHints: [
+        { id: "h1", level: 1, message: "hint 1" },
+        { id: "h2", level: 2, message: "hint 2" },
+      ],
+      revealedCount: 1,
+      totalCount: 2,
+    });
+    renderAndBegin();
+
+    expect(screen.queryByTestId("show-answer-btn")).not.toBeInTheDocument();
+  });
+
+  it("shows Show Answer button when all enhanced hints are revealed and step is not completed", () => {
+    currentMockStore = makeMockStore({ stepType: "command" });
+    mockGetAvailableHints.mockReturnValue({
+      availableHints: [],
+      nextHint: null,
+      allHints: [
+        { id: "h1", level: 1, message: "hint 1" },
+        { id: "h2", level: 2, message: "hint 2" },
+      ],
+      revealedCount: 2,
+      totalCount: 2,
+    });
+    renderAndBegin();
+
+    expect(screen.getByTestId("show-answer-btn")).toBeInTheDocument();
+    expect(screen.getByText("Stuck? Show the answer")).toBeInTheDocument();
+  });
+
+  it("clicking Show Answer reveals expected commands", () => {
+    currentMockStore = makeMockStore({ stepType: "command" });
+    mockGetAvailableHints.mockReturnValue({
+      availableHints: [],
+      nextHint: null,
+      allHints: [{ id: "h1", level: 1, message: "hint 1" }],
+      revealedCount: 1,
+      totalCount: 1,
+    });
+    renderAndBegin();
+
+    fireEvent.click(screen.getByTestId("show-answer-btn"));
+
+    // Should show expected command
+    expect(screen.getByText("$ nvidia-smi")).toBeInTheDocument();
+    // Should show skip button
+    expect(screen.getByTestId("skip-step-btn")).toBeInTheDocument();
+    expect(screen.getByText("Skip this step")).toBeInTheDocument();
+  });
+
+  it("clicking Skip Step calls completeScenarioStep", () => {
+    currentMockStore = makeMockStore({ stepType: "command" });
+    mockGetAvailableHints.mockReturnValue({
+      availableHints: [],
+      nextHint: null,
+      allHints: [{ id: "h1", level: 1, message: "hint 1" }],
+      revealedCount: 1,
+      totalCount: 1,
+    });
+    renderAndBegin();
+
+    fireEvent.click(screen.getByTestId("show-answer-btn"));
+    fireEvent.click(screen.getByTestId("skip-step-btn"));
+
+    expect(mockCompleteScenarioStep).toHaveBeenCalledWith(
+      "test-scenario",
+      "step-1",
+    );
+  });
+
+  it("does NOT show Show Answer button on concept steps", () => {
+    currentMockStore = makeMockStore({
+      stepType: "concept",
+      conceptContent: "Concept.",
+    });
+    mockGetAvailableHints.mockReturnValue(null);
+    renderAndBegin();
+
+    expect(screen.queryByTestId("show-answer-btn")).not.toBeInTheDocument();
+  });
+
+  it("does NOT show Show Answer button on observe steps", () => {
+    currentMockStore = makeMockStore({
+      stepType: "observe",
+      observeCommand: "nvidia-smi",
+    });
+    mockGetAvailableHints.mockReturnValue(null);
+    renderAndBegin();
+
+    expect(screen.queryByTestId("show-answer-btn")).not.toBeInTheDocument();
   });
 });
