@@ -112,6 +112,16 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
   const [toolHintsSidebarOpen, setToolHintsSidebarOpen] = useState(true);
   const isSmallScreen = useMediaQuery("(max-width: 1279px)");
   const [showNarrativeIntro, setShowNarrativeIntro] = useState(true);
+  const [showAnswer, setShowAnswer] = useState(false);
+
+  // Reset showAnswer when the step changes
+  const currentStepIdx =
+    activeScenario && scenarioProgress[activeScenario.id]
+      ? scenarioProgress[activeScenario.id].currentStepIndex
+      : 0;
+  useEffect(() => {
+    setShowAnswer(false);
+  }, [currentStepIdx, activeScenario?.id]);
 
   // Get command families for tool hints
   const commandFamilies = useMemo(() => {
@@ -921,6 +931,62 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                       )}
                     </div>
                   ) : null)}
+
+                {/* Show Answer — appears after all hints are revealed */}
+                {requiresCLIInput &&
+                  !isStepCompleted &&
+                  ((hintEvaluation &&
+                    (hintEvaluation.revealedCount || 0) ===
+                      (hintEvaluation.totalCount || 0) &&
+                    (hintEvaluation.totalCount || 0) > 0) ||
+                    (!hintEvaluation &&
+                      legacyAvailableHints.length > 0 &&
+                      legacyCurrentHintCount >=
+                        legacyAvailableHints.length)) && (
+                    <div
+                      className="bg-gray-800 rounded-lg p-4 mb-4 border-l-4 border-amber-500"
+                      data-testid="show-answer-section"
+                    >
+                      {!showAnswer ? (
+                        <button
+                          data-testid="show-answer-btn"
+                          onClick={() => setShowAnswer(true)}
+                          className="w-full text-amber-400 hover:text-amber-300 text-sm font-medium py-2 px-4 rounded bg-amber-500/10 hover:bg-amber-500/20 transition-colors border border-amber-500/30"
+                        >
+                          Stuck? Show the answer
+                        </button>
+                      ) : (
+                        <div>
+                          <h4 className="text-sm font-semibold text-amber-400 mb-2">
+                            Expected Commands
+                          </h4>
+                          <div className="space-y-2 mb-3">
+                            {currentStep.expectedCommands?.map((cmd, idx) => (
+                              <code
+                                key={idx}
+                                className="block bg-black rounded px-3 py-2 text-sm text-green-400 font-mono"
+                              >
+                                $ {cmd}
+                              </code>
+                            ))}
+                          </div>
+                          <button
+                            data-testid="skip-step-btn"
+                            onClick={() => {
+                              completeScenarioStep(
+                                activeScenario.id,
+                                currentStep.id,
+                              );
+                              setShowAnswer(false);
+                            }}
+                            className="w-full text-amber-400 hover:text-amber-300 text-sm font-medium py-2 px-4 rounded bg-amber-500/10 hover:bg-amber-500/20 transition-colors border border-amber-500/30"
+                          >
+                            Skip this step
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                 {/* Estimated Duration */}
                 <div className="flex items-center gap-2 text-sm text-gray-400">

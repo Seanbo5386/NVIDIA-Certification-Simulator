@@ -39,6 +39,7 @@ const AfterActionReview = lazy(() =>
     default: m.AfterActionReview,
   })),
 );
+import { ConfirmModal } from "./components/ConfirmModal";
 import { MissionBriefing } from "./components/MissionBriefing";
 import { MissionModeBar } from "./components/MissionModeBar";
 import { NarrativeResolution } from "./components/NarrativeResolution";
@@ -86,6 +87,7 @@ function App() {
   const [examMode, setExamMode] = useState<string | undefined>(undefined);
   const [activeTour, setActiveTour] = useState<TourId | null>(null);
   const [smallScreenDismissed, setSmallScreenDismissed] = useState(false);
+  const [showAbortConfirm, setShowAbortConfirm] = useState(false);
 
   const { syncStatus, isLoggedIn, manualRetry } = useCloudSync();
   const [userEmail, setUserEmail] = useState<string>();
@@ -200,15 +202,14 @@ function App() {
   };
 
   const handleAbortMission = useCallback(() => {
-    if (
-      window.confirm(
-        "Abort this mission? Your progress on the current step will be lost.",
-      )
-    ) {
-      exitScenario();
-      setShowLabWorkspace(false);
-      setShowDashboardSlideOver(false);
-    }
+    setShowAbortConfirm(true);
+  }, []);
+
+  const confirmAbortMission = useCallback(() => {
+    setShowAbortConfirm(false);
+    exitScenario();
+    setShowLabWorkspace(false);
+    setShowDashboardSlideOver(false);
   }, [exitScenario]);
 
   // Mission Mode derivations
@@ -591,6 +592,17 @@ function App() {
 
       {/* Auth Toast Notifications */}
       <AuthToast />
+
+      {/* Abort Mission Confirm Modal */}
+      <ConfirmModal
+        isOpen={showAbortConfirm}
+        title="Abort Mission"
+        message="Abort this mission? Your progress on the current step will be lost."
+        confirmLabel="Abort"
+        cancelLabel="Continue Mission"
+        onConfirm={confirmAbortMission}
+        onCancel={() => setShowAbortConfirm(false)}
+      />
     </div>
   );
 }

@@ -224,7 +224,7 @@
           "validation": {
             "type": "command",
             "command": "nvidia-smi",
-            "pattern": "grep"
+            "pattern": "GPU"
           }
         },
         {
@@ -267,7 +267,7 @@
           "validation": {
             "type": "command",
             "command": "sinfo",
-            "pattern": "grep"
+            "pattern": "idle"
           }
         },
         {
@@ -299,7 +299,7 @@
           "validation": {
             "type": "command",
             "command": "squeue",
-            "pattern": "wc"
+            "pattern": "\\d+"
           }
         },
         {
@@ -947,7 +947,7 @@
           "validation": {
             "type": "command",
             "command": "dmesg",
-            "pattern": "NVRM|nvidia|GPU"
+            "pattern": "nvrm|NVRM"
           }
         },
         {
@@ -1298,7 +1298,7 @@
         {
           "id": "step-11",
           "situation": "Hostname dgx-09 configured correctly. Slurm client configured.",
-          "task": "Use scontrol to add the new node to the cluster and verify its state.",
+          "task": "Verify the new node's state in the cluster using scontrol.",
           "expectedCommands": ["scontrol show node dgx-09"],
           "hints": [
             "scontrol update may be needed",
@@ -4376,7 +4376,7 @@
           "situation": "State documented. Time to clean up orphan processes and containers.",
           "task": "Drain the node to prevent new jobs while cleaning up.",
           "expectedCommands": [
-            "scontrol update nodename=dgx-01 state=drain reason='GPU memory cleanup'"
+            "scontrol update nodename=dgx-00 state=drain reason='GPU memory cleanup'"
           ],
           "hints": [
             "scontrol drain",
@@ -4436,7 +4436,7 @@
           "id": "step-11",
           "situation": "Memory cleared. Resume node for production use.",
           "task": "Resume the node in Slurm and verify it's ready for jobs.",
-          "expectedCommands": ["scontrol update nodename=dgx-01 state=resume"],
+          "expectedCommands": ["scontrol update nodename=dgx-00 state=resume"],
           "hints": [
             "scontrol resume",
             "sinfo to verify",
@@ -4995,7 +4995,7 @@
           "id": "step-7",
           "situation": "MST shows two ConnectX-7 HCA devices. Need to verify firmware configuration.",
           "task": "Query the HCA firmware configuration using mlxconfig.",
-          "expectedCommands": ["mlxconfig -d /dev/mst/mt41686_pciconf0 q"],
+          "expectedCommands": ["mlxconfig -d /dev/mst/mt41692_pciconf0 q"],
           "hints": [
             "mlxconfig -d <device> q queries config",
             "Check link type settings",
@@ -5210,7 +5210,7 @@
           "task": "Check the installed NVIDIA driver version to confirm it matches the cluster standard.",
           "expectedCommands": ["cat /proc/driver/nvidia/version"],
           "hints": [
-            "The proc filesystem shows driver info",
+            "Use: cat /proc/driver/nvidia/version",
             "Check both kernel and user-space versions",
             "Should match cluster standard"
           ],
@@ -5850,9 +5850,9 @@
           "id": "step-3",
           "situation": "Single-node benchmark shows good NVLink bandwidth. Need to enable NCCL debug logging for multi-node tests.",
           "task": "Set NCCL debug environment variable to get detailed transport information.",
-          "expectedCommands": ["NCCL_DEBUG=INFO"],
+          "expectedCommands": ["export NCCL_DEBUG=INFO"],
           "hints": [
-            "NCCL_DEBUG=INFO enables logging",
+            "export NCCL_DEBUG=INFO enables logging",
             "Shows transport selection details",
             "Useful for diagnosing issues"
           ],
@@ -5865,9 +5865,9 @@
           "id": "step-4",
           "situation": "Debug logging configured. Verify InfiniBand transport is not accidentally disabled.",
           "task": "Check and set the NCCL InfiniBand transport environment variable.",
-          "expectedCommands": ["NCCL_IB_DISABLE=0"],
+          "expectedCommands": ["export NCCL_IB_DISABLE=0"],
           "hints": [
-            "NCCL_IB_DISABLE=0 enables IB",
+            "export NCCL_IB_DISABLE=0 enables IB",
             "Set to 1 would force TCP fallback",
             "IB is critical for performance"
           ],
@@ -5891,9 +5891,9 @@
           "id": "step-5",
           "situation": "IB transport enabled. Also verify peer-to-peer GPU communication is enabled.",
           "task": "Check the NCCL P2P (peer-to-peer) configuration for intra-node communication.",
-          "expectedCommands": ["NCCL_P2P_DISABLE=0"],
+          "expectedCommands": ["export NCCL_P2P_DISABLE=0"],
           "hints": [
-            "NCCL_P2P_DISABLE=0 enables P2P",
+            "export NCCL_P2P_DISABLE=0 enables P2P",
             "P2P uses NVLink for intra-node",
             "Important for single-node perf"
           ],

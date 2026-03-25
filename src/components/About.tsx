@@ -15,9 +15,28 @@ import {
 
 const CHANGELOG = [
   {
+    version: "v1.3.1",
+    title: "Soft-Block Fixes",
+    current: true,
+    highlights: [
+      "Show Answer button lets stuck users reveal commands and skip steps",
+      "Pipe validation enforced — piped commands now check filtered output",
+      "squeue -w flag filters jobs by nodelist",
+      "journalctl -u opensmd returns realistic subnet manager logs",
+      "Fixed narrative data errors across 5 scenarios",
+    ],
+  },
+  {
+    version: "v1.3.0",
+    title: "User Feedback",
+    highlights: [
+      "Feedback form in header — submit general feedback, bug reports, or success stories",
+      "Authenticated submission via Cognito to prevent spam",
+    ],
+  },
+  {
     version: "v1.2.3",
     title: "Quiz Stats & Dashboard Toggle",
-    current: true,
     highlights: [
       "Tool Selection quiz scores display as percentages instead of raw counts",
       "Exam stats (Exams Taken, Avg Score, Pass Rate) include all quiz types",
@@ -139,7 +158,7 @@ const CHANGELOG = [
     version: "v0.7.0",
     title: "Narrative Scenarios",
     highlights: [
-      "28 story-driven scenarios across all 5 domains",
+      "32 story-driven scenarios across all 5 domains",
       "NarrativeIntro mission briefing screen",
       "InlineQuiz for in-scenario knowledge checks",
       "NarrativeResolution with debrief and scoring",

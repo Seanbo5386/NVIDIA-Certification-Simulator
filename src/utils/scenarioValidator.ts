@@ -458,6 +458,19 @@ export class ScenarioValidator {
 
     const passed = currentMatch || previousMatch;
 
+    // For pipe commands, also require the user typed a pipe
+    if (passed && rule.expectedCommands?.some((cmd) => cmd.includes("|"))) {
+      const hasPipe =
+        command.includes("|") || allCommands.some((cmd) => cmd.includes("|"));
+      if (!hasPipe) {
+        return {
+          ruleId: rule.id,
+          passed: false,
+          message: "Try using a pipe (|) to filter the output",
+        };
+      }
+    }
+
     // Special handling for GPU reset with XID 79 errors
     // When attempting GPU reset, if the output contains XID 79 error message,
     // the attempt itself is valid even though the command "failed"

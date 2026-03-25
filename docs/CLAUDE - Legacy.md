@@ -160,7 +160,3 @@ The `learningProgressStore` tracks:
 3. **Terminal** uses xterm.js with custom command routing
 4. **Visualizations** use D3.js for network/topology graphs
 5. **Tests** run with Vitest + jsdom + React Testing Library
-
----
-
-See `.claude/CLAUDE.md` for development workflow guidelines.

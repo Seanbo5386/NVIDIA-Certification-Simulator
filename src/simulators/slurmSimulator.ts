@@ -439,6 +439,7 @@ export class SlurmSimulator extends BaseSimulator {
     const user = this.getFlagString(parsed, ["u", "user"]);
     const jobIdFilter = this.getFlagString(parsed, ["j", "jobs"]);
     const statesFilter = this.getFlagString(parsed, ["t", "states"]);
+    const nodelistFilter = this.getFlagString(parsed, ["w", "nodelist"]);
     const longFormat = this.hasAnyFlag(parsed, ["l", "long"]);
     const customFormat = this.getFlagString(parsed, ["O", "Format"]);
     const sortSpec = this.getFlagString(parsed, ["S", "sort"]);
@@ -457,6 +458,13 @@ export class SlurmSimulator extends BaseSimulator {
     if (statesFilter) {
       const states = statesFilter.toUpperCase().split(",");
       filteredJobs = filteredJobs.filter((j) => states.includes(j.state));
+    }
+    if (nodelistFilter) {
+      const filterNodes = nodelistFilter.split(",");
+      filteredJobs = filteredJobs.filter((j) => {
+        const jobNodes = j.nodelist.split(",");
+        return filterNodes.some((n) => jobNodes.includes(n));
+      });
     }
 
     // Apply sorting

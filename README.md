@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.2.3-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.3.0-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/tests-3631_unit_|_307_E2E-brightgreen?style=for-the-badge)
 ![NVIDIA](https://img.shields.io/badge/NVIDIA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
@@ -74,6 +74,10 @@ $ nvidia-smi
 > **The Midnight Deployment** — It's 2AM and the training job crashed. Nodes are reporting XID errors, NCCL allreduce is hanging, and the team lead wants answers by morning. You have ibstat, dcgmi, and nvidia-smi. Go.
 
 Scenarios run in **sandboxed isolation** — faults and mutations never leak to other scenarios or the global cluster state.
+
+### User Feedback
+
+Submit general feedback, bug reports, or success stories directly from the header. Authenticated submission via Cognito prevents spam.
 
 ### Multi-Architecture Support
 
@@ -304,7 +308,7 @@ Sign in with email/password to sync progress across devices. Powered by AWS Ampl
 
 2. The Amplify infrastructure code lives in `amplify/` (gitignored, kept locally):
    - `amplify/auth/resource.ts` — Cognito user pool
-   - `amplify/data/resource.ts` — DynamoDB UserProgress table
+   - `amplify/data/resource.ts` — DynamoDB tables (UserProgress + Feedback)
    - `amplify/backend.ts` — Ties auth and data together
 
 3. Deploy:
@@ -319,6 +323,14 @@ Sign in with email/password to sync progress across devices. Powered by AWS Ampl
 4. Run `npm run dev` — sign-in button activates automatically.
 
 **What syncs:** Simulation state, quiz scores, learning progress, tier unlocks, spaced repetition schedules. Each user's data is isolated via Cognito owner-based authorization.
+
+**Feedback system:** The Feedback button in the header lets authenticated users submit general feedback, bug reports, and success stories. Submissions are stored in a DynamoDB `Feedback` table with owner-based authorization (defined in `amplify/data/resource.ts`). The table is created automatically when you deploy the Amplify backend — no additional setup required. Without a backend, the Feedback button still appears but submissions fail gracefully with an error message.
+
+To query feedback as an admin:
+
+```bash
+aws dynamodb scan --table-name Feedback-<your-stack-id> --region us-east-1
+```
 
 </details>
 

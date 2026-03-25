@@ -502,9 +502,7 @@ describe("narrativeScenarios.json", () => {
         "pwd",
         "cd",
         "tail",
-        "NCCL_DEBUG=INFO",
-        "NCCL_IB_DISABLE=0",
-        "NCCL_P2P_DISABLE=0",
+        "export",
       ];
       scenarios.forEach((s) => {
         s.steps.forEach((step) => {
