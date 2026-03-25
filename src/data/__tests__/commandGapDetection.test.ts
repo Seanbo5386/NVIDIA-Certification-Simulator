@@ -123,6 +123,7 @@ const TERMINAL_COMMANDS = new Set([
 
   // Shell builtins
   "cd",
+  "export",
 
   // Linux utilities (LinuxUtilsSimulator)
   "cat",
