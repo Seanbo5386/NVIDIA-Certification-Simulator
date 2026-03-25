@@ -460,8 +460,11 @@ export class SlurmSimulator extends BaseSimulator {
       filteredJobs = filteredJobs.filter((j) => states.includes(j.state));
     }
     if (nodelistFilter) {
-      const nodes = nodelistFilter.split(",");
-      filteredJobs = filteredJobs.filter((j) => nodes.includes(j.nodelist));
+      const filterNodes = nodelistFilter.split(",");
+      filteredJobs = filteredJobs.filter((j) => {
+        const jobNodes = j.nodelist.split(",");
+        return filterNodes.some((n) => jobNodes.includes(n));
+      });
     }
 
     // Apply sorting

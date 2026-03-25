@@ -121,7 +121,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
       : 0;
   useEffect(() => {
     setShowAnswer(false);
-  }, [currentStepIdx]);
+  }, [currentStepIdx, activeScenario?.id]);
 
   // Get command families for tool hints
   const commandFamilies = useMemo(() => {

@@ -15,9 +15,20 @@ import {
 
 const CHANGELOG = [
   {
+    version: "v1.3.1",
+    title: "Soft-Block Fixes",
+    current: true,
+    highlights: [
+      "Show Answer button lets stuck users reveal commands and skip steps",
+      "Pipe validation enforced — piped commands now check filtered output",
+      "squeue -w flag filters jobs by nodelist",
+      "journalctl -u opensmd returns realistic subnet manager logs",
+      "Fixed narrative data errors across 5 scenarios",
+    ],
+  },
+  {
     version: "v1.3.0",
     title: "User Feedback",
-    current: true,
     highlights: [
       "Feedback form in header — submit general feedback, bug reports, or success stories",
       "Authenticated submission via Cognito to prevent spam",

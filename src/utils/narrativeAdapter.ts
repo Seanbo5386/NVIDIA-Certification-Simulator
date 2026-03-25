@@ -114,6 +114,19 @@ function convertValidation(
       outputPattern: validation.pattern,
       requireAllCommands: expectedCommands.length > 1,
     });
+    // For pipe commands, also validate the output pattern so users
+    // can't skip the pipe (e.g., typing just `nvidia-smi` instead of
+    // `nvidia-smi | grep GPU`). The command rule validates the base
+    // command was typed; the output rule validates the filtered output.
+    const hasPipe = expectedCommands.some((cmd) => cmd.includes("|"));
+    if (hasPipe && validation.pattern) {
+      rules.push({
+        type: "output-match",
+        description: `Verify piped output matches expected pattern`,
+        expectedCommands,
+        outputPattern: validation.pattern,
+      });
+    }
   } else if (validation.type === "output" && validation.pattern) {
     rules.push({
       type: "output-match",

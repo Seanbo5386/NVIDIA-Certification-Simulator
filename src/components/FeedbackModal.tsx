@@ -67,7 +67,8 @@ export function FeedbackModal({
       setTimeout(() => {
         onClose();
       }, 1500);
-    } catch {
+    } catch (err) {
+      console.error("Failed to submit feedback:", err);
       setError("Something went wrong — please try again.");
     } finally {
       setSubmitting(false);
