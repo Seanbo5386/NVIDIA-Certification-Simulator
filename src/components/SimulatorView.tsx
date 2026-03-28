@@ -437,7 +437,8 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({
               revealedHints={revealedHintTexts}
               learningObjectives={activeScenario!.learningObjectives}
               narrativeContext={activeScenario!.narrative?.setting}
-              onQuizComplete={(_correct) => {
+              onQuizComplete={(correct) => {
+                recordQuizResult(currentStep.id, correct);
                 completeScenarioStep(activeScenario!.id, currentStep.id);
               }}
             />
@@ -675,7 +676,8 @@ export const SimulatorView: React.FC<SimulatorViewProps> = ({
                         revealedHints={revealedHintTexts}
                         learningObjectives={activeScenario!.learningObjectives}
                         narrativeContext={activeScenario!.narrative?.setting}
-                        onQuizComplete={(_correct) => {
+                        onQuizComplete={(correct) => {
+                          recordQuizResult(currentStep.id, correct);
                           // Quiz answered — advance to next step
                           completeScenarioStep(
                             activeScenario!.id,
