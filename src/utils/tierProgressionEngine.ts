@@ -65,6 +65,7 @@ export const FAMILY_TOOL_COUNTS: Record<string, number> = {
   "cluster-tools": 4, // sinfo, squeue, scontrol, sacct
   "container-tools": 3, // docker, enroot, pyxis
   diagnostics: 3, // dcgmi diag, nvidia-bug-report, gpu-burn
+  "xid-diagnostics": 3, // dmesg, nvidia-smi, dcgmi
 };
 
 /**

@@ -332,8 +332,9 @@ describe("CommandFamilyCards", () => {
       // Slurm Cluster Tools: 4 tools
       // Container Tools: 3 tools
       // Diagnostics & Testing: 3 tools
+      // XID Diagnostics: 3 tools
       const toolBadges = screen.getAllByText(/^\d+ tools$/);
-      expect(toolBadges.length).toBe(6);
+      expect(toolBadges.length).toBe(7);
     });
   });
 });

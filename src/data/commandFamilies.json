@@ -242,6 +242,42 @@
           "relatedTools": ["dcgmi diag"]
         }
       ]
+    },
+    {
+      "id": "xid-diagnostics",
+      "name": "XID Diagnostics",
+      "icon": "🔍",
+      "description": "Tools and knowledge for identifying, triaging, and responding to NVIDIA GPU XID errors found in system logs",
+      "quickRule": "Check logs? dmesg. GPU state after XID? nvidia-smi -q. Run diagnostics? dcgmi diag.",
+      "tools": [
+        {
+          "name": "dmesg",
+          "tagline": "Kernel log viewer",
+          "description": "Displays kernel ring buffer messages including NVIDIA XID errors with timestamps and GPU identifiers",
+          "bestFor": "Finding XID errors in system logs, checking when errors occurred, correlating GPU events with system events",
+          "exampleCommand": "dmesg | grep -i 'xid'",
+          "permissions": "user",
+          "relatedTools": ["nvidia-smi", "dcgmi"]
+        },
+        {
+          "name": "nvidia-smi",
+          "tagline": "GPU state checker",
+          "description": "Query detailed GPU state after an XID event to check ECC errors, temperature, power state, and process status",
+          "bestFor": "Verifying GPU health after an XID error, checking ECC counters, confirming GPU is still responsive",
+          "exampleCommand": "nvidia-smi -q -i 0 -d ECC,TEMPERATURE,POWER",
+          "permissions": "user",
+          "relatedTools": ["dmesg", "dcgmi"]
+        },
+        {
+          "name": "dcgmi",
+          "tagline": "Deep diagnostics",
+          "description": "Run DCGM diagnostic levels to validate GPU health after XID errors and identify hardware issues",
+          "bestFor": "Running post-XID health checks, validating GPU compute and memory integrity, generating diagnostic reports",
+          "exampleCommand": "dcgmi diag -r 1 -i 0",
+          "permissions": "root",
+          "relatedTools": ["nvidia-smi", "nvidia-bug-report"]
+        }
+      ]
     }
   ]
 }
