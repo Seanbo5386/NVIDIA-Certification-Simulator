@@ -52,6 +52,7 @@ import { AuthToast } from "./components/AuthToast";
 import { ExamGauntlet } from "./components/ExamGauntlet";
 import { WhichToolQuiz } from "./components/WhichToolQuiz";
 import { ToolMasteryQuiz } from "./components/ToolMasteryQuiz";
+import { XIDDrillQuiz } from "./components/XIDDrillQuiz";
 import { useSimulationStore } from "./store/simulationStore";
 import { useLearningProgressStore } from "./store/learningProgressStore";
 import { useMetricsSimulation } from "./hooks/useMetricsSimulation";
@@ -108,6 +109,11 @@ function App() {
   // Get due reviews count from learning progress store
   const dueReviews = useLearningProgressStore((state) => state.getDueReviews());
   const dueReviewCount = dueReviews.length;
+
+  // Get XID diagnostics unlocked tier for XIDDrillQuiz
+  const xidUnlockedTier = useLearningProgressStore(
+    (state) => (state.unlockedTiers["xid-diagnostics"] || 1) as 1 | 2 | 3,
+  );
 
   const {
     cluster,
@@ -560,13 +566,30 @@ function App() {
       )}
 
       {/* Tool Quiz Modal */}
-      {activeToolQuiz && (
-        <WhichToolQuiz
-          familyId={activeToolQuiz}
-          onComplete={(passed, score) => handleCloseToolQuiz(passed, score)}
-          onClose={() => setActiveToolQuiz(null)}
-        />
-      )}
+      {activeToolQuiz &&
+        (activeToolQuiz === "xid-diagnostics" ? (
+          <XIDDrillQuiz
+            tier={xidUnlockedTier}
+            onComplete={(passed, score, totalQuestions) => {
+              useLearningProgressStore
+                .getState()
+                .completeMasteryQuiz(
+                  activeToolQuiz,
+                  passed,
+                  score,
+                  totalQuestions,
+                );
+              setActiveToolQuiz(null);
+            }}
+            onClose={() => setActiveToolQuiz(null)}
+          />
+        ) : (
+          <WhichToolQuiz
+            familyId={activeToolQuiz}
+            onComplete={(passed, score) => handleCloseToolQuiz(passed, score)}
+            onClose={() => setActiveToolQuiz(null)}
+          />
+        ))}
 
       {/* Deep Mastery Quiz Modal */}
       {activeMasteryQuiz && (
