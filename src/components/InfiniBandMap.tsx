@@ -251,7 +251,7 @@ export const InfiniBandMap: React.FC<InfiniBandMapProps> = ({
     });
 
     return links;
-  }, [cluster, fabricConfig, width]);
+  }, [cluster, fabricConfig, width, height]);
 
   // Disable particle animations when user prefers reduced motion
   const { particleCount } = useNetworkAnimation({
