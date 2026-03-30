@@ -31,7 +31,8 @@ export type CommandFamilyId =
   | "bmc-hardware"
   | "cluster-tools"
   | "container-tools"
-  | "diagnostics";
+  | "diagnostics"
+  | "xid-diagnostics";
 
 /**
  * Quiz result for a command family

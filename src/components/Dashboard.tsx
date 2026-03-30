@@ -134,16 +134,14 @@ const GPUCard: React.FC<{ gpu: GPU; nodeId: string }> = ({ gpu }) => {
   const memoryPercent = (gpu.memoryUsed / gpu.memoryTotal) * 100;
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-nvidia-green transition-colors">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h3 className="text-sm font-semibold text-nvidia-green">
-            GPU {gpu.id}
-          </h3>
-          <p className="text-xs text-gray-400">{gpu.name}</p>
-        </div>
+    <div className="bg-gray-800 rounded-lg p-3 border border-gray-700 hover:border-nvidia-green transition-colors min-w-0">
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="text-sm font-semibold text-nvidia-green">
+          GPU {gpu.id}
+        </h3>
         <HealthIndicator status={gpu.healthStatus} />
       </div>
+      <p className="text-xs text-gray-400 truncate mb-3">{gpu.name}</p>
 
       <div className="space-y-2">
         {/* Utilization */}
@@ -169,9 +167,9 @@ const GPUCard: React.FC<{ gpu: GPU; nodeId: string }> = ({ gpu }) => {
               <HardDrive className="w-3 h-3" />
               Memory
             </span>
-            <span className="text-nvidia-green font-medium">
-              {(gpu.memoryUsed / 1024).toFixed(1)} /{" "}
-              {(gpu.memoryTotal / 1024).toFixed(1)} GB
+            <span className="text-nvidia-green font-medium whitespace-nowrap">
+              {(gpu.memoryUsed / 1024).toFixed(1)}/
+              {(gpu.memoryTotal / 1024).toFixed(0)}GB
             </span>
           </div>
           <div className="gpu-bar-container">
@@ -183,32 +181,26 @@ const GPUCard: React.FC<{ gpu: GPU; nodeId: string }> = ({ gpu }) => {
         </div>
 
         {/* Temperature and Power */}
-        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-700">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 border-t border-gray-700">
           <div
-            className="flex items-center gap-2"
+            className="flex items-center gap-1.5"
             role="status"
             aria-label={tempStatus.ariaLabel}
           >
             <Thermometer
-              className={`w-4 h-4 ${tempStatus.color}`}
+              className={`w-3.5 h-3.5 ${tempStatus.color}`}
               aria-hidden="true"
             />
-            <div>
-              <div className="text-xs text-gray-400">Temp</div>
-              <div className={`text-sm font-medium ${tempStatus.color}`}>
-                <span aria-hidden="true">{tempStatus.symbol} </span>
-                {Math.round(gpu.temperature)}°C
-              </div>
-            </div>
+            <span className={`text-xs font-medium ${tempStatus.color}`}>
+              <span aria-hidden="true">{tempStatus.symbol} </span>
+              {Math.round(gpu.temperature)}°C
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-yellow-500" />
-            <div>
-              <div className="text-xs text-gray-400">Power</div>
-              <div className="text-sm font-medium text-yellow-500">
-                {Math.round(gpu.powerDraw)}W / {gpu.powerLimit}W
-              </div>
-            </div>
+          <div className="flex items-center gap-1.5">
+            <Zap className="w-3.5 h-3.5 text-yellow-500" />
+            <span className="text-xs font-medium text-yellow-500">
+              {Math.round(gpu.powerDraw)}W/{gpu.powerLimit}W
+            </span>
           </div>
         </div>
 
@@ -394,53 +386,53 @@ const ClusterHealthSummary: React.FC = () => {
     criticalGPUs > 0 ? "Critical" : healthyGPUs < totalGPUs ? "Warning" : "OK";
 
   return (
-    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-6 border border-gray-700">
-      <div className="flex items-center justify-between mb-4 gap-2 overflow-hidden">
-        <div className="flex items-center gap-4 min-w-0 flex-wrap">
-          <h2 className="text-xl font-bold text-nvidia-green">
-            Cluster Health
-          </h2>
-          <SystemTypeSelector />
+    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-4 md:p-6 border border-gray-700">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <h2 className="text-lg md:text-xl font-bold text-nvidia-green">
+          Cluster Health
+        </h2>
+        <SystemTypeSelector />
+        <div className="ml-auto">
+          <HealthIndicator status={overallHealth} />
         </div>
-        <HealthIndicator status={overallHealth} />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gray-800/50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-nvidia-green">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        <div className="bg-gray-800/50 rounded-lg p-2 md:p-4">
+          <div className="text-lg md:text-2xl font-bold text-nvidia-green">
             {totalNodes}/{totalNodes}
           </div>
-          <div className="text-sm text-gray-400">Nodes Online</div>
+          <div className="text-xs md:text-sm text-gray-400">Nodes Online</div>
         </div>
 
-        <div className="bg-gray-800/50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-nvidia-green">
+        <div className="bg-gray-800/50 rounded-lg p-2 md:p-4">
+          <div className="text-lg md:text-2xl font-bold text-nvidia-green">
             {healthyGPUs}/{totalGPUs}
           </div>
-          <div className="text-sm text-gray-400">GPUs Healthy</div>
+          <div className="text-xs md:text-sm text-gray-400">GPUs Healthy</div>
         </div>
 
         <div
-          className="bg-gray-800/50 rounded-lg p-4"
+          className="bg-gray-800/50 rounded-lg p-2 md:p-4"
           role="status"
           aria-label="InfiniBand status: Active"
         >
-          <div className="text-2xl font-bold text-nvidia-green">
+          <div className="text-lg md:text-2xl font-bold text-nvidia-green">
             <span aria-hidden="true">✓ </span>Active
           </div>
-          <div className="text-sm text-gray-400">InfiniBand</div>
+          <div className="text-xs md:text-sm text-gray-400">InfiniBand</div>
         </div>
 
         <div
-          className="bg-gray-800/50 rounded-lg p-4"
+          className="bg-gray-800/50 rounded-lg p-2 md:p-4"
           role="status"
           aria-label={`BCM HA state: ${effectiveCluster.bcmHA.state}`}
         >
-          <div className="text-2xl font-bold text-nvidia-green">
+          <div className="text-lg md:text-2xl font-bold text-nvidia-green">
             <span aria-hidden="true">✓ </span>
             {effectiveCluster.bcmHA.state}
           </div>
-          <div className="text-sm text-gray-400">BCM HA</div>
+          <div className="text-xs md:text-sm text-gray-400">BCM HA</div>
         </div>
       </div>
 
@@ -613,7 +605,7 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
             {currentNode.gpus.map((gpu) => (
               <GPUCard key={gpu.id} gpu={gpu} nodeId={currentNode.id} />
             ))}

@@ -31,6 +31,7 @@ const EXPECTED_FAMILY_IDS = [
   "cluster-tools",
   "container-tools",
   "diagnostics",
+  "xid-diagnostics",
 ];
 
 const KNOWN_COMMANDS = [
@@ -55,6 +56,7 @@ const KNOWN_COMMANDS = [
   "dcgmi diag",
   "nvidia-bug-report",
   "gpu-burn",
+  "dmesg",
 ];
 
 describe("commandFamilies.json", () => {
@@ -67,8 +69,8 @@ describe("commandFamilies.json", () => {
       expect(Array.isArray(families)).toBe(true);
     });
 
-    it("should have exactly 6 command families", () => {
-      expect(families).toHaveLength(6);
+    it("should have exactly 7 command families", () => {
+      expect(families).toHaveLength(7);
     });
   });
 
@@ -171,10 +173,12 @@ describe("commandFamilies.json", () => {
   });
 
   describe("no duplicate tool names", () => {
-    it("should have no duplicate tool names across all families", () => {
-      const allToolNames = families.flatMap((f) => f.tools.map((t) => t.name));
-      const uniqueNames = new Set(allToolNames);
-      expect(uniqueNames.size).toBe(allToolNames.length);
+    it("should have no duplicate tool names within a single family", () => {
+      families.forEach((family) => {
+        const toolNames = family.tools.map((t) => t.name);
+        const uniqueNames = new Set(toolNames);
+        expect(uniqueNames.size).toBe(toolNames.length);
+      });
     });
   });
 

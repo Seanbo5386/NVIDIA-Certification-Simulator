@@ -33,11 +33,11 @@ import { logger } from "@/utils/logger";
 /**
  * Maps command names to their command family IDs for tracking tool usage
  */
-const toolFamilyMap: Record<string, string> = {
+const toolFamilyMap: Record<string, string | string[]> = {
   // GPU Monitoring tools
-  "nvidia-smi": "gpu-monitoring",
+  "nvidia-smi": ["gpu-monitoring", "xid-diagnostics"],
   nvsm: "gpu-monitoring",
-  dcgmi: "gpu-monitoring",
+  dcgmi: ["gpu-monitoring", "xid-diagnostics"],
   nvtop: "gpu-monitoring",
   // InfiniBand tools
   ibstat: "infiniband-tools",
@@ -58,9 +58,11 @@ const toolFamilyMap: Record<string, string> = {
   enroot: "container-tools",
   pyxis: "container-tools",
   // Diagnostics
-  "dcgmi-diag": "diagnostics",
-  "nvidia-bug-report": "diagnostics",
+  "dcgmi diag": ["diagnostics", "xid-diagnostics"],
+  "nvidia-bug-report.sh": ["diagnostics", "xid-diagnostics"],
   "gpu-burn": "diagnostics",
+  // XID Diagnostics
+  dmesg: "xid-diagnostics",
 };
 
 interface SimulationState {
@@ -560,12 +562,25 @@ export const useSimulationStore = create<SimulationState>()(
 
       // Learning progress integration
       trackToolUsage: (command: string) => {
-        const baseCommand = command.split(" ")[0];
-        const familyId = toolFamilyMap[baseCommand];
-        if (familyId) {
-          useLearningProgressStore
-            .getState()
-            .markToolUsed(familyId, baseCommand);
+        let bestMatch = "";
+        for (const toolKey in toolFamilyMap) {
+          if (
+            command.startsWith(toolKey) &&
+            toolKey.length > bestMatch.length
+          ) {
+            bestMatch = toolKey;
+          }
+        }
+
+        if (bestMatch) {
+          const familyIds = toolFamilyMap[bestMatch];
+          const ids = Array.isArray(familyIds) ? familyIds : [familyIds];
+          const baseCommand = bestMatch.split(" ")[0];
+          for (const familyId of ids) {
+            useLearningProgressStore
+              .getState()
+              .markToolUsed(familyId, baseCommand);
+          }
         }
       },
 
