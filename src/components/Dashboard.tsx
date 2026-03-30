@@ -386,53 +386,53 @@ const ClusterHealthSummary: React.FC = () => {
     criticalGPUs > 0 ? "Critical" : healthyGPUs < totalGPUs ? "Warning" : "OK";
 
   return (
-    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-6 border border-gray-700">
-      <div className="flex items-center justify-between mb-4 gap-2 overflow-hidden">
-        <div className="flex items-center gap-4 min-w-0 flex-wrap">
-          <h2 className="text-xl font-bold text-nvidia-green">
-            Cluster Health
-          </h2>
-          <SystemTypeSelector />
+    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg p-4 md:p-6 border border-gray-700">
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <h2 className="text-lg md:text-xl font-bold text-nvidia-green">
+          Cluster Health
+        </h2>
+        <SystemTypeSelector />
+        <div className="ml-auto">
+          <HealthIndicator status={overallHealth} />
         </div>
-        <HealthIndicator status={overallHealth} />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gray-800/50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-nvidia-green">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+        <div className="bg-gray-800/50 rounded-lg p-2 md:p-4">
+          <div className="text-lg md:text-2xl font-bold text-nvidia-green">
             {totalNodes}/{totalNodes}
           </div>
-          <div className="text-sm text-gray-400">Nodes Online</div>
+          <div className="text-xs md:text-sm text-gray-400">Nodes Online</div>
         </div>
 
-        <div className="bg-gray-800/50 rounded-lg p-4">
-          <div className="text-2xl font-bold text-nvidia-green">
+        <div className="bg-gray-800/50 rounded-lg p-2 md:p-4">
+          <div className="text-lg md:text-2xl font-bold text-nvidia-green">
             {healthyGPUs}/{totalGPUs}
           </div>
-          <div className="text-sm text-gray-400">GPUs Healthy</div>
+          <div className="text-xs md:text-sm text-gray-400">GPUs Healthy</div>
         </div>
 
         <div
-          className="bg-gray-800/50 rounded-lg p-4"
+          className="bg-gray-800/50 rounded-lg p-2 md:p-4"
           role="status"
           aria-label="InfiniBand status: Active"
         >
-          <div className="text-2xl font-bold text-nvidia-green">
+          <div className="text-lg md:text-2xl font-bold text-nvidia-green">
             <span aria-hidden="true">✓ </span>Active
           </div>
-          <div className="text-sm text-gray-400">InfiniBand</div>
+          <div className="text-xs md:text-sm text-gray-400">InfiniBand</div>
         </div>
 
         <div
-          className="bg-gray-800/50 rounded-lg p-4"
+          className="bg-gray-800/50 rounded-lg p-2 md:p-4"
           role="status"
           aria-label={`BCM HA state: ${effectiveCluster.bcmHA.state}`}
         >
-          <div className="text-2xl font-bold text-nvidia-green">
+          <div className="text-lg md:text-2xl font-bold text-nvidia-green">
             <span aria-hidden="true">✓ </span>
             {effectiveCluster.bcmHA.state}
           </div>
-          <div className="text-sm text-gray-400">BCM HA</div>
+          <div className="text-xs md:text-sm text-gray-400">BCM HA</div>
         </div>
       </div>
 
