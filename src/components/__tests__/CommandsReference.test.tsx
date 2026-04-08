@@ -83,10 +83,12 @@ vi.mock("@/data/taskCategories.json", () => ({
     categories: [
       {
         title: "Check GPU Health",
+        icon: "🖥️",
         decisionGuide: "Quick snapshot → nvidia-smi | Deep diagnostics → dcgmi",
       },
       {
         title: "Diagnose Network",
+        icon: "🌐",
         decisionGuide: "Port status → ibstat | Fabric → ibdiagnet",
       },
     ],
@@ -259,11 +261,10 @@ describe("CommandsReference", () => {
 
     expect(screen.getByText("Check GPU Health")).toBeInTheDocument();
     expect(screen.getByText("Diagnose Network")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Quick snapshot → nvidia-smi | Deep diagnostics → dcgmi",
-      ),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Quick snapshot")).toBeInTheDocument();
+    expect(screen.getByText("nvidia-smi")).toBeInTheDocument();
+    expect(screen.getByText("Port status")).toBeInTheDocument();
+    expect(screen.getByText("ibdiagnet")).toBeInTheDocument();
   });
 
   // --------------------------------------------------------------------------

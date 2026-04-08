@@ -55,18 +55,43 @@ const CATEGORY_DISPLAY_NAMES: Record<CommandCategory, string> = {
   general: "General",
 };
 
+interface DecisionGuideRow {
+  task: string;
+  command: string;
+}
+
 interface DecisionGuide {
   title: string;
-  guide: string;
+  icon: string;
+  rows: DecisionGuideRow[];
+}
+
+/** Parse "Task → cmd | Task → cmd" into structured rows. */
+function parseDecisionGuide(guide: string): DecisionGuideRow[] {
+  return guide
+    .split("|")
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .map((segment) => {
+      const [task, ...rest] = segment.split("→");
+      return {
+        task: (task || "").trim(),
+        command: rest.join("→").trim(),
+      };
+    });
 }
 
 const decisionGuides: DecisionGuide[] = (
   taskCategoriesData as {
-    categories: { title: string; decisionGuide: string }[];
+    categories: { title: string; icon: string; decisionGuide: string }[];
   }
 ).categories
   .filter((cat) => cat.title !== "Understand Errors")
-  .map((cat) => ({ title: cat.title, guide: cat.decisionGuide }));
+  .map((cat) => ({
+    title: cat.title,
+    icon: cat.icon,
+    rows: parseDecisionGuide(cat.decisionGuide),
+  }));
 
 /** Extract the first sentence from a description for the collapsed header. */
 function briefDescription(text: string): string {
@@ -230,12 +255,35 @@ export const CommandsReference: React.FC = () => {
             {decisionGuides.map((guide) => (
               <div
                 key={guide.title}
-                className="bg-gray-900 rounded-lg p-3 border border-gray-700"
+                className="bg-gray-900 rounded-lg border border-gray-700 overflow-hidden"
               >
-                <h5 className="text-sm font-semibold text-nvidia-green mb-1">
-                  {guide.title}
-                </h5>
-                <p className="text-xs text-gray-400 font-mono">{guide.guide}</p>
+                <div className="flex items-center gap-2 px-3 py-2 bg-gray-800/60 border-b border-gray-700">
+                  <span className="text-base leading-none" aria-hidden>
+                    {guide.icon}
+                  </span>
+                  <h5 className="text-sm font-semibold text-nvidia-green">
+                    {guide.title}
+                  </h5>
+                </div>
+                <table className="w-full text-xs">
+                  <tbody>
+                    {guide.rows.map((row, i) => (
+                      <tr
+                        key={`${row.task}-${i}`}
+                        className="border-t border-gray-800/80 first:border-t-0"
+                      >
+                        <td className="px-3 py-1.5 text-gray-400 align-top w-1/2">
+                          {row.task}
+                        </td>
+                        <td className="px-3 py-1.5 align-top">
+                          <code className="font-mono text-nvidia-green whitespace-nowrap">
+                            {row.command}
+                          </code>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ))}
           </div>
