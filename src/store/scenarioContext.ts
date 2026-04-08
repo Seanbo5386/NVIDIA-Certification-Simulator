@@ -51,6 +51,8 @@ export class ScenarioContext {
   private readonly: boolean = false;
   private eventLog: EventLog;
   private seedJobs: SeedJob[] = [];
+  // Keyed by `${nodeId}:${canonicalServiceName}` so each node has its own
+  // service state, matching real multi-node systemd behavior.
   private serviceStates: Map<string, "active" | "inactive"> = new Map();
 
   constructor(scenarioId: string, baseCluster?: ClusterConfig) {
@@ -523,24 +525,45 @@ export class ScenarioContext {
   // ── Service States (for systemctl simulation) ────────────────────
 
   /**
-   * Get a service's current state. Returns "active" by default if not set,
-   * matching real systemd behavior where most services are running unless
-   * explicitly marked otherwise by a scenario.
+   * Canonicalize a systemd unit name. systemd treats `foo` and `foo.service`
+   * as the same unit, so we strip the trailing `.service` suffix when keying
+   * the state map.
    */
-  getServiceState(serviceName: string): "active" | "inactive" {
-    return this.serviceStates.get(serviceName) ?? "active";
+  private static canonicalizeServiceName(name: string): string {
+    return name.replace(/\.service$/i, "");
+  }
+
+  private serviceKey(nodeId: string, serviceName: string): string {
+    return `${nodeId}:${ScenarioContext.canonicalizeServiceName(serviceName)}`;
   }
 
   /**
-   * Set a service's state. Used by scenarios to mark services as inactive,
-   * and by `systemctl start/stop/restart` to flip state at runtime.
+   * Get a service's current state on a specific node. Returns "active" by
+   * default if not set, matching real systemd behavior where most services
+   * are running unless explicitly marked otherwise by a scenario.
    */
-  setServiceState(serviceName: string, state: "active" | "inactive"): void {
+  getServiceState(
+    nodeId: string,
+    serviceName: string,
+  ): "active" | "inactive" {
+    return this.serviceStates.get(this.serviceKey(nodeId, serviceName)) ?? "active";
+  }
+
+  /**
+   * Set a service's state on a specific node. Used by scenarios to mark
+   * services as inactive, and by `systemctl start/stop/restart` to flip
+   * state at runtime.
+   */
+  setServiceState(
+    nodeId: string,
+    serviceName: string,
+    state: "active" | "inactive",
+  ): void {
     if (this.readonly) {
       logger.warn("Cannot set service state in readonly context");
       return;
     }
-    this.serviceStates.set(serviceName, state);
+    this.serviceStates.set(this.serviceKey(nodeId, serviceName), state);
   }
 }
 

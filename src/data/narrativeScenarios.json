@@ -4711,7 +4711,7 @@
           "validation": {
             "type": "command",
             "command": "systemctl",
-            "pattern": "^systemctl\\s+status\\b"
+            "pattern": "^systemctl(\\s+--?[\\w-]+)*\\s+status\\b"
           },
           "quiz": {
             "question": "What is the primary purpose of NVIDIA Fabric Manager?",
@@ -4738,7 +4738,7 @@
           "validation": {
             "type": "command",
             "command": "systemctl",
-            "pattern": "^systemctl\\s+start\\b"
+            "pattern": "^systemctl(\\s+--?[\\w-]+)*\\s+start\\b"
           }
         },
         {

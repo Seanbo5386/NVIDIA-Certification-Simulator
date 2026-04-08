@@ -792,20 +792,26 @@ ${formatTimestamp(3.789012)} ACPI Warning: SystemIO range conflicts with OpRegio
     context: CommandContext,
   ): CommandResult {
     const action = parsed.subcommands[0];
-    const service = parsed.subcommands[1];
+    const rawService = parsed.subcommands[1];
+    // Canonicalize unit name (systemd treats `foo` and `foo.service` the same)
+    const service = rawService?.replace(/\.service$/i, "");
     const scenarioCtx = context.scenarioContext;
+    const currentNode = context.currentNode || "dgx-00";
 
     if (action === "status") {
       if (!service) {
         return this.createError("Usage: systemctl status <service>");
       }
 
-      const state = scenarioCtx?.getServiceState(service) ?? "active";
+      const state = scenarioCtx?.getServiceState(currentNode, service) ?? "active";
 
       if (state === "inactive") {
         const output = `● ${service}.service - ${service}
    Loaded: loaded (/usr/lib/systemd/system/${service}.service; disabled; vendor preset: enabled)
-   Active: inactive (dead)`;
+   Active: inactive (dead)
+     Docs: man:${service}(8)
+
+${currentNode} systemd[1]: ${service}.service: Unit not started.`;
         return this.createSuccess(output);
       }
 
@@ -837,6 +843,7 @@ ${formatTimestamp(3.789012)} ACPI Warning: SystemIO range conflicts with OpRegio
       // Update scenario service state if a sandbox is active
       if (scenarioCtx) {
         scenarioCtx.setServiceState(
+          currentNode,
           service,
           action === "stop" ? "inactive" : "active",
         );
