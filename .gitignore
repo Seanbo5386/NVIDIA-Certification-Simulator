@@ -45,7 +45,7 @@ test-results.txt
 .playwright-mcp/
 
 # Claude Code local files
-.claude/*.local.*
+.claude/
 
 # Review screenshots and test output
 review-*.png
