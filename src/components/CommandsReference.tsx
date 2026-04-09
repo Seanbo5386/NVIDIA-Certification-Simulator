@@ -67,7 +67,8 @@ interface DecisionGuide {
 }
 
 /** Parse "Task → cmd | Task → cmd" into structured rows. */
-function parseDecisionGuide(guide: string): DecisionGuideRow[] {
+function parseDecisionGuide(guide: string | undefined): DecisionGuideRow[] {
+  if (!guide) return [];
   return guide
     .split("|")
     .map((segment) => segment.trim())
@@ -78,7 +79,8 @@ function parseDecisionGuide(guide: string): DecisionGuideRow[] {
         task: (task || "").trim(),
         command: rest.join("→").trim(),
       };
-    });
+    })
+    .filter((row) => row.task && row.command);
 }
 
 const decisionGuides: DecisionGuide[] = (
@@ -265,25 +267,27 @@ export const CommandsReference: React.FC = () => {
                     {guide.title}
                   </h5>
                 </div>
-                <table className="w-full text-xs">
-                  <tbody>
-                    {guide.rows.map((row, i) => (
-                      <tr
-                        key={`${row.task}-${i}`}
-                        className="border-t border-gray-800/80 first:border-t-0"
-                      >
-                        <td className="px-3 py-1.5 text-gray-400 align-top w-1/2">
-                          {row.task}
-                        </td>
-                        <td className="px-3 py-1.5 align-top">
-                          <code className="font-mono text-nvidia-green whitespace-nowrap">
-                            {row.command}
-                          </code>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <tbody>
+                      {guide.rows.map((row, i) => (
+                        <tr
+                          key={`${row.task}-${i}`}
+                          className="border-t border-gray-800/80 first:border-t-0"
+                        >
+                          <td className="px-3 py-1.5 text-gray-400 align-top w-1/2">
+                            {row.task}
+                          </td>
+                          <td className="px-3 py-1.5 align-top">
+                            <code className="font-mono text-nvidia-green whitespace-nowrap">
+                              {row.command}
+                            </code>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ))}
           </div>
