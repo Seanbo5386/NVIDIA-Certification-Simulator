@@ -28,6 +28,7 @@ import type { CommandFamily } from "@/types/commandFamilies";
 import { NarrativeIntro } from "./NarrativeIntro";
 import { InlineQuiz } from "./InlineQuiz";
 import { NarrativeResolution } from "./NarrativeResolution";
+import { useHardwareText } from "@/utils/hardwareTextSubstitution";
 
 interface LabWorkspaceProps {
   onClose: () => void;
@@ -107,6 +108,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
 
   // Learning progress store for tier unlock checks
   const learningProgress = useLearningProgressStore();
+  const sub = useHardwareText();
 
   const [showHints, setShowHints] = useState<Record<string, number>>({});
   const [toolHintsSidebarOpen, setToolHintsSidebarOpen] = useState(true);
@@ -514,7 +516,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                           : "SITUATION"}
                       </p>
                       <p className="text-gray-300 leading-relaxed">
-                        {currentStep.description}
+                        {sub(currentStep.description || "")}
                       </p>
                     </div>
 
@@ -522,7 +524,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                     {isConceptStep && currentStep.conceptContent && (
                       <div className="bg-gray-800 rounded-lg p-4 mb-4 border border-purple-700/50">
                         <div className="text-gray-200 leading-relaxed whitespace-pre-line text-sm">
-                          {currentStep.conceptContent}
+                          {sub(currentStep.conceptContent)}
                         </div>
                       </div>
                     )}
@@ -540,7 +542,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                                 className="text-sm text-gray-300 flex items-start gap-2"
                               >
                                 <Lightbulb className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
-                                <span>{tip}</span>
+                                <span>{sub(tip)}</span>
                               </li>
                             ))}
                           </ul>
@@ -586,7 +588,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                   </>
                 ) : (
                   <p className="text-gray-300 mb-4 leading-relaxed">
-                    {currentStep.description}
+                    {sub(currentStep.description || "")}
                   </p>
                 )}
 
@@ -618,7 +620,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                                 isPassed ? "text-gray-400 line-through" : ""
                               }
                             >
-                              {objective}
+                              {sub(objective)}
                             </span>
                           </li>
                         );
@@ -834,7 +836,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                                         Hint {idx + 1} - Level {hint.level}
                                       </div>
                                       <p className="text-sm text-gray-200">
-                                        {hint.message}
+                                        {sub(hint.message)}
                                       </p>
                                     </div>
                                   </div>
@@ -919,7 +921,7 @@ export function LabWorkspace({ onClose }: LabWorkspaceProps) {
                                 <span className="text-yellow-400 font-bold">
                                   {idx + 1}.
                                 </span>
-                                <span>{hint}</span>
+                                <span>{sub(hint)}</span>
                               </div>
                             ))}
                         </div>

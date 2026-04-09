@@ -1,4 +1,5 @@
 import { Trophy, Clock, Brain } from "lucide-react";
+import { useHardwareText } from "@/utils/hardwareTextSubstitution";
 
 interface NarrativeResolutionProps {
   resolution: string;
@@ -13,6 +14,7 @@ export function NarrativeResolution({
   timeSpent,
   onExit,
 }: NarrativeResolutionProps) {
+  const sub = useHardwareText();
   return (
     <div className="flex flex-col items-center justify-center h-full p-8 text-center">
       <div className="max-w-lg">
@@ -24,7 +26,7 @@ export function NarrativeResolution({
           Mission Complete
         </h2>
 
-        <p className="text-gray-300 mb-8 leading-relaxed">{resolution}</p>
+        <p className="text-gray-300 mb-8 leading-relaxed">{sub(resolution)}</p>
 
         {/* Stats */}
         <div className="flex justify-center gap-8 mb-8">
