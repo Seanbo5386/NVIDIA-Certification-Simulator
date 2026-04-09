@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Crosshair, Clock, Zap } from "lucide-react";
 import { useFocusTrap } from "../hooks/useFocusTrap";
+import { useHardwareText } from "@/utils/hardwareTextSubstitution";
 
 interface MissionBriefingProps {
   title: string;
@@ -27,6 +28,15 @@ export function MissionBriefing({
   skippable,
   onSkip,
 }: MissionBriefingProps) {
+  const sub = useHardwareText();
+  const resolvedHook = useMemo(
+    () => sub(narrative.hook),
+    [sub, narrative.hook],
+  );
+  const resolvedSetting = useMemo(
+    () => sub(narrative.setting),
+    [sub, narrative.setting],
+  );
   const [phase, setPhase] = useState(0);
   const [typedHook, setTypedHook] = useState("");
   const [skippedAnimation, setSkippedAnimation] = useState(false);
@@ -56,12 +66,12 @@ export function MissionBriefing({
   useEffect(() => {
     if (phase !== 2 || skippedAnimation) return;
 
-    const chars = narrative.hook.split("");
+    const chars = resolvedHook.split("");
     const timers: ReturnType<typeof setTimeout>[] = [];
 
     chars.forEach((_, i) => {
       const timer = setTimeout(() => {
-        setTypedHook(narrative.hook.slice(0, i + 1));
+        setTypedHook(resolvedHook.slice(0, i + 1));
 
         // After last character, advance to phase 3
         if (i === chars.length - 1) {
@@ -75,7 +85,7 @@ export function MissionBriefing({
     return () => {
       timers.forEach(clearTimeout);
     };
-  }, [phase, narrative.hook, skippedAnimation]);
+  }, [phase, resolvedHook, skippedAnimation]);
 
   // Phase 3 -> 4: show Accept button after setting fades in
   useEffect(() => {
@@ -86,9 +96,9 @@ export function MissionBriefing({
 
   const handleBackdropClick = useCallback(() => {
     setSkippedAnimation(true);
-    setTypedHook(narrative.hook);
+    setTypedHook(resolvedHook);
     setPhase(4);
-  }, [narrative.hook]);
+  }, [resolvedHook]);
 
   const handleDialogClick = useCallback(
     (e: React.MouseEvent) => {
@@ -162,8 +172,8 @@ export function MissionBriefing({
             <p className="text-base text-white font-medium mb-4 leading-relaxed italic min-h-[3rem]">
               {phase >= 2 && (
                 <>
-                  &ldquo;{skippedAnimation ? narrative.hook : typedHook}
-                  {(skippedAnimation || typedHook === narrative.hook) && (
+                  &ldquo;{skippedAnimation ? resolvedHook : typedHook}
+                  {(skippedAnimation || typedHook === resolvedHook) && (
                     <>&rdquo;</>
                   )}
                 </>
@@ -176,7 +186,7 @@ export function MissionBriefing({
             className={`transition-opacity duration-500 ${phase >= 3 ? "opacity-100" : "opacity-0"}`}
           >
             <p className="text-sm text-gray-300 mb-6 leading-relaxed">
-              {narrative.setting}
+              {resolvedSetting}
             </p>
           </div>
 

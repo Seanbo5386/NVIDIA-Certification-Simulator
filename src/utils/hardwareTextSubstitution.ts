@@ -53,9 +53,8 @@ function buildPlaceholderMap(systemType: SystemType): Record<string, string> {
   };
 }
 
-// Cache: avoid rebuilding the map on every call for the same systemType
-let cachedType: SystemType | null = null;
-let cachedMap: Record<string, string> = {};
+// Cache placeholder maps for all system types that have been used
+const placeholderMapCache = new Map<SystemType, Record<string, string>>();
 
 const PLACEHOLDER_RE = /\{\{([A-Z_]+)\}\}/g;
 
@@ -70,13 +69,14 @@ export function substituteHardwareText(
 ): string {
   if (!text || !text.includes("{{")) return text;
 
-  if (cachedType !== systemType) {
-    cachedType = systemType;
-    cachedMap = buildPlaceholderMap(systemType);
+  let placeholderMap = placeholderMapCache.get(systemType);
+  if (!placeholderMap) {
+    placeholderMap = buildPlaceholderMap(systemType);
+    placeholderMapCache.set(systemType, placeholderMap);
   }
 
   return text.replace(PLACEHOLDER_RE, (match, key: string) => {
-    return cachedMap[key] ?? match;
+    return placeholderMap![key] ?? match;
   });
 }
 
