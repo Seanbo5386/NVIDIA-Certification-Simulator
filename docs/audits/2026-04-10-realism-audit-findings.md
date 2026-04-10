@@ -8,7 +8,49 @@
 
 ## 1. Executive Summary
 
-_To be completed after all phases are done._
+### 1.1 Total Findings by Severity
+
+| Severity     | Count  | Description                                                       |
+| ------------ | ------ | ----------------------------------------------------------------- |
+| **Critical** | 25     | Factually wrong; would actively teach incorrect information       |
+| **High**     | 32     | Misleading or incomplete; confusing in real-world troubleshooting |
+| **Medium**   | 24     | Imprecise; ballpark correct but doesn't match official docs       |
+| **Low**      | 14     | Cosmetic; doesn't affect learning outcomes                        |
+| **Total**    | **95** |                                                                   |
+
+### 1.2 Top 10 Highest-Impact Issues
+
+1. **DGX-GB200 entry is structurally wrong** — Modeled as an 8-GPU DGX box; actual product is the NVL72 full-rack system with 72 GPUs, 36 Grace CPUs, 18 NVSwitches, and liquid cooling. Every spec value (count, CPU, NVSwitch, memory, FP16, generation name) is incorrect. **Recommendation:** Restructure as "DGX-B200" (the real 8-GPU box) or accurately model NVL72.
+
+2. **DGX-VR200 is a fabricated product** — "DGX-VR200" does not exist. The real products are "DGX Vera Rubin NVL72" (72 GPUs, Vera CPU) and "DGX Rubin NVL8" (8 GPUs, Intel Xeon 6). The CPU model assigned (Vera) is wrong for the NVL8 form factor, the SM count (256 vs 224), FP16 TFLOPS (1800 vs ~8000), and NVSwitch count (2 vs 4) are all wrong.
+
+3. **XID error codes 54, 62, 63 entirely wrong** — XID 54 is described as "Hardware Watchdog Timeout" (actually: auxiliary power connector not connected). XID 62 is labeled as informational "Spurious Host Interrupt" (actually: PMU Halt Error — critical, requires power cycle). XID 63 meaning is inverted: labeled "Row Remapping Failure" but actually means successful row remapping. These are directly testable on the NCP-AII exam.
+
+4. **DGX-B200 memory capacity wrong** — 192 GB is the die-level capacity; user-addressable memory is 180 GB (1,440 GB total). The model name, memoryGB, memoryMiB, and totalGpuMemoryGB fields all need correction. Also: FP16 (1800→2250), TF32 (900→1200), SM count (192→148 enabled), SXM version (SXM5→SXM6), and architecture label are wrong.
+
+5. **DGX-H200 specs copied from H100** — FP16 TFLOPS (989 vs 1979), TF32 (495 vs 989), base clock (1095 vs 1590 MHz), boost clock (1830 vs 1980 MHz), and memory clock (2619 vs 1313 MHz) all contain H100 values. These are visible in every `nvidia-smi -q` query.
+
+6. **H100 NVSwitch generation labeled "4th Gen"** — Correct value is "3rd Gen" (NVSwitch 3.0). NVLink is 4th generation, but the NVSwitch chip is 3rd generation. Direct exam question territory.
+
+7. **Three Ampere driver versions across the simulator** — clusterFactory (535.129.03), fabricManagerSimulator (535.104.05), and nvidia-container-cli.json (535.104.12) all disagree. Any cross-tool comparison (`nvidia-smi` vs `nv-fabricmanager --version` vs `nvidia-container-cli info`) reveals the inconsistency.
+
+8. **GPU UUID format is wrong** — clusterFactory generates 8-char truncated IDs (`GPU-A3F10C9B`); real NVIDIA UUIDs are full UUID v4 (`GPU-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`). UUIDs appear in `nvidia-smi -q`, `nvidia-smi -L`, `dcgmi discovery -l`, and are used as command arguments in GPU-specific operations.
+
+9. **HPL burn-in TFLOPS hardcoded at 450–500 for all system types** — This is 3x the theoretical FP64 peak of an A100 (19.5 TFLOPS FP64) and ~2x the A100's FP32 peak. Correct range: A100 ~130–140, H100 ~230–245, B200 ~306–324 TFLOPS.
+
+10. **`dcgmi discovery -l` output format wrong** — Produces flat indented text instead of the characteristic DCGM bordered table format used by every other DCGM subcommand. Students will not recognize the real tool's output structure.
+
+### 1.3 Overall Realism Assessment
+
+**High-generation systems (B200, GB200, VR200) require significant remediation.** The A100 and H100 specs are broadly sound with targeted corrections needed on clock speeds and NVSwitch generation labeling. The H200 was copy-pasted from H100 and needs a full pass. B200 has 6 critical spec errors. GB200 and VR200 are structurally incorrect product models that need architectural redesign before other values are worth correcting.
+
+**XID error codes are a certification-critical weakness** — 4 of the 28 audited codes are factually wrong in ways that would cause an exam failure: wrong name, inverted meaning, or wrong severity classification.
+
+**Simulator cross-consistency is low** — Driver versions appear in 3 variants, CUDA paths don't track the node's actual CUDA version, DCGM and Slurm versions disagree between tools. None of these are difficult to fix.
+
+**Data file command syntax is generally sound** — The ~280 nvidia-smi references, Slurm commands, and IB commands in quiz/exam/scenario files are mostly correct. The most impactful issue is `ibportstate -R` appearing as a correct answer when it is invalid syntax.
+
+---
 
 ---
 
@@ -641,7 +683,81 @@ All quiz correct answers verified accurate. Tool descriptions correct. Troublesh
 
 ### 4.2 dcgmi/Slurm/IB Simulators
 
-_Pending re-audit (agent hit rate limit)..._
+#### [High] dcgmiSimulator: `dcgmi discovery -l` output format wrong
+
+- **File:** src/simulators/dcgmiSimulator.ts:415–429
+- **Current Value:** Flat indented text: `GPU 0: GPU-...` with 2-space-indented key/value pairs
+- **Correct Value:** Bordered table with `+--------+---...+` header/separator rows. All other DCGM subcommands (`diag`, `health`, `fieldgroup`) correctly use the bordered table style — `discovery` is inconsistent with both the rest of the simulator and the real tool.
+- **Impact:** Students learning to parse `dcgmi discovery -l` output will not recognize the real bordered table format.
+
+#### [High] slurmSimulator: `sinfo` GRES hardcodes `gpu:h100` for all system types
+
+- **File:** src/simulators/slurmSimulator.ts:277, 288, 816–817
+- **Current Value:** `Gres=gpu:h100:8` / `GresUsed=gpu:h100:...` for all cluster configurations
+- **Correct Value:** Should read from `node.systemType` via `getHardwareSpecs()` (already imported at line 8). A DGX-B200 should show `gpu:b200:8`, a DGX-A100 should show `gpu:a100:8`.
+- **Impact:** Any non-H100 scenario shows incorrect GRES identifiers in `sinfo` and `scontrol show node`.
+
+#### [Medium] dcgmiSimulator: DCGM version is stale (3.1.3 vs current 3.3.x)
+
+- **File:** src/simulators/dcgmiSimulator.ts:249
+- **Current Value:** `"3.1.3"` (mid-2023)
+- **Correct Value:** DCGM 3.3.x is the current production release line as of 2026. `3.3.5` or similar is appropriate for H100/H200-era clusters.
+
+#### [Medium] dcgmiSimulator: `dcgmi diag` "Warning:" prefix should be "Error:" on failure
+
+- **File:** src/simulators/dcgmiSimulator.ts:383
+- **Current Value:** `"\x1b[31mWarning: N test(s) failed"`
+- **Correct Value:** Real DCGM prints `"Error: "` (not `"Warning: "`) when tests fail. "Warning" is used only for non-failure advisory messages.
+
+#### [Medium] dcgmiSimulator: `dcgmi diag` level-1 test list is incomplete
+
+- **File:** src/simulators/dcgmiSimulator.ts:349–361
+- **Current Value:** 10 tests including "Pulse Test" (non-existent DCGM test name)
+- **Correct Value:** Real level-1 short diagnostic includes `Inforom` and `Fabric Manager` checks on NVSwitch systems. Level-1 hardware test is `Pcie`, not "Pulse Test".
+
+#### [Medium] dcgmiSimulator: `dcgmi health` thermal threshold 80°C contradicts displayed policy
+
+- **File:** src/simulators/dcgmiSimulator.ts:533 vs :735
+- **Current Value:** Flags `gpu.temperature > 80` as thermal issue (line 533); policy display shows `> 83°C` throttle and `> 90°C` critical (line 735)
+- **Correct Value:** Health check threshold should match the configured policy threshold (83–85°C for H100). Using 80°C contradicts the displayed policy values.
+
+#### [Medium] slurmSimulator: `scontrol show node` timestamps hardcoded to January 2024
+
+- **File:** src/simulators/slurmSimulator.ts:823–831
+- **Current Value:** `BootTime=2024-01-10T08:00:00`, `SlurmdStartTime=2024-01-10T08:05:00`, `Reason=...[root@2024-01-11T10:00:00]`
+- **Correct Value:** Should be generated dynamically relative to `new Date()`. A node booted 26+ months ago is implausible for a production cluster.
+
+#### [Medium] slurmSimulator: missing `mix` state for partially-allocated nodes
+
+- **File:** src/simulators/slurmSimulator.ts:373–411
+- **Current Value:** `sinfo` groups nodes into `idle`, `alloc`, and `drain` only
+- **Correct Value:** Real Slurm uses `mix` state when a node is partially allocated (e.g., 4 of 8 GPUs in use). This is a common state in real DGX clusters.
+
+#### [Medium] slurmSimulator: `GresUsed` GPU index range hardcoded to `0-3`
+
+- **File:** src/simulators/slurmSimulator.ts:817
+- **Current Value:** `GresUsed=gpu:h100:4(IDX:0-3)` for any allocated node
+- **Correct Value:** Index range should reflect actual allocated GPU IDs. Real Slurm shows specific allocated indices (e.g., `IDX:0,1,4,5`).
+
+#### [Low] dcgmiSimulator: DCGM version string — `dcgmi --version` vs package version mismatch
+
+- Covered in Section 8 (cross-system consistency finding).
+
+#### [Low] slurmSimulator: Slurm version 23.02.6 is two major releases behind
+
+- **File:** src/simulators/slurmSimulator.ts:123, 202, 433, 771, 1037+
+- **Current Value:** `"slurm 23.02.6"` everywhere
+- **Correct Value:** Slurm 23.11.x and 24.05.x are current production releases as of 2026. Version format (lowercase, no newline) is correct.
+
+#### [Low] ibstat: CA name shows hardware model instead of kernel device name
+
+- **File:** src/simulators/infinibandSimulator.ts (ibstat handler)
+- **Current Value:** CA name shown as "ConnectX-7" (hardware model name)
+- **Correct Value:** Real `ibstat` shows kernel device name: `mlx5_0`, `mlx5_1`, etc. Hardware model is available via `ibstat mlx5_0` device-specific output, not the device header.
+
+#### Verified Correct
+
+DCGM health subsystem names and check categories, DCGM fieldgroup management, DCGM policy thresholds display, Slurm node state names (idle/alloc/drain/down), `sinfo` column names and basic alignment, `squeue`/`sacct` output formats, `ibstat` port state terminology (Active/Down/Init, LinkUp/Polling), `ibdiagnet` diagnostic output format, `perfquery` counter names, InfiniBand error counter field names.
 
 ---
 
@@ -717,15 +833,99 @@ XID 43 timing (5→10→15s), XID 48 timing (2→8→12s), thermal cascade timin
 
 ---
 
-## 7. Layer 6 — Cluster Factory & Cross-System Consistency
+## 7. Layer 6 — Cluster Factory & Node Generation
 
-_Pending re-audit (agent hit rate limit)..._
+#### [Medium] GPU UUIDs are 8-char truncated hex, not full UUID v4
+
+- **File:** src/utils/clusterFactory.ts:80–87
+- **Current Value:** `"GPU-" + 8 random hex chars` → e.g., `GPU-A3F10C9B` (uppercase)
+- **Correct Value:** Real NVIDIA GPU UUIDs are full UUID v4: `GPU-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` (32 hex chars in 5 groups, lowercase)
+- **Impact:** Every dynamically-created cluster node has clearly non-real UUIDs. Commands like `nvidia-smi -i GPU-<uuid>` would fail to match if a user copies the UUID from one command to another. Test fixtures already use the correct full format (`GPU-12345678-1234-1234-1234-123456789012`), creating a test/runtime divergence.
+
+#### [Medium] fabricManagerSimulator `meta.version` stuck at 535.104.05
+
+- **File:** src/simulators/fabricManagerSimulator.ts:53, 135
+- **Current Value:** `meta.version = "535.104.05"` hardcoded
+- **Correct Value:** Should match `node.nvidiaDriverVersion` (535.129.03 for Ampere from clusterFactory). On real systems, Fabric Manager version tracks the driver branch identically.
+- **Impact:** `nv-fabricmanager --version` output is inconsistent with `nvidia-smi` output. The test at `fabricManagerSimulator.test.ts:801` locks in the mismatch.
+
+#### [Medium] nvidiaBugReportSimulator: same stale driver fallback
+
+- **File:** src/simulators/nvidiaBugReportSimulator.ts:28, 49
+- **Current Value:** Default fallback `"535.104.05"` (25 patch releases behind clusterFactory's `535.129.03`)
+- **Correct Value:** Should derive from node's `nvidiaDriverVersion`
+
+#### [Medium] nvidia-container-cli.json data file uses a third Ampere driver variant
+
+- **File:** src/data/output/containers/nvidia-container-cli.json (all 4 `output_example` fields)
+- **Current Value:** `"535.104.12"` — a third distinct Ampere patch level
+- **Correct Value:** Must match the node's driver version (`535.129.03`). Three different 535.x patch strings now appear across the simulator: `.03` (clusterFactory), `.05` (fabricManager), `.12` (container-cli).
+
+#### [Low] OS/kernel version inconsistencies across data files
+
+- **Files:** Various JSON files, narrativeScenarios.json
+- **Current Value:** Some files use kernel `5.15.0-88-generic`, `5.15.0-86-generic`, `5.15.0-50-generic`; clusterFactory uses `5.15.0-91-generic`
+- **Correct Value:** Canonicalize to `5.15.0-91-generic` across all files
+- **Additional:** narrativeScenarios.json references driver version `"535.154"` which does not exist
+
+#### [Low] PCI address format: GPU slots start at 0x10 (not slot 0)
+
+- **File:** src/utils/clusterFactory.ts:106
+- **Current Value:** `00000000:${(0x10 + id).toString(16).padStart(2, "0")}:00.0`
+- **Note:** Real DGX systems assign GPUs to specific PCIe slots based on baseboard topology (A100: bus IDs 07, 0f, 47, 4f, 87, 8f, b7, bf). Starting at 0x10 (16) is arbitrary and doesn't match DGX slot assignments. Medium-severity for systems where PCI IDs appear in output.
+
+#### Verified Correct
+
+BlueField-3 mode configuration (DPU mode, Arm owns NIC resources), OVS configuration, rshim availability flag, InfiniBand port LID starting values, SLURM partition names (batch/interactive/gpu), BCM HA topology (primary/secondary/Active state).
 
 ---
 
 ## 8. Cross-System Consistency Findings
 
-_Pending re-audit (agent hit rate limit)..._
+### 8.1 Driver Version Fragmentation
+
+Three distinct Ampere (535.x) driver patch levels are embedded across the simulator:
+
+| Location                                               | Driver Version |
+| ------------------------------------------------------ | -------------- |
+| `src/utils/clusterFactory.ts` (Ampere)                 | `535.129.03`   |
+| `src/simulators/fabricManagerSimulator.ts` (fallback)  | `535.104.05`   |
+| `src/data/output/containers/nvidia-container-cli.json` | `535.104.12`   |
+
+**Impact:** A learner running `nvidia-smi`, `nv-fabricmanager --version`, and `nvidia-container-cli info` would see three different patch versions for what should be one identically-versioned driver stack.
+
+### 8.2 CUDA Path Hardcoded to 12.2 Regardless of Node Type
+
+- **File:** src/simulators/linuxUtilsSimulator.ts:1182–1205, 1359, 1369, 1527–1529
+- **Current Value:** `CUDA_HOME=/usr/local/cuda-12.2`, `libcudart.so.12.2.140`, `CUDA version: 12.2` in `env`, `ldconfig -p`, and `dpkg -l` outputs
+- **Context:** clusterFactory assigns `cuda: "12.4"` for Hopper, `"12.6"` for Blackwell
+- **Impact:** `nvidia-smi` correctly shows 12.4 for Hopper (reads `node.cudaVersion`), but `env`, `ldconfig`, and `dpkg` all show 12.2. Cross-tool CUDA version check produces contradictory results.
+
+### 8.3 DCGM Version Mismatch: dcgmiSimulator vs dpkg
+
+- **Files:** `src/simulators/dcgmiSimulator.ts:249` vs `src/simulators/linuxUtilsSimulator.ts:1264`
+- **dcgmiSimulator:** `dcgmi --version` = `3.1.3`
+- **linuxUtilsSimulator (dpkg):** `datacenter-gpu-manager 3.1.8-1`
+- **Impact:** `dcgmi --version` and `dpkg -l | grep dcgm` report different patch versions. Visible to detail-oriented users.
+
+### 8.4 Slurm Version Mismatch: scontrol vs syslog
+
+- **Files:** `src/simulators/slurmSimulator.ts` vs `src/simulators/linuxUtilsSimulator.ts:405`
+- **slurmSimulator:** `23.02.6` (all version outputs: sinfo -V, scontrol version, etc.)
+- **linuxUtilsSimulator (journalctl):** `slurmd version 23.02.7`
+- **Impact:** Cross-tool Slurm version check produces two different patch numbers for the same daemon.
+
+### 8.5 GPU UUID Format Inconsistency: Runtime vs Test Fixtures
+
+- **Runtime (clusterFactory.ts):** Generates `GPU-XXXXXXXX` (8-char, uppercase)
+- **Test fixtures (simulator tests):** Use `GPU-12345678-1234-1234-1234-123456789012` (full UUID v4)
+- **Impact:** Test coverage does not validate the actual UUID format displayed to users. Any command that accepts a UUID as input (e.g., `nvidia-smi -i GPU-...`) would match test fixtures but not the runtime-generated IDs.
+
+### 8.6 OFED Version: Tool Version vs Bundle Version (Cosmetic)
+
+- **ibstat/IB tools (`meta.version`):** `"5.9-0"` (libibverbs package version)
+- **`ofed_info` output:** `MLNX_OFED_LINUX-23.10-1.1.9.0`
+- **Note:** On real systems these can legitimately differ — ibstat reports the libibverbs version, ofed_info reports the OFED bundle. Low severity; cosmetic inconsistency only.
 
 ---
 
