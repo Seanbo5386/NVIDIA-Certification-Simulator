@@ -21,7 +21,7 @@ const GPU_TYPE_MAP: Record<SystemType, GPUType> = {
   "DGX-H100": "H100-SXM",
   "DGX-H200": "H200-SXM",
   "DGX-B200": "B200",
-  "DGX-GB200": "GB200",
+  "DGX-GB200": "B200",
   "DGX-VR200": "R200",
 };
 
@@ -78,12 +78,15 @@ export const MIG_PROFILES = [
 ];
 
 function generateUUID(): string {
-  return (
-    "GPU-" +
-    Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16))
-      .join("")
-      .toUpperCase()
-  );
+  const hex = () =>
+    Math.floor(Math.random() * 0xffffffff)
+      .toString(16)
+      .padStart(8, "0");
+  const hex2 = () =>
+    Math.floor(Math.random() * 0xffff)
+      .toString(16)
+      .padStart(4, "0");
+  return `GPU-${hex()}-${hex2()}-${hex2()}-${hex2()}-${hex()}${hex2()}`;
 }
 
 function createNVLinkConnections(specs: HardwareSpec): NVLinkConnection[] {
@@ -131,12 +134,16 @@ function createGPU(id: number, specs: HardwareSpec): GPU {
   };
 }
 
-function createBlueFieldDPU(id: number): BlueFieldDPU {
+function createBlueFieldDPU(id: number, systemType: SystemType): BlueFieldDPU {
+  // BF-2 (mt41686) for Ampere; BF-3 (mt41692) for Hopper+
+  const isBF3 = systemType !== "DGX-A100";
+  const deviceId = isBF3 ? "mt41692" : "mt41686";
+  const firmwareVersion = isBF3 ? "24.35.2000" : "24.26.1610";
   return {
     id,
     pciAddress: `0000:${(0xa0 + id).toString(16)}:00.0`,
-    devicePath: `/dev/mst/mt41692_pciconf${id}`,
-    firmwareVersion: "24.35.2000",
+    devicePath: `/dev/mst/${deviceId}_pciconf${id}`,
+    firmwareVersion,
     mode: {
       mode: "DPU",
       internalCpuModel: 1,
@@ -189,7 +196,7 @@ function createInfiniBandHCA(id: number, specs: HardwareSpec): InfiniBandHCA {
       specs.network.hcaModel === "ConnectX-9"
         ? "34.42.1000"
         : specs.network.hcaModel === "ConnectX-8"
-          ? "32.41.1000"
+          ? "40.48.1000"
           : specs.network.hcaModel === "ConnectX-7"
             ? "28.39.1002"
             : "20.35.1012",
@@ -295,7 +302,7 @@ function createBMCSensors(): BMCSensor[] {
 function createBMC(nodeId: number): BMC {
   return {
     ipAddress: `192.168.0.${100 + nodeId}`,
-    macAddress: `00:0a:f7:${nodeId.toString(16).padStart(2, "0")}:00:01`,
+    macAddress: `b8:ce:f6:${nodeId.toString(16).padStart(2, "0")}:00:01`,
     firmwareVersion: "3.47.00",
     manufacturer: "NVIDIA",
     sensors: createBMCSensors(),
@@ -315,8 +322,8 @@ export function createDGXNode(
     Ampere: { driver: "535.129.03", cuda: "12.2" },
     Hopper: { driver: "550.54.15", cuda: "12.4" },
     Blackwell: { driver: "560.35.03", cuda: "12.6" },
-    "Blackwell Ultra": { driver: "565.47.01", cuda: "12.8" },
-    Rubin: { driver: "570.10.01", cuda: "13.0" },
+    "Blackwell Ultra": { driver: "565.57.01", cuda: "12.7" },
+    Rubin: { driver: "570.86.15", cuda: "12.8" },
   };
   const versions =
     driverVersions[specs.system.generation] || driverVersions["Ampere"];
@@ -328,7 +335,9 @@ export function createDGXNode(
     gpus: Array.from({ length: specs.gpu.count }, (_, i) =>
       createGPU(i, specs),
     ),
-    dpus: Array.from({ length: 2 }, (_, i) => createBlueFieldDPU(i)),
+    dpus: Array.from({ length: 2 }, (_, i) =>
+      createBlueFieldDPU(i, systemType),
+    ),
     hcas: Array.from({ length: specs.network.hcaCount }, (_, i) =>
       createInfiniBandHCA(i, specs),
     ),

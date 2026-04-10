@@ -99,13 +99,13 @@ describe("MetricsSimulator", () => {
     it("should use architecture-appropriate boost clock for thermal throttle", () => {
       const h100Gpu = createMockGPU({
         name: "NVIDIA H100-SXM5-80GB",
-        clocksSM: 1830,
+        clocksSM: 1980,
       });
       const result = simulator.injectFault(h100Gpu, "thermal");
 
-      // H100 boost is 1830 MHz; at 85°C: 1830 - (85-70)*10 = 1680
-      expect(result.clocksSM).toBe(1680);
-      expect(result.clocksSM).toBeLessThan(1830);
+      // H100 boost is 1980 MHz; at 85°C: 1980 - (85-70)*10 = 1830
+      expect(result.clocksSM).toBe(1830);
+      expect(result.clocksSM).toBeLessThan(1980);
     });
 
     it("should inject NVLink failure", () => {
@@ -294,7 +294,7 @@ describe("MetricsSimulator", () => {
     it("should use architecture-appropriate SM clock for H100", () => {
       const h100Gpu = createMockGPU({
         name: "NVIDIA H100-SXM5-80GB",
-        clocksSM: 1830,
+        clocksSM: 1980,
         temperature: 50,
         powerDraw: 200,
         powerLimit: 700,
@@ -306,9 +306,9 @@ describe("MetricsSimulator", () => {
       for (let i = 0; i < 20; i++) {
         gpu = tickMetrics([gpu])[0];
       }
-      // H100 boost is 1830 MHz; at moderate temp (<70°C) should stay near boost
+      // H100 boost is 1980 MHz; at moderate temp (<70°C) should stay near boost
       expect(gpu.clocksSM).toBeGreaterThan(1600);
-      expect(gpu.clocksSM).toBeLessThanOrEqual(1830);
+      expect(gpu.clocksSM).toBeLessThanOrEqual(1980);
     });
   });
 });
