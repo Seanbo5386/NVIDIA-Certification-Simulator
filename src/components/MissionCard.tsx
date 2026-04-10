@@ -10,6 +10,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { validateCommandExecuted } from "@/utils/commandValidator";
+import { useHardwareText } from "@/utils/hardwareTextSubstitution";
 import { InlineQuiz } from "./InlineQuiz";
 import type { NarrativeQuiz } from "../types/scenarios";
 
@@ -96,6 +97,7 @@ export function MissionCard({
   narrativeContext,
   onQuizComplete,
 }: MissionCardProps) {
+  const sub = useHardwareText();
   const [showHintDropdown, setShowHintDropdown] = useState(false);
   const [showInfoPopover, setShowInfoPopover] = useState(false);
   const [flashingChip, setFlashingChip] = useState<number | null>(null);
@@ -199,7 +201,7 @@ export function MissionCard({
                 <div className="absolute top-full right-0 mt-1 w-72 bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-3 z-30">
                   {narrativeContext && (
                     <p className="text-xs text-gray-300 mb-2">
-                      {narrativeContext}
+                      {sub(narrativeContext)}
                     </p>
                   )}
                   {learningObjectives && learningObjectives.length > 0 && (
@@ -228,7 +230,7 @@ export function MissionCard({
 
         {/* Row 2 — Current Step Task */}
         <p className="text-xs text-gray-300 leading-snug mb-1.5 line-clamp-2">
-          {currentStep.task || currentStep.description}
+          {sub(currentStep.task || currentStep.description || "")}
         </p>
 
         {/* Row 3 — Commands / Concept / Observe */}
@@ -270,9 +272,12 @@ export function MissionCard({
             tabIndex={0}
             className="text-xs text-purple-300 bg-purple-900/20 rounded px-2 py-1.5 mb-1.5 max-h-32 overflow-y-auto whitespace-pre-line"
           >
-            {currentStep.conceptText ||
-              currentStep.conceptContent ||
-              currentStep.description}
+            {sub(
+              currentStep.conceptText ||
+                currentStep.conceptContent ||
+                currentStep.description ||
+                "",
+            )}
           </div>
         )}
 
@@ -336,7 +341,7 @@ export function MissionCard({
                         <span className="text-yellow-400 font-mono mr-1">
                           {idx + 1}.
                         </span>
-                        {hint}
+                        {sub(hint)}
                       </li>
                     ))}
                   </ul>

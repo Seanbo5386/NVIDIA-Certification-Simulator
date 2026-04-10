@@ -7,6 +7,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { validateCommandExecuted } from "@/utils/commandValidator";
+import { useHardwareText } from "@/utils/hardwareTextSubstitution";
 import { InlineQuiz } from "./InlineQuiz";
 import type { NarrativeQuiz } from "../types/scenarios";
 
@@ -72,6 +73,7 @@ export function MissionInstructionPanel({
   revealedHints,
   onQuizComplete,
 }: MissionInstructionPanelProps) {
+  const sub = useHardwareText();
   const [flashingChip, setFlashingChip] = useState<number | null>(null);
   const [quizAnswered, setQuizAnswered] = useState(false);
 
@@ -130,7 +132,7 @@ export function MissionInstructionPanel({
               Situation
             </h4>
             <p className="text-sm text-gray-300 leading-relaxed">
-              {currentStep.situation}
+              {sub(currentStep.situation)}
             </p>
           </div>
         )}
@@ -142,7 +144,7 @@ export function MissionInstructionPanel({
               Your Task
             </h4>
             <p className="text-sm text-white font-medium leading-relaxed">
-              {currentStep.task || currentStep.description}
+              {sub(currentStep.task || currentStep.description || "")}
             </p>
           </div>
         )}
@@ -196,9 +198,12 @@ export function MissionInstructionPanel({
             tabIndex={0}
             className="text-sm text-purple-300 bg-purple-900/20 rounded px-4 py-3 whitespace-pre-line"
           >
-            {currentStep.conceptText ||
-              currentStep.conceptContent ||
-              currentStep.description}
+            {sub(
+              currentStep.conceptText ||
+                currentStep.conceptContent ||
+                currentStep.description ||
+                "",
+            )}
           </div>
         )}
 
@@ -237,7 +242,7 @@ export function MissionInstructionPanel({
                     <span className="mt-0.5 shrink-0">
                       {passed ? "\u2713" : "\u25CB"}
                     </span>
-                    {obj}
+                    {sub(obj)}
                   </li>
                 );
               })}
@@ -265,7 +270,7 @@ export function MissionInstructionPanel({
                     <span className="text-yellow-400 font-mono mr-1.5">
                       {idx + 1}.
                     </span>
-                    {hint}
+                    {sub(hint)}
                   </li>
                 ))}
               </ul>

@@ -397,8 +397,8 @@
       "domain": 1,
       "title": "The Midnight Deployment",
       "narrative": {
-        "hook": "New DGX H100 cluster arrives at 11 PM - deployment deadline is 8 AM.",
-        "setting": "You're the lead systems engineer responsible for bringing up a 4-node DGX H100 cluster before the AI team's Monday morning deadline.",
+        "hook": "New {{SYSTEM_NAME}} cluster arrives at 11 PM - deployment deadline is 8 AM.",
+        "setting": "You're the lead systems engineer responsible for bringing up a 4-node {{SYSTEM_NAME}} cluster before the AI team's Monday morning deadline.",
         "resolution": "Successfully configure BMC, validate firmware, and bring all GPUs online with proper driver installation."
       },
       "commandFamilies": ["bmc-hardware", "gpu-monitoring", "diagnostics"],
@@ -407,7 +407,7 @@
       "steps": [
         {
           "id": "step-1",
-          "situation": "The shipping crates are open. Four pristine DGX H100 nodes sit on the rack rails, power cables ready.",
+          "situation": "The shipping crates are open. Four pristine {{SYSTEM_NAME}} nodes sit on the rack rails, power cables ready.",
           "task": "Before powering on, use ipmitool to verify BMC connectivity and check the System Event Log for any shipping damage alerts.",
           "expectedCommands": ["ipmitool sel list", "ipmitool sel elist"],
           "hints": [
@@ -455,7 +455,7 @@
           "expectedCommands": ["nvidia-smi"],
           "hints": [
             "nvidia-smi shows all GPUs",
-            "Look for 8x H100 GPUs",
+            "Look for 8x {{GPU_MODEL}} GPUs",
             "Check for any ERR! or N/A values"
           ],
           "validation": {
@@ -1095,7 +1095,7 @@
       "title": "The Rack Expansion",
       "narrative": {
         "hook": "Four new DGX nodes arrive to expand the training cluster capacity by 50%.",
-        "setting": "Budget approved, hardware delivered. Your job is to integrate 4 new DGX A100 nodes into the existing 8-node cluster seamlessly.",
+        "setting": "Budget approved, hardware delivered. Your job is to integrate 4 new {{SYSTEM_NAME}} nodes into the existing 8-node cluster seamlessly.",
         "resolution": "Configure BMC networking, validate GPU health, and integrate nodes into Slurm."
       },
       "commandFamilies": [
@@ -1137,7 +1137,7 @@
         },
         {
           "id": "step-3",
-          "situation": "Four new DGX A100 nodes are racked, cabled, and powered on. BMC LEDs show network activity.",
+          "situation": "Four new {{SYSTEM_NAME}} nodes are racked, cabled, and powered on. BMC LEDs show network activity.",
           "task": "Use ipmitool to verify BMC connectivity and check system power state.",
           "expectedCommands": ["ipmitool chassis status"],
           "hints": [
@@ -1159,7 +1159,7 @@
           "hints": [
             "dmidecode -t system for model",
             "dmidecode -t memory for RAM",
-            "DGX A100 should have 1TB or 2TB"
+            "{{SYSTEM_NAME}} should have {{SYSTEM_MEMORY_GB}}GB+ RAM"
           ],
           "validation": {
             "type": "command",
@@ -1180,13 +1180,13 @@
         },
         {
           "id": "step-5",
-          "situation": "Hardware matches spec: DGX A100 with 1TB RAM, 8 GPUs expected.",
-          "task": "Run nvidia-smi to verify all 8 A100 GPUs are detected.",
+          "situation": "Hardware matches spec: {{SYSTEM_NAME}} with {{SYSTEM_MEMORY_GB}}GB RAM, 8 GPUs expected.",
+          "task": "Run nvidia-smi to verify all 8 {{GPU_MODEL}} GPUs are detected.",
           "expectedCommands": ["nvidia-smi"],
           "hints": [
             "nvidia-smi shows GPU inventory",
-            "Should see 8 A100 GPUs",
-            "Check memory: 40GB or 80GB per GPU"
+            "Should see 8 {{GPU_MODEL}} GPUs",
+            "Check memory: 40GB or {{GPU_MEMORY_GB}}GB per GPU"
           ],
           "validation": {
             "type": "command",
@@ -1196,13 +1196,13 @@
         },
         {
           "id": "step-6",
-          "situation": "All 8 GPUs detected: A100-SXM4-80GB. Time for health validation.",
+          "situation": "All 8 GPUs detected: {{GPU_MODEL_FULL}}. Time for health validation.",
           "task": "Check GPU topology to verify NVLink connectivity between GPUs.",
           "expectedCommands": ["nvidia-smi topo -m"],
           "hints": [
             "nvidia-smi topo -m shows topology",
             "All GPUs should connect via NVLink",
-            "NV12 for A100 systems"
+            "{{NVLINK_LABEL}} for {{GPU_MODEL}} systems"
           ],
           "validation": {
             "type": "command",
@@ -1210,7 +1210,7 @@
             "pattern": "topo"
           },
           "quiz": {
-            "question": "What does 'NV12' in topology output indicate?",
+            "question": "What does '{{NVLINK_LABEL}}' in topology output indicate?",
             "options": [
               "12 NVLink connections",
               "NVLink version 1.2",
@@ -1218,7 +1218,7 @@
               "PCIe gen 4 x12"
             ],
             "correctIndex": 0,
-            "explanation": "NV12 indicates 12 NVLink connections between the GPU pair, providing high-bandwidth communication for multi-GPU workloads like distributed training."
+            "explanation": "{{NVLINK_LABEL}} indicates 12 NVLink connections between the GPU pair, providing high-bandwidth communication for multi-GPU workloads like distributed training."
           }
         },
         {
@@ -1311,10 +1311,26 @@
             "pattern": "node|update|show"
           },
           "autoFaults": [
-            { "nodeId": "dgx-08", "type": "add-node", "severity": "warning" },
-            { "nodeId": "dgx-09", "type": "add-node", "severity": "warning" },
-            { "nodeId": "dgx-10", "type": "add-node", "severity": "warning" },
-            { "nodeId": "dgx-11", "type": "add-node", "severity": "warning" }
+            {
+              "nodeId": "dgx-08",
+              "type": "add-node",
+              "severity": "warning"
+            },
+            {
+              "nodeId": "dgx-09",
+              "type": "add-node",
+              "severity": "warning"
+            },
+            {
+              "nodeId": "dgx-10",
+              "type": "add-node",
+              "severity": "warning"
+            },
+            {
+              "nodeId": "dgx-11",
+              "type": "add-node",
+              "severity": "warning"
+            }
           ]
         },
         {
@@ -1778,9 +1794,9 @@
       "domain": 2,
       "title": "The Fiber Optic Fault",
       "narrative": {
-        "hook": "A newly racked DGX node's InfiniBand ports refuse to train at full NDR 400 Gb/s speed.",
-        "setting": "The datacenter team just installed a new DGX H100 node. Cabling is complete, but the fabric manager reports degraded link widths on two ports.",
-        "resolution": "You traced the issue to a faulty QSFP-DD transceiver with dirty fiber connectors, confirmed via mlxlink eye diagram analysis and mlxcables diagnostics. After reseating and cleaning the optics, all ports trained at full 4x NDR speed."
+        "hook": "A newly racked DGX node's InfiniBand ports refuse to train at full {{NET_PROTOCOL}} {{NET_RATE_GBS}} Gb/s speed.",
+        "setting": "The datacenter team just installed a new {{SYSTEM_NAME}} node. Cabling is complete, but the fabric manager reports degraded link widths on two ports.",
+        "resolution": "You traced the issue to a faulty QSFP-DD transceiver with dirty fiber connectors, confirmed via mlxlink eye diagram analysis and mlxcables diagnostics. After reseating and cleaning the optics, all ports trained at full 4x {{NET_PROTOCOL}} speed."
       },
       "commandFamilies": ["infiniband-tools", "gpu-monitoring", "bmc-hardware"],
       "estimatedMinutes": 15,
@@ -1790,16 +1806,16 @@
           "id": "step-1",
           "type": "concept",
           "situation": "Before diagnosing the link issue, your lead engineer gives you a quick primer on InfiniBand in the datacenter.",
-          "task": "InfiniBand and NDR Networking",
+          "task": "InfiniBand and {{NET_PROTOCOL}} Networking",
           "expectedCommands": [],
           "hints": [],
           "validation": {
             "type": "none"
           },
-          "conceptContent": "InfiniBand is a high-bandwidth, low-latency network fabric used in GPU clusters for inter-node communication.\n\nDGX H100 uses NDR (Next Data Rate) InfiniBand:\n- 400 Gb/s per port (4x lanes at 100 Gb/s each)\n- Sub-microsecond latency\n- RDMA (Remote Direct Memory Access) for GPU-to-GPU transfers\n\nKey concepts:\n- Link Width: Number of lanes (1x, 4x). Full speed requires 4x.\n- Link Rate: Speed per lane. NDR = 100 Gb/s per lane.\n- HCA: Host Channel Adapter — the InfiniBand NIC in each node.\n- Transceiver: QSFP-DD module that converts electrical signals to optical.\n\nDegraded link width (1x instead of 4x) usually points to a cable or transceiver issue.",
+          "conceptContent": "InfiniBand is a high-bandwidth, low-latency network fabric used in GPU clusters for inter-node communication.\n\n{{SYSTEM_NAME}} uses {{NET_PROTOCOL}} (Next Data Rate) InfiniBand:\n- 400 Gb/s per port (4x lanes at 100 Gb/s each)\n- Sub-microsecond latency\n- RDMA (Remote Direct Memory Access) for GPU-to-GPU transfers\n\nKey concepts:\n- Link Width: Number of lanes (1x, 4x). Full speed requires 4x.\n- Link Rate: Speed per lane. {{NET_PROTOCOL}} = 100 Gb/s per lane.\n- HCA: Host Channel Adapter — the InfiniBand NIC in each node.\n- Transceiver: QSFP-DD module that converts electrical signals to optical.\n\nDegraded link width (1x instead of 4x) usually points to a cable or transceiver issue.",
           "tips": [
             "ibstat is the first command to check port status and link speed",
-            "NDR at 1x width runs at only 100 Gb/s instead of 400 Gb/s — a 75% bandwidth loss"
+            "{{NET_PROTOCOL}} at 1x width runs at only 100 Gb/s instead of 400 Gb/s — a 75% bandwidth loss"
           ]
         },
         {
@@ -1820,13 +1836,13 @@
         },
         {
           "id": "step-3",
-          "situation": "The new DGX H100 node has been racked and cabled. The network team says two InfiniBand ports are showing reduced bandwidth.",
+          "situation": "The new {{SYSTEM_NAME}} node has been racked and cabled. The network team says two InfiniBand ports are showing reduced bandwidth.",
           "task": "Start by checking the InfiniBand HCA port status to see which ports are active and their link rates.",
           "expectedCommands": ["ibstat"],
           "hints": [
             "ibstat shows HCA port status",
             "Look at the 'Rate' field for each port",
-            "NDR should show 400 Gb/s"
+            "{{NET_PROTOCOL}} should show {{NET_RATE_GBS}} Gb/s"
           ],
           "validation": {
             "type": "command",
@@ -1943,7 +1959,7 @@
           "expectedCommands": ["ibstat"],
           "hints": [
             "ibstat to re-check port rates",
-            "Should now show 400 Gb/s",
+            "Should now show {{NET_RATE_GBS}} Gb/s",
             "Both ports should be 4x width"
           ],
           "validation": {
@@ -1954,7 +1970,7 @@
         },
         {
           "id": "step-10",
-          "situation": "Both ports now show 400 Gb/s at full 4x width. The fiber cleaning resolved the issue.",
+          "situation": "Both ports now show {{NET_RATE_GBS}} Gb/s at full 4x width. The fiber cleaning resolved the issue.",
           "task": "Run a final iblinkinfo to confirm the node is fully integrated into the fabric at full bandwidth.",
           "expectedCommands": ["iblinkinfo"],
           "hints": [
@@ -2022,7 +2038,7 @@
           "expectedCommands": ["iblinkinfo"],
           "hints": [
             "iblinkinfo shows link status fabric-wide",
-            "Every link should be 4x NDR",
+            "Every link should be 4x {{NET_PROTOCOL}}",
             "Look for any reduced-width links"
           ],
           "validation": {
@@ -2039,7 +2055,7 @@
               "Speed and width are always the same value"
             ],
             "correctIndex": 1,
-            "explanation": "A link can train at NDR speed but only 1x or 2x width instead of 4x, delivering a fraction of expected bandwidth. This is why checking both speed and width is critical during validation — speed alone can be misleading."
+            "explanation": "A link can train at {{NET_PROTOCOL}} speed but only 1x or 2x width instead of 4x, delivering a fraction of expected bandwidth. This is why checking both speed and width is critical during validation — speed alone can be misleading."
           }
         },
         {
@@ -2173,7 +2189,7 @@
           "hints": [
             "ibstat for final port status",
             "Document link rates",
-            "All ports should be 400 Gb/s"
+            "All ports should be {{NET_RATE_GBS}} Gb/s"
           ],
           "validation": {
             "type": "command",
@@ -2246,7 +2262,7 @@
         },
         {
           "id": "step-3",
-          "situation": "Fresh 12-node DGX A100 cluster with Slurm installed but not configured for GPUs.",
+          "situation": "Fresh 12-node {{SYSTEM_NAME}} cluster with Slurm installed but not configured for GPUs.",
           "task": "Check the current Slurm configuration to understand what's already set up.",
           "expectedCommands": ["scontrol show config"],
           "hints": [
@@ -2289,7 +2305,7 @@
         },
         {
           "id": "step-5",
-          "situation": "Each node has 8 A100-80GB GPUs. Need to configure Slurm to recognize them.",
+          "situation": "Each node has 8 {{GPU_MODEL}}-{{GPU_MEMORY_GB}}GB GPUs. Need to configure Slurm to recognize them.",
           "task": "Check if dcgmi is running to provide GPU telemetry for Slurm.",
           "expectedCommands": ["dcgmi discovery -l"],
           "hints": [
@@ -2969,7 +2985,7 @@
       "title": "The Silent Cluster",
       "narrative": {
         "hook": "Production cluster showing intermittent NCCL timeouts during distributed training.",
-        "setting": "You're the on-call engineer for a 32-node DGX A100 cluster experiencing random training hangs.",
+        "setting": "You're the on-call engineer for a 32-node {{SYSTEM_NAME}} cluster experiencing random training hangs.",
         "resolution": "Identify ECC errors on GPU 3 causing NVLink degradation and intermittent communication failures."
       },
       "commandFamilies": [
@@ -3281,7 +3297,7 @@
           "validation": {
             "type": "none"
           },
-          "conceptContent": "A DGX cluster has multiple bandwidth layers that can become bottlenecks: NVLink (600 GB/s per GPU on DGX A100) connects GPUs within a node via NVSwitch. InfiniBand (200 Gb/s per port, 8 ports = 1.6 Tb/s per node) connects nodes across the fabric. PCIe Gen4 (32 GB/s per x16 slot) connects GPUs to the host CPU. Each layer has different bandwidth, latency, and failure modes. Performance issues often stem from a single weak link in this chain. Systematic diagnosis starts with checking each layer.",
+          "conceptContent": "A DGX cluster has multiple bandwidth layers that can become bottlenecks: NVLink ({{NVLINK_BW_GBS}} GB/s per GPU on {{SYSTEM_NAME}}) connects GPUs within a node via NVSwitch. InfiniBand (200 Gb/s per port, 8 ports = 1.6 Tb/s per node) connects nodes across the fabric. PCIe Gen4 (32 GB/s per x16 slot) connects GPUs to the host CPU. Each layer has different bandwidth, latency, and failure modes. Performance issues often stem from a single weak link in this chain. Systematic diagnosis starts with checking each layer.",
           "tips": [
             "NVLink is 12x faster than PCIe for GPU-to-GPU transfers",
             "InfiniBand uses RDMA for low-latency cross-node communication"
@@ -3337,7 +3353,7 @@
           "hints": [
             "ibstat shows port status",
             "Check rate and width",
-            "Look for 4x HDR expected"
+            "Look for 4x {{NET_PROTOCOL}} expected"
           ],
           "validation": {
             "type": "command",
@@ -3358,7 +3374,7 @@
         },
         {
           "id": "step-4",
-          "situation": "ibstat shows all ports at 4x HDR (200 Gb/s) on node 1. Check other nodes.",
+          "situation": "ibstat shows all ports at 4x {{NET_PROTOCOL}} (200 Gb/s) on node 1. Check other nodes.",
           "task": "Use iblinkinfo to see the entire fabric topology and link states.",
           "expectedCommands": ["iblinkinfo"],
           "hints": [
@@ -3495,7 +3511,7 @@
         },
         {
           "id": "step-11",
-          "situation": "Link now at 4x HDR. Resume node and verify bandwidth.",
+          "situation": "Link now at 4x {{NET_PROTOCOL}}. Resume node and verify bandwidth.",
           "task": "Resume the node in Slurm after successful cable replacement.",
           "expectedCommands": ["scontrol update nodename=dgx-07 state=resume"],
           "hints": [
@@ -3765,7 +3781,7 @@
       "steps": [
         {
           "id": "step-1",
-          "situation": "HPL benchmark on 16-node DGX H100 cluster achieves 23.4 PFLOPS instead of expected 39 PFLOPS.",
+          "situation": "HPL benchmark on 16-node {{SYSTEM_NAME}} cluster achieves 23.4 PFLOPS instead of expected 39 PFLOPS.",
           "task": "Verify basic GPU configuration and availability using nvidia-smi.",
           "expectedCommands": ["nvidia-smi"],
           "hints": [
@@ -3781,13 +3797,13 @@
         },
         {
           "id": "step-2",
-          "situation": "All 128 H100 GPUs detected. Clocks show max frequency. Memory available.",
+          "situation": "All 128 {{GPU_MODEL}} GPUs detected. Clocks show max frequency. Memory available.",
           "task": "Check GPU topology to verify optimal NVLink connectivity.",
           "expectedCommands": ["nvidia-smi topo -m"],
           "hints": [
             "nvidia-smi topo -m",
             "All GPUs should use NVLink",
-            "NV18 for H100"
+            "{{NVLINK_LABEL}} for {{GPU_MODEL}}"
           ],
           "validation": {
             "type": "command",
@@ -3813,7 +3829,7 @@
           "expectedCommands": ["ibstat"],
           "hints": [
             "ibstat for port status",
-            "Check 400 Gb/s NDR",
+            "Check {{NET_RATE_GBS}} Gb/s {{NET_PROTOCOL}}",
             "Verify all ports active"
           ],
           "validation": {
@@ -3824,7 +3840,7 @@
         },
         {
           "id": "step-4",
-          "situation": "InfiniBand shows full 400 Gb/s NDR on all ports. Check system configuration.",
+          "situation": "InfiniBand shows full 400 Gb/s {{NET_PROTOCOL}} on all ports. Check system configuration.",
           "task": "Check CPU and memory configuration for NUMA optimization.",
           "expectedCommands": ["numactl --hardware"],
           "hints": [
@@ -3885,21 +3901,27 @@
               "gpuId": 2,
               "type": "thermal",
               "severity": "warning",
-              "parameters": { "targetTemp": 83 }
+              "parameters": {
+                "targetTemp": 83
+              }
             },
             {
               "nodeId": "dgx-00",
               "gpuId": 5,
               "type": "thermal",
               "severity": "warning",
-              "parameters": { "targetTemp": 85 }
+              "parameters": {
+                "targetTemp": 85
+              }
             },
             {
               "nodeId": "dgx-00",
               "gpuId": 5,
               "type": "power",
               "severity": "warning",
-              "parameters": { "powerDraw": 700 }
+              "parameters": {
+                "powerDraw": 700
+              }
             }
           ]
         },
@@ -3921,7 +3943,7 @@
         },
         {
           "id": "step-8",
-          "situation": "Power throttling detected. Some GPUs hitting 700W limit and throttling.",
+          "situation": "Power throttling detected. Some GPUs hitting {{GPU_TDP_W}}W limit and throttling.",
           "task": "Check cluster-wide job status and resource utilization.",
           "expectedCommands": ["scontrol show job"],
           "hints": [
@@ -4236,7 +4258,7 @@
           "validation": {
             "type": "none"
           },
-          "conceptContent": "Each NVIDIA A100 GPU has 80 GB of HBM2e memory. GPU memory is divided into: framebuffer (FB) for tensor data and model weights, reserved memory for the driver and ECC overhead (~5-6%), and BAR1 memory for CPU-side mapping. Common causes of out-of-memory errors: leaked GPU contexts from previous jobs, memory fragmentation, increased batch sizes, model size changes, or actual hardware ECC issues reducing usable memory. The nvidia-smi command shows current memory usage, while nvidia-smi pmon shows per-process memory consumption.",
+          "conceptContent": "Each NVIDIA {{GPU_MODEL}} GPU has {{GPU_MEMORY_GB}} GB of {{GPU_MEMORY_TYPE}} memory. GPU memory is divided into: framebuffer (FB) for tensor data and model weights, reserved memory for the driver and ECC overhead (~5-6%), and BAR1 memory for CPU-side mapping. Common causes of out-of-memory errors: leaked GPU contexts from previous jobs, memory fragmentation, increased batch sizes, model size changes, or actual hardware ECC issues reducing usable memory. The nvidia-smi command shows current memory usage, while nvidia-smi pmon shows per-process memory consumption.",
           "tips": [
             "GPU memory does not have swap — when it is full, allocations fail immediately",
             "Always check for orphaned GPU processes from previous jobs with nvidia-smi pmon"
@@ -4681,7 +4703,7 @@
       "difficulty": "intermediate",
       "narrative": {
         "hook": "A brand-new DGX cluster sits idle because Fabric Manager was never started after initial OS installation.",
-        "setting": "You are the datacenter engineer responsible for bringing a 4-node DGX H100 cluster online. The OS and drivers are installed, but multi-GPU NVSwitch communication is not working because NVIDIA Fabric Manager has not been configured.",
+        "setting": "You are the datacenter engineer responsible for bringing a 4-node {{SYSTEM_NAME}} cluster online. The OS and drivers are installed, but multi-GPU NVSwitch communication is not working because NVIDIA Fabric Manager has not been configured.",
         "resolution": "Successfully start and configure Fabric Manager, verify NVSwitch communication, and confirm all GPUs can communicate across the NVSwitch fabric."
       },
       "commandFamilies": ["gpu-monitoring", "diagnostics", "bmc-hardware"],
@@ -4689,7 +4711,7 @@
       "steps": [
         {
           "id": "step-1",
-          "situation": "The DGX H100 cluster has been racked and the OS is installed, but users report that multi-GPU jobs fail with NVLink errors.",
+          "situation": "The {{SYSTEM_NAME}} cluster has been racked and the OS is installed, but users report that multi-GPU jobs fail with NVLink errors.",
           "task": "Check the current status of the NVIDIA Fabric Manager service to see if it is running.",
           "expectedCommands": ["systemctl status nvidia-fabricmanager"],
           "hints": [
@@ -4764,7 +4786,7 @@
           "expectedCommands": ["nvidia-smi"],
           "hints": [
             "nvidia-smi shows all GPUs",
-            "Look for 8 H100 GPUs per node",
+            "Look for 8 {{GPU_MODEL}} GPUs per node",
             "Check for any ERR! entries"
           ],
           "validation": {
@@ -5250,7 +5272,7 @@
       "difficulty": "intermediate",
       "narrative": {
         "hook": "A research institution just received their first GPU cluster, and the job scheduler needs to be configured from scratch for GPU-aware workload management.",
-        "setting": "You are the HPC administrator tasked with configuring Slurm for GPU workloads on a new 8-node DGX A100 cluster. GRES, partitions, and accounting all need to be set up and validated.",
+        "setting": "You are the HPC administrator tasked with configuring Slurm for GPU workloads on a new 8-node {{SYSTEM_NAME}} cluster. GRES, partitions, and accounting all need to be set up and validated.",
         "resolution": "Successfully configure Slurm GRES for GPU scheduling, validate partitions, and confirm that GPU jobs can be submitted and tracked."
       },
       "commandFamilies": ["cluster-tools", "gpu-monitoring", "diagnostics"],
@@ -5807,7 +5829,7 @@
       "title": "The NCCL Championship",
       "difficulty": "advanced",
       "narrative": {
-        "hook": "The new 16-node DGX H100 cluster needs to pass NCCL all-reduce benchmarks before production sign-off.",
+        "hook": "The new 16-node {{SYSTEM_NAME}} cluster needs to pass NCCL all-reduce benchmarks before production sign-off.",
         "setting": "You are the validation engineer responsible for running and optimizing NCCL collective communication benchmarks across the entire cluster. The acceptance criteria require 90% of theoretical bandwidth.",
         "resolution": "Tune NCCL environment variables, optimize transport selection, and achieve target bandwidth across all nodes."
       },
@@ -5967,7 +5989,7 @@
           "expectedCommands": ["ibstat"],
           "hints": [
             "ibstat shows port status",
-            "Verify NDR 400 Gb/s rate",
+            "Verify {{NET_PROTOCOL}} {{NET_RATE_GBS}} Gb/s rate",
             "All ports should be Active"
           ],
           "validation": {
@@ -6012,7 +6034,7 @@
       "difficulty": "advanced",
       "narrative": {
         "hook": "The cluster acceptance test requires hitting 85% of theoretical peak FLOPS on the HPL benchmark, and the first run achieved only 65%.",
-        "setting": "You are the performance engineer tasked with running and optimizing HPL (High Performance Linpack) on a DGX H100 cluster for the formal acceptance test. The customer will not accept the system until performance targets are met.",
+        "setting": "You are the performance engineer tasked with running and optimizing HPL (High Performance Linpack) on a {{SYSTEM_NAME}} cluster for the formal acceptance test. The customer will not accept the system until performance targets are met.",
         "resolution": "Diagnose NUMA binding issues and thermal throttling, optimize HPL parameters, and achieve the required performance target."
       },
       "commandFamilies": ["gpu-monitoring", "diagnostics", "cluster-tools"],
@@ -6435,7 +6457,7 @@
       "steps": [
         {
           "id": "step-1",
-          "situation": "New 32-node cluster with NDR InfiniBand fabric needs validation before going live.",
+          "situation": "New 32-node cluster with {{NET_PROTOCOL}} InfiniBand fabric needs validation before going live.",
           "task": "Discover all hosts connected to the InfiniBand fabric.",
           "expectedCommands": ["ibhosts"],
           "hints": [
@@ -6527,7 +6549,7 @@
           "hints": [
             "ib_write_bw tests write bandwidth",
             "Run server on one end, client on other",
-            "Compare to expected NDR bandwidth"
+            "Compare to expected {{NET_PROTOCOL}} bandwidth"
           ],
           "validation": {
             "type": "command",

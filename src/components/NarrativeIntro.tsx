@@ -1,4 +1,5 @@
 import { Crosshair, X } from "lucide-react";
+import { useHardwareText } from "@/utils/hardwareTextSubstitution";
 
 interface NarrativeIntroProps {
   title: string;
@@ -19,6 +20,7 @@ export function NarrativeIntro({
   skippable,
   onSkip,
 }: NarrativeIntroProps) {
+  const sub = useHardwareText();
   return (
     <div
       data-testid="narrative-intro-overlay"
@@ -48,12 +50,12 @@ export function NarrativeIntro({
 
           {/* Hook — the attention grabber */}
           <p className="text-base text-white font-medium mb-4 leading-relaxed italic">
-            &ldquo;{narrative.hook}&rdquo;
+            &ldquo;{sub(narrative.hook)}&rdquo;
           </p>
 
           {/* Setting — the context */}
           <p className="text-sm text-gray-300 mb-6 leading-relaxed">
-            {narrative.setting}
+            {sub(narrative.setting)}
           </p>
 
           {/* Begin button */}
