@@ -1140,6 +1140,15 @@ export class NvidiaSmiSimulator extends BaseSimulator {
         output += "SYS\tSYS\t0-63\t0\n";
       });
 
+      output += `\nLegend:\n\n`;
+      output += `  X    = Self\n`;
+      output += `  SYS  = Connection traversing PCIe as well as the SMP interconnect between NUMA nodes (e.g., QPI/UPI)\n`;
+      output += `  NODE = Connection traversing PCIe as well as the interconnect between PCIe Host Bridges within a NUMA node\n`;
+      output += `  PHB  = Connection traversing PCIe as well as a PCIe Host Bridge (typically the CPU)\n`;
+      output += `  PXB  = Connection traversing multiple PCIe bridges (without traversing the PCIe Host Bridge)\n`;
+      output += `  PIX  = Connection traversing at most a single PCIe bridge\n`;
+      output += `  NV#  = Connection traversing a bonded set of # NVLinks\n`;
+
       return this.createSuccess(output);
     }
 
@@ -1527,7 +1536,7 @@ export class NvidiaSmiSimulator extends BaseSimulator {
 
       output += `FB Memory Usage\n`;
       output += `    Total                                 : ${g.memoryTotal} MiB\n`;
-      output += `    Reserved                              : 625 MiB\n`;
+      output += `    Reserved                              : ${Math.round(g.memoryTotal * 0.02)} MiB\n`;
       output += `    Used                                  : ${g.memoryUsed} MiB\n`;
       output += `    Free                                  : ${g.memoryTotal - g.memoryUsed} MiB\n\n`;
 
