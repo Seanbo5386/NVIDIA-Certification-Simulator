@@ -22,6 +22,7 @@ describe("SlurmSimulator GRES", () => {
           {
             id: "dgx-00",
             hostname: "dgx-00.cluster.local",
+            systemType: "DGX-H100",
             gpus: Array(8)
               .fill(null)
               .map((_, i) => ({
@@ -37,6 +38,7 @@ describe("SlurmSimulator GRES", () => {
           {
             id: "dgx-01",
             hostname: "dgx-01.cluster.local",
+            systemType: "DGX-H100",
             gpus: Array(8)
               .fill(null)
               .map((_, i) => ({
@@ -79,7 +81,7 @@ describe("SlurmSimulator GRES", () => {
         context,
       );
       expect(result.exitCode).toBe(0);
-      expect(result.output).toContain("Gres=gpu:h100:8");
+      expect(result.output).toContain("Gres=gpu:h100:8"); // DGX-H100 uses h100 type
     });
 
     it("should show GresUsed= in scontrol show node output", () => {
@@ -96,7 +98,7 @@ describe("SlurmSimulator GRES", () => {
         context,
       );
       expect(result.output).toContain("GresUsed=gpu:h100:");
-      // alloc state shows some GPUs in use
+      // alloc state shows some GPUs in use (DGX-H100 uses h100 type)
       expect(result.output).toMatch(/GresUsed=gpu:h100:\d+/);
     });
   });
