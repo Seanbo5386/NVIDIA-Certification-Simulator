@@ -117,10 +117,10 @@ export const DGX_H100_LAYOUT: DGXLayout = {
     { gpuIndex: 7, x: 0.15, y: 0.25, nvSwitchGroup: 0 },
   ],
   nvSwitchPositions: [
-    { id: 0, x: 0.35, y: 0.35, connectedGPUs: [0, 1, 6, 7] },
-    { id: 1, x: 0.65, y: 0.35, connectedGPUs: [0, 1, 2, 3] },
-    { id: 2, x: 0.65, y: 0.65, connectedGPUs: [2, 3, 4, 5] },
-    { id: 3, x: 0.35, y: 0.65, connectedGPUs: [4, 5, 6, 7] },
+    { id: 0, x: 0.35, y: 0.35, connectedGPUs: [0, 1, 2, 3, 4, 5, 6, 7] },
+    { id: 1, x: 0.65, y: 0.35, connectedGPUs: [0, 1, 2, 3, 4, 5, 6, 7] },
+    { id: 2, x: 0.65, y: 0.65, connectedGPUs: [0, 1, 2, 3, 4, 5, 6, 7] },
+    { id: 3, x: 0.35, y: 0.65, connectedGPUs: [0, 1, 2, 3, 4, 5, 6, 7] },
   ],
   nvLinkConnections: [
     // Full mesh through NVSwitch (all-to-all)
