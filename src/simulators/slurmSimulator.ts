@@ -836,9 +836,14 @@ export class SlurmSimulator extends BaseSimulator {
           output += `   State=${node.slurmState.toUpperCase()}${node.slurmState === "drain" ? "+DRAIN" : ""} ThreadsPerCore=1 TmpDisk=0 Weight=1 Owner=N/A MCS_label=N/A\n`;
           output += `   Partitions=gpu\n`;
           const now = new Date();
-          const bootTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          // Boot time between 10 and 40 days ago
+          const bootTime = new Date(
+            now.getTime() - (10 + Math.random() * 30) * 24 * 60 * 60 * 1000,
+          );
           const bootStr = bootTime.toISOString().slice(0, 19);
-          const slurmdStr = new Date(bootTime.getTime() + 5 * 60 * 1000)
+          const slurmdStr = new Date(
+            bootTime.getTime() + (5 + Math.random() * 5) * 60 * 1000,
+          )
             .toISOString()
             .slice(0, 19);
           output += `   BootTime=${bootStr} SlurmdStartTime=${slurmdStr}\n`;
