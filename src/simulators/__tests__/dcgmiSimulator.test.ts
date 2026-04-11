@@ -102,8 +102,8 @@ describe("DcgmiSimulator", () => {
 
       expect(result.exitCode).toBe(0);
       expect(result.output).toContain("2 GPU(s) found"); // Actual format
-      expect(result.output).toContain("GPU 0:");
-      expect(result.output).toContain("GPU 1:");
+      expect(result.output).toContain("| GPU ID |"); // Bordered table header
+      expect(result.output).toContain("| 0      |"); // GPU 0 row
       expect(result.output).toContain("H100");
       expect(result.output).toContain("GPU-"); // UUID format
     });
