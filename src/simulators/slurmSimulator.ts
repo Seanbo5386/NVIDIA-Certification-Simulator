@@ -6,7 +6,19 @@ import {
 } from "@/simulators/BaseSimulator";
 import type { DGXNode } from "@/types/hardware";
 import type { SeedJob } from "@/types/scenarios";
-import { getHardwareSpecs } from "@/data/hardwareSpecs";
+import { getHardwareSpecs, type SystemType } from "@/data/hardwareSpecs";
+
+function getGresGpuType(systemType: SystemType): string {
+  const gpuModelMap: Record<SystemType, string> = {
+    "DGX-A100": "a100",
+    "DGX-H100": "h100",
+    "DGX-H200": "h200",
+    "DGX-B200": "b200",
+    "DGX-GB200": "b200",
+    "DGX-VR200": "r200",
+  };
+  return gpuModelMap[systemType] ?? "gpu";
+}
 
 interface SlurmJob {
   jobId: number;
@@ -274,7 +286,8 @@ export class SlurmSimulator extends BaseSimulator {
         output = "NODE                 GRES\n";
         nodes.forEach((node) => {
           const gpuCount = node.gpus.length;
-          const gres = gpuCount > 0 ? `gpu:h100:${gpuCount}` : "(null)";
+          const gpuType = getGresGpuType(node.systemType);
+          const gres = gpuCount > 0 ? `gpu:${gpuType}:${gpuCount}` : "(null)";
           output += `${node.id.padEnd(20)} ${gres}\n`;
         });
       } else if (
@@ -285,7 +298,8 @@ export class SlurmSimulator extends BaseSimulator {
         output = "NODE                 GRES      \n";
         nodes.forEach((node) => {
           const gpuCount = node.gpus.length;
-          const gres = gpuCount > 0 ? `gpu:h100:${gpuCount}` : "(null)";
+          const gpuType = getGresGpuType(node.systemType);
+          const gres = gpuCount > 0 ? `gpu:${gpuType}:${gpuCount}` : "(null)";
           output += `${node.id.padEnd(20)} ${gres.padEnd(10)}\n`;
         });
       } else {
@@ -813,14 +827,26 @@ export class SlurmSimulator extends BaseSimulator {
           output += `   CPUAlloc=${allocCpus} CPUEfctv=${node.cpuCount} CPUTot=${node.cpuCount} CPULoad=0.50\n`;
           output += `   AvailableFeatures=(null)\n`;
           output += `   ActiveFeatures=(null)\n`;
-          output += `   Gres=gpu:h100:${node.gpus.length}\n`;
-          output += `   GresUsed=gpu:h100:${node.slurmState === "alloc" ? Math.min(4, node.gpus.length) : 0}(IDX:${node.slurmState === "alloc" ? "0-3" : "N/A"})\n`;
+          const gpuType = getGresGpuType(node.systemType);
+          output += `   Gres=gpu:${gpuType}:${node.gpus.length}\n`;
+          output += `   GresUsed=gpu:${gpuType}:${node.slurmState === "alloc" ? Math.min(4, node.gpus.length) : 0}(IDX:${node.slurmState === "alloc" ? "0-3" : "N/A"})\n`;
           output += `   NodeAddr=${node.id} NodeHostName=${node.hostname} Version=23.02.6\n`;
           output += `   OS=Linux 5.15.0-91-generic #101-Ubuntu SMP x86_64\n`;
           output += `   RealMemory=${node.ramTotal * 1024} AllocMem=${allocMem} FreeMem=${(node.ramTotal - node.ramUsed) * 1024} Sockets=${sockets} Boards=1\n`;
           output += `   State=${node.slurmState.toUpperCase()}${node.slurmState === "drain" ? "+DRAIN" : ""} ThreadsPerCore=1 TmpDisk=0 Weight=1 Owner=N/A MCS_label=N/A\n`;
           output += `   Partitions=gpu\n`;
-          output += `   BootTime=2024-01-10T08:00:00 SlurmdStartTime=2024-01-10T08:05:00\n`;
+          const now = new Date();
+          // Boot time between 10 and 40 days ago
+          const bootTime = new Date(
+            now.getTime() - (10 + Math.random() * 30) * 24 * 60 * 60 * 1000,
+          );
+          const bootStr = bootTime.toISOString().slice(0, 19);
+          const slurmdStr = new Date(
+            bootTime.getTime() + (5 + Math.random() * 5) * 60 * 1000,
+          )
+            .toISOString()
+            .slice(0, 19);
+          output += `   BootTime=${bootStr} SlurmdStartTime=${slurmdStr}\n`;
           output += `   LastBusyTime=2024-01-11T14:30:00\n`;
           output += `   CfgTRES=cpu=${node.cpuCount},mem=${node.ramTotal * 1024}M,billing=${node.cpuCount},gres/gpu=${node.gpus.length}\n`;
           output += `   AllocTRES=${node.slurmState === "alloc" ? `cpu=${allocCpus},mem=${allocMem}M,gres/gpu=4` : ""}\n`;

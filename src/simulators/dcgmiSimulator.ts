@@ -13,6 +13,7 @@ import {
   BaseSimulator,
   type SimulatorMetadata,
 } from "@/simulators/BaseSimulator";
+import { getThermalThresholds } from "@/simulators/nvidiaSmiFormatters";
 
 export class DcgmiSimulator extends BaseSimulator {
   constructor() {
@@ -246,7 +247,7 @@ export class DcgmiSimulator extends BaseSimulator {
   getMetadata(): SimulatorMetadata {
     return {
       name: "dcgmi",
-      version: "3.1.3",
+      version: "3.3.5",
       description: "NVIDIA Data Center GPU Manager Interface",
       commands: Array.from(this.commandMetadata.values()),
     };
@@ -412,13 +413,17 @@ export class DcgmiSimulator extends BaseSimulator {
 
     // Check for -l or --list flag
     if (this.hasAnyFlag(parsed, ["l", "list"])) {
+      const sep =
+        "+--------+-------------------------------------------------------------------+";
       let output = `${node.gpus.length} GPU(s) found.\n`;
+      output += sep + "\n";
+      output += `| GPU ID | Device Information                                                |\n`;
+      output += sep + "\n";
       node.gpus.forEach((gpu, idx) => {
-        output += `\nGPU ${idx}: ${gpu.uuid}\n`;
-        output += `  Device Information:\n`;
-        output += `    UUID:        ${gpu.uuid}\n`;
-        output += `    PCI Bus ID:  ${gpu.pciAddress}\n`;
-        output += `    Device Name: ${gpu.name}\n`;
+        output += `| ${idx.toString().padEnd(6)} | Name: ${gpu.name.padEnd(59)} |\n`;
+        output += `|        | PCI Bus ID: ${gpu.pciAddress.padEnd(55)} |\n`;
+        output += `|        | Device UUID: ${gpu.uuid.padEnd(54)} |\n`;
+        output += sep + "\n";
       });
       return this.createSuccess(output);
     }
@@ -530,7 +535,7 @@ export class DcgmiSimulator extends BaseSimulator {
         );
         if (eccCheck) eccCheck.healthy = false;
       }
-      if (gpu.temperature > 80) {
+      if (gpu.temperature > getThermalThresholds(gpu.name || "").maxOp) {
         const thermalCheck = checks.find((c) => c.system === "Thermal");
         if (thermalCheck) thermalCheck.healthy = false;
       }

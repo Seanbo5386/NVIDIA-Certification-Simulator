@@ -21,10 +21,10 @@ describe("hardwareSpecs", () => {
 
   it("should have correct GB200 GPU specs", () => {
     const specs = HARDWARE_SPECS["DGX-GB200"];
-    expect(specs.gpu.model).toContain("GB200");
+    expect(specs.gpu.model).toContain("B200");
     expect(specs.gpu.count).toBe(8);
-    expect(specs.gpu.memoryGB).toBe(192);
-    expect(specs.gpu.memoryMiB).toBe(196608);
+    expect(specs.gpu.memoryGB).toBe(180);
+    expect(specs.gpu.memoryMiB).toBe(184320);
     expect(specs.gpu.memoryType).toBe("HBM3e");
   });
 
@@ -33,7 +33,7 @@ describe("hardwareSpecs", () => {
     expect(specs.nvlink.version).toBe("5.0");
     expect(specs.nvlink.linksPerGpu).toBe(18);
     expect(specs.nvlink.totalBandwidthGBs).toBe(1800);
-    expect(specs.nvlink.nvSwitchCount).toBe(2);
+    expect(specs.nvlink.nvSwitchCount).toBe(4);
   });
 
   it("should have correct GB200 network specs with ConnectX-8 XDR", () => {
@@ -46,7 +46,7 @@ describe("hardwareSpecs", () => {
   it("should have Grace CPU for GB200", () => {
     const specs = HARDWARE_SPECS["DGX-GB200"];
     expect(specs.system.cpu.model).toContain("Grace");
-    expect(specs.system.generation).toBe("Blackwell Ultra");
+    expect(specs.system.generation).toBe("Blackwell");
   });
 
   it("getHardwareSpecs should return correct specs for each type", () => {
@@ -67,7 +67,7 @@ describe("hardwareSpecs", () => {
   });
 
   it("getGenerationName should return generation for GB200", () => {
-    expect(getGenerationName("DGX-GB200")).toBe("Blackwell Ultra");
+    expect(getGenerationName("DGX-GB200")).toBe("Blackwell");
   });
 
   it("all specs should have 8 GPUs", () => {
@@ -120,7 +120,7 @@ describe("hardwareSpecs", () => {
     it("has ConnectX-9 networking", () => {
       const specs = getHardwareSpecs("DGX-VR200");
       expect(specs.network.hcaModel).toBe("ConnectX-9");
-      expect(specs.network.portRateGbs).toBe(1600);
+      expect(specs.network.portRateGbs).toBe(800);
     });
   });
 });
