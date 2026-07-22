@@ -84,3 +84,6 @@ amplify_outputs*
 amplifyconfiguration*
 aws-exports.js
 aws-exports.ts
+
+# Personal presentation prep (not for the repo)
+presentation-notes/
