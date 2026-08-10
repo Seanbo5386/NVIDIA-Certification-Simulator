@@ -217,3 +217,58 @@ describe("InfiniBand HCA/port identity (SIM-3/SIM-13)", () => {
     }
   });
 });
+
+// ---------------------------------------------------------------------------
+// InfiniBand LIDs must be unique across the whole fabric (bot review P2).
+//
+// A subnet manager assigns each port a fabric-unique LID; that is what makes
+// a LID an address. HCA ids restart at 0 on every node, so deriving the LID
+// as `100 + hcaId` gave every node's mlx5_0 LID 100 -- 64 ports sharing only
+// 8 distinct addresses, which makes ibping/iblinkinfo unable to say which
+// host a LID refers to.
+// ---------------------------------------------------------------------------
+describe("InfiniBand LID assignment", () => {
+  function allPorts(cluster: ReturnType<typeof createCustomCluster>) {
+    return cluster.nodes.flatMap((node) =>
+      node.hcas.flatMap((hca) =>
+        hca.ports.map((port) => ({
+          nodeId: node.id,
+          caType: hca.caType,
+          lid: port.lid,
+        })),
+      ),
+    );
+  }
+
+  it("assigns every port in the fabric a distinct LID", () => {
+    const cluster = createCustomCluster(8, "DGX-H100");
+    const ports = allPorts(cluster);
+
+    expect(ports.length).toBe(64);
+    expect(new Set(ports.map((p) => p.lid)).size).toBe(ports.length);
+  });
+
+  it("does not repeat the same LID for mlx5_0 on different nodes", () => {
+    const cluster = createCustomCluster(8, "DGX-H100");
+    const firstHcaLids = allPorts(cluster)
+      .filter((p) => p.caType === "mlx5_0")
+      .map((p) => p.lid);
+
+    expect(firstHcaLids.length).toBe(8);
+    expect(new Set(firstHcaLids).size).toBe(8);
+  });
+
+  it("keeps LIDs unique across every supported architecture", () => {
+    for (const systemType of [
+      "DGX-A100",
+      "DGX-H100",
+      "DGX-H200",
+      "DGX-B200",
+      "DGX-GB200",
+      "DGX-VR200",
+    ] as const) {
+      const ports = allPorts(createCustomCluster(8, systemType));
+      expect(new Set(ports.map((p) => p.lid)).size).toBe(ports.length);
+    }
+  });
+});

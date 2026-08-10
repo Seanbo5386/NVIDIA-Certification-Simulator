@@ -285,15 +285,25 @@ export class ClusterPhysicsEngine {
     const ratedTDP = getRatedTDP(gpu.name);
     const loadRatio = Math.min(newPowerDraw / ratedTDP, 1);
     const faultRatio = faultHeat / ratedTDP;
+    // The target must be able to sit ABOVE this architecture's shutdown
+    // threshold, otherwise a saturating fault can never cross it: temperature
+    // approaches the target asymptotically and is rounded to one decimal, so
+    // clamping the target at exactly the threshold parks it just underneath
+    // (94.7 for the 95C architectures) and thermal-critical never fires.
+    // Only the CLAMP moves -- THERMAL_CEILING itself is left alone because
+    // heatWattsFraction inverts through it, and changing it there would
+    // silently re-scale every authored fault severity in the scenario data.
+    // A100 (shutdown 92) keeps the original 95C ceiling exactly.
+    const targetCeiling = Math.max(THERMAL_CEILING, thresholds.shutdown + 3);
     const targetTemp = Math.min(
       AMBIENT_TEMP +
         loadRatio * (NORMAL_FULL_LOAD_TEMP - AMBIENT_TEMP) +
         faultRatio * (THERMAL_CEILING - AMBIENT_TEMP),
-      THERMAL_CEILING,
+      targetCeiling,
     );
     let newTemp =
       gpu.temperature + (targetTemp - gpu.temperature) * TEMP_SMOOTHING;
-    newTemp = Math.max(AMBIENT_TEMP, Math.min(THERMAL_CEILING + 5, newTemp));
+    newTemp = Math.max(AMBIENT_TEMP, Math.min(targetCeiling + 5, newTemp));
 
     // Check thermal thresholds against computed temperature (per-arch now,
     // not a single hardcoded pair) — PHYS-16.

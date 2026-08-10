@@ -200,7 +200,11 @@ function createInfiniBandPort(
   };
 }
 
-function createInfiniBandHCA(id: number, specs: HardwareSpec): InfiniBandHCA {
+function createInfiniBandHCA(
+  id: number,
+  specs: HardwareSpec,
+  nodeId: number,
+): InfiniBandHCA {
   const hcaDeviceIds: Record<string, string> = {
     "ConnectX-6": "mt4123",
     "ConnectX-7": "mt4129",
@@ -224,11 +228,20 @@ function createInfiniBandHCA(id: number, specs: HardwareSpec): InfiniBandHCA {
           : specs.network.hcaModel === "ConnectX-7"
             ? "28.39.1002"
             : "20.35.1012",
-    // Unique LID per port across the node (100 + a running index), not the
-    // same 101 for every port (SIM-13). This function only ever builds one
-    // port per HCA (portNum always 1), so the HCA's own id doubles as the
-    // per-node port index.
-    ports: [createInfiniBandPort(1, 100 + id, specs)],
+    // Unique LID per port across the FABRIC, not just within one node. A
+    // subnet manager hands out fabric-unique LIDs -- that is what makes a LID
+    // an address -- but HCA ids restart at 0 on each node, so `100 + id`
+    // alone gave every node's mlx5_0 LID 100 and left ibping/iblinkinfo
+    // unable to say which host a LID belonged to. Offsetting by the node's
+    // index keeps them distinct cluster-wide. This function only ever builds
+    // one port per HCA (portNum always 1), so the HCA id is the port index.
+    ports: [
+      createInfiniBandPort(
+        1,
+        100 + nodeId * specs.network.hcaCount + id,
+        specs,
+      ),
+    ],
   };
 }
 
@@ -367,7 +380,7 @@ export function createDGXNode(
       createBlueFieldDPU(i, systemType),
     ),
     hcas: Array.from({ length: specs.network.hcaCount }, (_, i) =>
-      createInfiniBandHCA(i, specs),
+      createInfiniBandHCA(i, specs, id),
     ),
     bmc: createBMC(id),
     cpuModel: `${cpu.model} ${cpu.coresPerSocket}-Core Processor`,

@@ -753,7 +753,7 @@ export const useSimulationStore = create<SimulationState>()(
     })),
     {
       name: "nvidia-simulator-storage",
-      version: 2,
+      version: 3,
       migrate: (persistedState: unknown, version: number) => {
         // v0 → v1: cpuCount was persisted as socket count (2) instead of total
         // cores (sockets × coresPerSocket).
@@ -767,7 +767,13 @@ export const useSimulationStore = create<SimulationState>()(
         // `port.xmitDataBytes + 12500000` would compute NaN on the very
         // first tick under load and never recover (NaN + anything is NaN).
         //
-        // Both migrations drop ONLY the stale cluster so the factory
+        // v2 → v3: InfiniBand port LIDs were only unique within a node, so
+        // every node's mlx5_0 shared LID 100. LIDs are addresses that
+        // ibping/iblinkinfo resolve to a host, so a persisted v2 fabric would
+        // keep answering ambiguously forever. Values, not shape -- nothing
+        // crashes -- but the cluster must be rebuilt to pick up unique ones.
+        //
+        // All migrations drop ONLY the stale cluster so the factory
         // rebuilds it with the current shape; preserve the user's
         // scenarioProgress, completedScenarios, and settings rather than
         // wiping everything. Any version below the current one (older OR
@@ -776,7 +782,7 @@ export const useSimulationStore = create<SimulationState>()(
         // trusting a cluster shaped by an unknown schema version.
         if (persistedState && typeof persistedState === "object") {
           const next = { ...(persistedState as Record<string, unknown>) };
-          if (version !== 2) {
+          if (version !== 3) {
             delete next.cluster;
           }
           return next;

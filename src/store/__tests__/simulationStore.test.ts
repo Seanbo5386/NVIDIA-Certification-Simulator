@@ -192,7 +192,21 @@ describe("persistence migration (migrate)", () => {
     expect(migrated.completedScenarios).toEqual(["a"]);
   });
 
-  it("preserves the cluster for the current version (v2)", () => {
+  it("preserves the cluster for the current version (v3)", () => {
+    const migrate = useSimulationStore.persist.getOptions().migrate;
+    const v3State = {
+      cluster: { nodes: [{ id: "node-1", gpus: [] }] },
+      completedScenarios: ["a"],
+    };
+
+    const migrated = migrate!(v3State, 3) as Record<string, unknown>;
+
+    // v3 is current: the cluster is kept (merge re-validates afterward).
+    expect(migrated.cluster).toEqual({ nodes: [{ id: "node-1", gpus: [] }] });
+    expect(migrated.completedScenarios).toEqual(["a"]);
+  });
+
+  it("drops a v2 cluster so its node-local-only LIDs are rebuilt as fabric-unique", () => {
     const migrate = useSimulationStore.persist.getOptions().migrate;
     const v2State = {
       cluster: { nodes: [{ id: "node-1", gpus: [] }] },
@@ -201,8 +215,8 @@ describe("persistence migration (migrate)", () => {
 
     const migrated = migrate!(v2State, 2) as Record<string, unknown>;
 
-    // v2 is current: the cluster is kept (merge re-validates afterward).
-    expect(migrated.cluster).toEqual({ nodes: [{ id: "node-1", gpus: [] }] });
+    expect(migrated.cluster).toBeUndefined();
+    // Progress the user earned still survives the rebuild.
     expect(migrated.completedScenarios).toEqual(["a"]);
   });
 
@@ -228,7 +242,9 @@ describe("persistence merge (rehydrate sanitizes corrupted cluster, F5)", () => 
     window.localStorage.clear();
   });
 
-  function seed(stateOverrides: Record<string, unknown>, version = 2) {
+  // Defaults to the CURRENT persist version so these tests exercise merge()'s
+  // sanitizing, not the migration's cluster drop.
+  function seed(stateOverrides: Record<string, unknown>, version = 3) {
     window.localStorage.setItem(
       "nvidia-simulator-storage",
       JSON.stringify({

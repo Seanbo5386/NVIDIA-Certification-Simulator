@@ -570,3 +570,69 @@ describe("getNvlinkHealthRatio (PHYS-6)", () => {
     expect(getNvlinkHealthRatio([gpu, undefined as unknown as GPU])).toBe(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// thermal-critical must be reachable on every architecture (bot review P2).
+//
+// H100/H200/B200/GB200/R200 all have shutdown == 95, which was exactly the
+// value targetTemp was clamped to. Since temperature approaches the target
+// asymptotically (0.15 smoothing) and is rounded to one decimal, it settled
+// at 94.7 and `newTemp >= thresholds.shutdown` never became true -- the
+// strongest modeled thermal fault could not produce a thermal-critical event
+// or a Critical dashboard reading. Only A100 (shutdown 92) ever crossed.
+// ---------------------------------------------------------------------------
+describe("thermal-critical reachability under a saturating fault", () => {
+  function runSaturatingFault(name: string) {
+    const engine = new ClusterPhysicsEngine();
+    let gpu = createTestGPU({
+      name,
+      temperature: 85,
+      utilization: 100,
+      powerLimit: getRatedTDP(name),
+      // Author a fault far hotter than any shutdown threshold.
+      activeFaultHeatWatts: heatWattsFraction(120) * getRatedTDP(name),
+    });
+
+    let peak = 0;
+    for (let i = 0; i < 400; i++) {
+      gpu = engine.tickGPU(gpu);
+      peak = Math.max(peak, gpu.temperature);
+    }
+    const events = engine.getThresholdEvents();
+    return {
+      peak,
+      sawCritical: events.some((e) => e.type === "thermal-critical"),
+    };
+  }
+
+  it.each([
+    ["NVIDIA H100 80GB HBM3", 95],
+    ["NVIDIA H200 141GB HBM3e", 95],
+    ["NVIDIA B200", 95],
+    ["NVIDIA GB200", 95],
+    ["NVIDIA R200", 95],
+    ["NVIDIA A100-SXM4-80GB", 92],
+  ])(
+    "%s reaches its shutdown threshold and emits thermal-critical",
+    (name, shutdown) => {
+      const { peak, sawCritical } = runSaturatingFault(name);
+      expect(peak).toBeGreaterThanOrEqual(shutdown);
+      expect(sawCritical).toBe(true);
+    },
+  );
+
+  it("still settles a healthy full-load GPU at 70-75C, well clear of any threshold", () => {
+    const engine = new ClusterPhysicsEngine();
+    let gpu = createTestGPU({
+      name: "NVIDIA H100 80GB HBM3",
+      temperature: 40,
+      utilization: 100,
+      powerLimit: getRatedTDP("NVIDIA H100 80GB HBM3"),
+    });
+    for (let i = 0; i < 400; i++) {
+      gpu = engine.tickGPU(gpu);
+    }
+    expect(gpu.temperature).toBeGreaterThanOrEqual(70);
+    expect(gpu.temperature).toBeLessThanOrEqual(75);
+  });
+});
