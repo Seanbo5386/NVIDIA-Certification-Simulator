@@ -262,4 +262,119 @@ describe("SlurmSimulator CommandDefinitionRegistry Integration", () => {
       expect(result.output).toContain("sacct");
     });
   });
+
+  // --------------------------------------------------------------------------
+  // parseWithSchema must resolve the REAL subcommand's flag schema.
+  //
+  // getMetadata().name is "slurm", which has no registry definition, so any
+  // parseWithSchema call that omits an explicit command name silently falls
+  // back to heuristic parsing — where a boolean flag swallows the token after
+  // it. Previously only scancel passed the override, so e.g.
+  // "scontrol -o show node dgx-00" lost the "show" subcommand entirely and
+  // produced empty output.
+  // --------------------------------------------------------------------------
+  describe("subcommand flag-schema resolution", () => {
+    const subcommands = [
+      "sinfo",
+      "squeue",
+      "scontrol",
+      "sbatch",
+      "srun",
+      "scancel",
+      "sacct",
+      "sacctmgr",
+    ];
+
+    // Precondition the fix depends on: every subcommand has a real definition
+    // to look up, while the metadata name "slurm" has none.
+    it.each(subcommands)(
+      "has a registry flag schema for %s, unlike the 'slurm' metadata name",
+      async (name) => {
+        await vi.waitFor(
+          () => {
+            expect(simulator["definitionRegistry"]).not.toBeNull();
+          },
+          { timeout: 5000 },
+        );
+
+        const registry = simulator["definitionRegistry"]!;
+        expect(registry.getFlagSchema("slurm")).toBeUndefined();
+
+        const schema = registry.getFlagSchema(name);
+        expect(schema).toBeDefined();
+        expect(schema!.size).toBeGreaterThan(0);
+      },
+    );
+
+    it("does not let srun's boolean -l swallow the command to run", async () => {
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
+
+      const plain = simulator.executeSrun(parse("srun hostname"), context);
+      const flagged = simulator.executeSrun(parse("srun -l hostname"), context);
+
+      // -l only prefixes task IDs; it must not consume "hostname".
+      expect(flagged.exitCode).toBe(plain.exitCode);
+      expect(flagged.output).toBeTruthy();
+    });
+
+    it("does not let sbatch's boolean -H swallow the script name", async () => {
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
+
+      const plain = simulator.executeSbatch(parse("sbatch train.sh"), context);
+      const flagged = simulator.executeSbatch(
+        parse("sbatch -H train.sh"),
+        context,
+      );
+
+      // -H holds the job; the script argument must still be seen.
+      expect(flagged.exitCode).toBe(plain.exitCode);
+    });
+
+    it("does not let scontrol's boolean -o swallow the show subcommand", async () => {
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
+
+      const result = simulator.executeScontrol(
+        parse("scontrol -o show node dgx-00"),
+        context,
+      );
+
+      // Same information as the un-flagged form; -o only changes layout.
+      expect(result.output).toContain("NodeName=dgx-00");
+    });
+
+    it("does not let sacctmgr's boolean -i swallow the show subcommand", async () => {
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
+
+      const plain = simulator.executeSacctmgr(
+        parse("sacctmgr show cluster"),
+        context,
+      );
+      const flagged = simulator.executeSacctmgr(
+        parse("sacctmgr -i show cluster"),
+        context,
+      );
+
+      expect(flagged.output).toBe(plain.output);
+    });
+  });
 });

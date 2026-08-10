@@ -56,7 +56,6 @@ interface SlurmJob {
 export class SlurmSimulator extends BaseSimulator {
   private jobs: SlurmJob[] = [];
   private nextJobId = 1000;
-  private currentCommand = "slurm";
 
   constructor() {
     super();
@@ -131,9 +130,17 @@ export class SlurmSimulator extends BaseSimulator {
     return 0;
   }
 
+  /**
+   * NOTE: "slurm" names the simulator, not a real command — there is no
+   * `slurm` entry in the definition registry. Every method that reaches the
+   * registry (parseWithSchema/validateFlagsWithRegistry/getHelpFromRegistry)
+   * must therefore pass its own subcommand name explicitly; relying on this
+   * fallback silently drops to heuristic flag parsing, where a boolean flag
+   * swallows the token after it.
+   */
   getMetadata(): SimulatorMetadata {
     return {
-      name: this.currentCommand,
+      name: "slurm",
       version: "23.02.6",
       description: "Slurm Workload Manager",
       commands: [],
@@ -202,7 +209,7 @@ export class SlurmSimulator extends BaseSimulator {
 
   // sinfo - Show partition and node information
   executeSinfo(parsed: ParsedCommand, context: CommandContext): CommandResult {
-    parsed = this.parseWithSchema(parsed.raw);
+    parsed = this.parseWithSchema(parsed.raw, "sinfo");
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       return (
@@ -413,7 +420,7 @@ export class SlurmSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     _context: CommandContext,
   ): CommandResult {
-    parsed = this.parseWithSchema(parsed.raw);
+    parsed = this.parseWithSchema(parsed.raw, "squeue");
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       return (
@@ -752,7 +759,7 @@ export class SlurmSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
-    parsed = this.parseWithSchema(parsed.raw);
+    parsed = this.parseWithSchema(parsed.raw, "scontrol");
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       return (
@@ -1047,7 +1054,7 @@ export class SlurmSimulator extends BaseSimulator {
 
   // sbatch - Submit batch job
   executeSbatch(parsed: ParsedCommand, context: CommandContext): CommandResult {
-    parsed = this.parseWithSchema(parsed.raw);
+    parsed = this.parseWithSchema(parsed.raw, "sbatch");
     // Handle --help or bare "help" argument
     if (
       this.hasAnyFlag(parsed, ["help"]) ||
@@ -1231,7 +1238,7 @@ export class SlurmSimulator extends BaseSimulator {
 
   // srun - Run job interactively
   executeSrun(parsed: ParsedCommand, context: CommandContext): CommandResult {
-    parsed = this.parseWithSchema(parsed.raw);
+    parsed = this.parseWithSchema(parsed.raw, "srun");
     // Handle --help or bare "help" argument
     if (
       this.hasAnyFlag(parsed, ["help"]) ||
@@ -1355,10 +1362,6 @@ export class SlurmSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     context: CommandContext,
   ): CommandResult {
-    // Pass "scancel" explicitly: this simulator's metadata name is
-    // "slurm", which has no registry definition, so without the override
-    // the heuristic parser would let boolean flags like -v swallow the
-    // job ID as their value ("scancel -v 2001" -> no job ID).
     parsed = this.parseWithSchema(parsed.raw, "scancel");
     // Handle --help or bare "help" argument
     if (
@@ -1417,7 +1420,7 @@ export class SlurmSimulator extends BaseSimulator {
     parsed: ParsedCommand,
     _context: CommandContext,
   ): CommandResult {
-    parsed = this.parseWithSchema(parsed.raw);
+    parsed = this.parseWithSchema(parsed.raw, "sacctmgr");
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       let output = "Usage: sacctmgr [COMMAND] [OPTIONS]\n\n";
@@ -1637,7 +1640,7 @@ export class SlurmSimulator extends BaseSimulator {
 
   // sacct - Job accounting
   executeSacct(parsed: ParsedCommand, _context: CommandContext): CommandResult {
-    parsed = this.parseWithSchema(parsed.raw);
+    parsed = this.parseWithSchema(parsed.raw, "sacct");
     // Handle --help
     if (this.hasAnyFlag(parsed, ["help"])) {
       return (
