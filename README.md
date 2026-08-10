@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.6.1-blue?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.7.0-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
 ![Tests](https://img.shields.io/badge/tests-4153_unit_|_483_E2E-brightgreen?style=for-the-badge)
 ![NVIDIA](https://img.shields.io/badge/NVIDIA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
@@ -394,8 +394,14 @@ src/
 
 ## Roadmap
 
-### Completed (v1.6.1)
+### Completed (v1.7.0)
 
+- [x] One unified thermal model: watts-driven temperature, ~70-75C full-load equilibrium, power capping that measurably cools, and injected thermal faults that persist until remediated
+- [x] Simulation physics reaches scenario sandboxes, with threshold events routed from the cluster actually being ticked
+- [x] nvidia-smi power-limit bounds, throttle-reason and P-state reporting, ECC/compute-mode setters, and a consolidated --query-gpu field map
+- [x] Benchmarks that degrade with real hardware state (downed NVLinks, throttled clocks, capped power) on corrected NCCL and HPL math
+- [x] Per-HCA InfiniBand identities (mlx5_N, unique GUIDs/LIDs), device- and LID-aware fabric tools, and an ib-port-error fault type
+- [x] Slurm state and output truthfulness: down nodes in sinfo, compressed hostlists, DRAIN semantics with required Reason, resource-checked srun
 - [x] Terminal input hardening: echo strips ANSI/control sequences; pipe chains reject empty segments and unknown filter stages; a malformed pipeline is rejected before any command runs (no side effects)
 - [x] Command parser treats a negative number after a value flag as that flag's value (`nvidia-smi -i -5`)
 - [x] Persisted-state hardening: corrupted/future-version localStorage clusters are rebuilt on rehydrate; architecture switching blocked during an active scenario

@@ -15,9 +15,23 @@ import {
 
 const CHANGELOG = [
   {
+    version: "v1.7.0",
+    title: "Simulation Realism Overhaul",
+    current: true,
+    highlights: [
+      "One honest thermal model: temperature is driven by power in watts through a single smoothing path, so a full-load node settles around 70-75C, capping power measurably cools it, and an injected thermal fault holds its symptom until you actually remediate it instead of quietly evaporating",
+      "Physics now reaches scenario sandboxes, not just the global cluster — metrics tick and threshold events route from the cluster you are actually looking at, and a fresh load shows consistent idle values without pressing Start",
+      "Power management and flag truthfulness in nvidia-smi: per-architecture power-limit bounds, real clocks-throttle-reason and P-state reporting driven by engine state, ECC and compute-mode setters, and a consolidated --query-gpu field map that requires --format",
+      "Benchmarks detect sick hardware: corrected NCCL bus-bandwidth math (the old double ring factor inflated results ~1.75x), normalized FP bases so H100/H200 HPL peaks are right, and results that scale with downed NVLinks, throttled clocks, and capped power",
+      "InfiniBand devices have real identities — per-HCA mlx5_N names, unique GUIDs and LIDs instead of one shared placeholder — and ibstat/perfquery/ibping honor device and LID arguments, with a new ib-port-error fault and load-driven traffic counters",
+      "Slurm tells the truth: down nodes appear in sinfo, hostlists compress to dgx-[00-07], scontrol reports DRAIN and DRAIN+ALLOC states and requires a Reason, srun checks real node and GPU availability instead of always succeeding, and scancel is silent by default",
+      "In-scenario knowledge checks keep the answer explanation on screen until you click Continue, rather than pulling it away on a 1.5-second timer",
+      "Corrected exam, quiz, and scenario content across all five domains; dcgmi diag -r 4 support; terminal history, Ctrl+R, and ssh to newly added nodes fixed; help nvsm now resolves",
+    ],
+  },
+  {
     version: "v1.6.1",
     title: "Security & Review Hardening",
-    current: true,
     highlights: [
       "Terminal input hardening: echo strips ANSI/control sequences, pipe chains reject empty segments and unknown filter stages, and a malformed pipeline is rejected before any command runs so it cannot apply side effects",
       "Command parser treats a negative number following a value flag as that flag's value (nvidia-smi -i -5) instead of a malformed option",
