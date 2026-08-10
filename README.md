@@ -4,7 +4,7 @@
 
 ![Version](https://img.shields.io/badge/version-1.6.1-blue?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
-![Tests](https://img.shields.io/badge/tests-4134_unit_|_483_E2E-brightgreen?style=for-the-badge)
+![Tests](https://img.shields.io/badge/tests-4153_unit_|_483_E2E-brightgreen?style=for-the-badge)
 ![NVIDIA](https://img.shields.io/badge/NVIDIA-76B900?style=for-the-badge&logo=nvidia&logoColor=white)
 ![React](https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
@@ -38,13 +38,13 @@ The NCP-AII certification exam tests hands-on datacenter skills — but most peo
 
 |                   |                                                                                           |
 | ----------------- | ----------------------------------------------------------------------------------------- |
-| **Commands**      | 20 simulators, 229 CLI definitions across 17 categories                                   |
+| **Commands**      | 20 simulators, 215 CLI definitions across 17 categories                                   |
 | **Scenarios**     | 40 story-driven labs across all 5 exam domains                                            |
 | **Exam Prep**     | 199 practice questions + 65 tool selection + 175 deep mastery quizzes                     |
 | **Architectures** | DGX A100, H100, H200, B200, GB200, VR200 (switchable from dashboard)                      |
 | **Learning**      | 3-tier progression (Guided > Choice > Realistic) with SM-2 spaced repetition              |
 | **Cloud Sync**    | Optional sign-in to save progress across devices (AWS Cognito)                            |
-| **Tests**         | 4,134 unit + 483 E2E tests (474 passed / 9 skipped), 0 TypeScript errors, 0 lint warnings |
+| **Tests**         | 4,153 unit + 483 E2E tests (474 passed / 9 skipped), 0 TypeScript errors, 0 lint warnings |
 
 ---
 
@@ -351,7 +351,7 @@ aws dynamodb scan --table-name Feedback-<your-stack-id> --region us-east-1
 
 ```bash
 npm run test           # Watch mode
-npm run test:run       # Single run (4,134 unit tests)
+npm run test:run       # Single run (4,153 unit tests)
 npm run test:coverage  # With coverage report
 npm run lint           # ESLint (0 errors, 0 warnings)
 npx playwright test    # 483 E2E tests, 3 viewports (474 passed / 9 skipped, 0 failed)
@@ -437,19 +437,19 @@ src/
 
 ### Completed (v1.2.0)
 
-- [x] 20 command simulators with 229 CLI definitions across 17 categories
+- [x] 20 command simulators with 215 CLI definitions across 17 categories
 - [x] 32 narrative scenarios with story-driven learning across all 5 domains
-- [x] 199 exam questions, 60 tool selection quizzes, and 150 deep mastery quizzes
+- [x] 199 exam questions, 65 tool selection quizzes, and 175 deep mastery quizzes
 - [x] Multi-architecture support (DGX A100, H100, H200, B200, GB200, VR200)
 - [x] User authentication and cloud sync (AWS Cognito + DynamoDB)
 - [x] Sandbox isolation with automatic per-step fault injection
 - [x] 3-tier learning progression with spaced repetition (SM-2)
 - [x] D3.js topology visualization (NVLink and InfiniBand fabric maps)
 - [x] Spotlight tour, data-driven CLI framework, tab completion
-- [x] CI/CD pipeline with 3,510 unit + 307 E2E tests, 0 TypeScript errors
+- [x] CI/CD pipeline running unit tests, lint, typecheck, and E2E on every push
 - [x] Security hardening (secret scanning, error sanitization, rate limiting)
 - [x] Bundle splitting (main chunk reduced from 2,304 kB to 1,077 kB)
-- [x] E2E tests with Playwright (307 tests across 7 spec files)
+- [x] E2E tests with Playwright across 3 viewport profiles (see Testing above for current counts)
 - [x] Inline MissionCard with click-to-paste commands, quiz gating, and mount animation
 - [x] nvidia-smi ERR! display for Critical GPU health status
 
