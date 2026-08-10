@@ -871,13 +871,34 @@ describe("-e / --ecc-config", () => {
     expect(result.output).toContain("ECC support disabled");
   });
 
-  it("persists the change so a subsequent query reflects it", () => {
+  it("persists the change as pending, leaving the current mode alone until a reset", () => {
     simulator.execute(parse("nvidia-smi -i 0 -e 0"), context);
-    const queryResult = simulator.execute(
+
+    const current = simulator.execute(
       parse("nvidia-smi --query-gpu=ecc.mode.current --format=csv,noheader"),
       context,
     );
-    expect(queryResult.output).toContain("Disabled");
+    const pending = simulator.execute(
+      parse("nvidia-smi --query-gpu=ecc.mode.pending --format=csv,noheader"),
+      context,
+    );
+
+    // The command's own output says a reset/reboot is required, so the live
+    // mode must not have moved yet.
+    expect(current.output).toContain("Enabled");
+    expect(pending.output).toContain("Disabled");
+  });
+
+  it("applies the pending mode once the GPU is reset", () => {
+    simulator.execute(parse("nvidia-smi -i 0 -e 0"), context);
+    simulator.execute(parse("nvidia-smi --gpu-reset -i 0"), context);
+
+    const current = simulator.execute(
+      parse("nvidia-smi --query-gpu=ecc.mode.current --format=csv,noheader"),
+      context,
+    );
+
+    expect(current.output).toContain("Disabled");
   });
 
   it("rejects an out-of-range GPU index instead of silently no-oping", () => {
@@ -1368,5 +1389,139 @@ describe("--format requirement and nounits (SIM-10)", () => {
       context,
     );
     expect(utilResult.output.trim()).toMatch(/^\d+$/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ECC mode is a pending change until the GPU is reset (bot review P2).
+//
+// `nvidia-smi -e 0|1` reports "All GPUs must be reset (or the machine
+// rebooted) for this setting to take effect", and nvidia-smi.json documents
+// the same. Applying it to the live mode immediately contradicts both, and
+// makes ecc.mode.current and ecc.mode.pending permanently identical when the
+// entire point of the pair is that they can differ.
+// ---------------------------------------------------------------------------
+describe("ECC mode pending vs current (bot review P2)", () => {
+  let simulator: NvidiaSmiSimulator;
+  let context: CommandContext;
+
+  function buildGpuState(gpu: Record<string, unknown> = {}) {
+    const baseGpu = {
+      id: 0,
+      uuid: "GPU-ecc00000-0000-0000-0000-000000000000",
+      name: "NVIDIA H100-SXM5-80GB",
+      type: "H100-SXM",
+      pciAddress: "0000:17:00.0",
+      temperature: 45,
+      powerDraw: 250,
+      powerLimit: 700,
+      memoryTotal: 81920,
+      memoryUsed: 1024,
+      utilization: 0,
+      clocksSM: 1980,
+      clocksMem: 2619,
+      eccEnabled: true,
+      eccErrors: {
+        singleBit: 0,
+        doubleBit: 0,
+        aggregated: { singleBit: 0, doubleBit: 0 },
+      },
+      migMode: false,
+      migInstances: [],
+      nvlinks: [],
+      healthStatus: "OK",
+      xidErrors: [],
+      persistenceMode: true,
+      computeMode: "Default",
+      ...gpu,
+    };
+    const updateGPU = vi.fn();
+    vi.mocked(useSimulationStore.getState).mockReturnValue({
+      cluster: {
+        nodes: [
+          {
+            id: "dgx-00",
+            hostname: "n",
+            systemType: "DGX-H100",
+            healthStatus: "OK",
+            slurmState: "idle",
+            gpus: [baseGpu],
+            hcas: [],
+          },
+        ],
+      },
+      updateGPU,
+    } as never);
+    return { updateGPU, baseGpu };
+  }
+
+  beforeEach(() => {
+    simulator = new NvidiaSmiSimulator();
+    context = {
+      currentNode: "dgx-00",
+      currentPath: "/root",
+      environment: {},
+      history: [],
+    };
+  });
+
+  it("stages -e 0 as the pending mode without changing the current mode", () => {
+    const { updateGPU } = buildGpuState({ eccEnabled: true });
+
+    const result = simulator.execute(parse("nvidia-smi -i 0 -e 0"), context);
+
+    expect(result.exitCode).toBe(0);
+    expect(updateGPU).toHaveBeenCalledWith(
+      "dgx-00",
+      0,
+      expect.objectContaining({ eccModePending: false }),
+    );
+    // The live mode must survive untouched until a reset.
+    const applied = updateGPU.mock.calls[0][2] as Record<string, unknown>;
+    expect(applied.eccEnabled).toBeUndefined();
+  });
+
+  it("reports current Enabled and pending Disabled after -e 0", () => {
+    buildGpuState({ eccEnabled: true, eccModePending: false });
+
+    const current = simulator.execute(
+      parse("nvidia-smi --query-gpu=ecc.mode.current --format=csv,noheader"),
+      context,
+    );
+    const pending = simulator.execute(
+      parse("nvidia-smi --query-gpu=ecc.mode.pending --format=csv,noheader"),
+      context,
+    );
+
+    expect(current.output.trim()).toBe("Enabled");
+    expect(pending.output.trim()).toBe("Disabled");
+  });
+
+  it("treats a GPU with no staged change as having pending equal to current", () => {
+    buildGpuState({ eccEnabled: true });
+
+    const pending = simulator.execute(
+      parse("nvidia-smi --query-gpu=ecc.mode.pending --format=csv,noheader"),
+      context,
+    );
+
+    expect(pending.output.trim()).toBe("Enabled");
+  });
+
+  it("promotes the pending mode to current on --gpu-reset", () => {
+    const { updateGPU } = buildGpuState({
+      eccEnabled: true,
+      eccModePending: false,
+    });
+
+    const result = simulator.execute(
+      parse("nvidia-smi --gpu-reset -i 0"),
+      context,
+    );
+
+    expect(result.exitCode).toBe(0);
+    const applied = updateGPU.mock.calls[0][2] as Record<string, unknown>;
+    expect(applied.eccEnabled).toBe(false);
+    expect(applied.eccModePending).toBeUndefined();
   });
 });

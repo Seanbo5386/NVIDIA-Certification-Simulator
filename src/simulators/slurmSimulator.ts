@@ -1310,7 +1310,14 @@ export class SlurmSimulator extends BaseSimulator {
     output += `srun: job ${jobId} queued and waiting for resources\n`;
     output += `srun: job ${jobId} has been allocated resources\n`;
 
-    const command = parsed.positionalArgs.join(" ");
+    // The executable can land in either bucket depending on whether a flag
+    // schema was available: without one, a flag ends subcommand parsing and
+    // "srun --gres=gpu:1 nvidia-smi" leaves nvidia-smi positional; with one,
+    // flags and subcommands interleave and it lands in subcommands instead.
+    // Subcommands are always a prefix (the parser stops filling them the
+    // moment it writes a positional), so concatenating preserves input order.
+    // sbatch and scancel already read both buckets; this matches them.
+    const command = [...parsed.subcommands, ...parsed.positionalArgs].join(" ");
 
     if (command.includes("nvidia-smi")) {
       output += "\n";

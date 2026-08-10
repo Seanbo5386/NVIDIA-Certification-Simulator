@@ -323,6 +323,7 @@ describe("SlurmSimulator CommandDefinitionRegistry Integration", () => {
     });
 
     it("does not let sbatch's boolean -H swallow the script name", async () => {
+      // Registry init is async, so this wait needs real timers.
       await vi.waitFor(
         () => {
           expect(simulator["definitionRegistry"]).not.toBeNull();
@@ -330,14 +331,29 @@ describe("SlurmSimulator CommandDefinitionRegistry Integration", () => {
         { timeout: 5000 },
       );
 
-      const plain = simulator.executeSbatch(parse("sbatch train.sh"), context);
-      const flagged = simulator.executeSbatch(
-        parse("sbatch -H train.sh"),
-        context,
-      );
+      // A successful sbatch schedules a 100ms job-start timer whose callback
+      // reads the store through resolveCluster. Both submissions below would
+      // otherwise fire after this file's mocks are torn down, and
+      // useSimulationStore.getState() would be undefined by then -- an
+      // uncaught TypeError that fails the run even though every test passes.
+      // Fake timers keep those callbacks from ever escaping the test.
+      vi.useFakeTimers();
+      try {
+        const plain = simulator.executeSbatch(
+          parse("sbatch train.sh"),
+          context,
+        );
+        const flagged = simulator.executeSbatch(
+          parse("sbatch -H train.sh"),
+          context,
+        );
 
-      // -H holds the job; the script argument must still be seen.
-      expect(flagged.exitCode).toBe(plain.exitCode);
+        // -H holds the job; the script argument must still be seen.
+        expect(flagged.exitCode).toBe(plain.exitCode);
+      } finally {
+        // Discards the pending timers along with the fake clock.
+        vi.useRealTimers();
+      }
     });
 
     it("does not let scontrol's boolean -o swallow the show subcommand", async () => {

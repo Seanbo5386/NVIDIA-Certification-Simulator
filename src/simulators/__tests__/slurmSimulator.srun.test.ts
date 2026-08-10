@@ -211,3 +211,65 @@ describe("SlurmSimulator srun multi-node allocation (bot review P2)", () => {
     expect(jobs[0].nodes).toBe(1);
   });
 });
+
+// ---------------------------------------------------------------------------
+// The tests above construct the simulator and call it synchronously, so the
+// async definition registry has not loaded yet and parseWithSchema silently
+// falls back to heuristic parsing. That hides how srun behaves in the real
+// app, where the registry IS loaded: with a schema, a flag no longer ends
+// subcommand parsing, so the executable lands in parsed.subcommands rather
+// than parsed.positionalArgs. These tests await the registry first.
+// ---------------------------------------------------------------------------
+describe("SlurmSimulator srun executable resolution with the registry loaded", () => {
+  let simulator: SlurmSimulator;
+  const context = {
+    currentNode: "dgx-00",
+    currentPath: "/root",
+    environment: {},
+    history: [],
+  };
+
+  beforeEach(async () => {
+    simulator = new SlurmSimulator();
+    vi.mocked(useSimulationStore.getState).mockReturnValue({
+      cluster: { nodes: [makeNode("dgx-00", "idle", 8)] },
+      setSlurmState: vi.fn(),
+      allocateGPUsForJob: vi.fn(),
+      deallocateGPUsForJob: vi.fn(),
+    } as unknown as ReturnType<typeof useSimulationStore.getState>);
+    await simulator["initializeDefinitionRegistry"]();
+  });
+
+  it("still reports the allocation for the shipped 'srun --gres=gpu:1 nvidia-smi' scenario command", () => {
+    const result = simulator.executeSrun(
+      parse("srun --gres=gpu:1 nvidia-smi"),
+      context,
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(result.output).toContain("Allocated 1 GPU(s) from dgx-00");
+    expect(result.output).toContain("GPU 0:");
+  });
+
+  it("names the job after the executable rather than falling back to 'interactive'", () => {
+    simulator.executeSrun(parse("srun --gres=gpu:1 nvidia-smi"), context);
+
+    const jobs = (simulator as unknown as { jobs: { name: string }[] }).jobs;
+    expect(jobs[0].name).toBe("nvidia-smi");
+  });
+
+  it("keeps a multi-token command intact when a flag precedes it", () => {
+    const result = simulator.executeSrun(
+      parse("srun --gres=gpu:1 my_script.sh"),
+      context,
+    );
+
+    expect(result.exitCode).toBe(0);
+    const jobs = (
+      simulator as unknown as {
+        jobs: { name: string; command: string }[];
+      }
+    ).jobs;
+    expect(jobs[0].command).toContain("my_script.sh");
+  });
+});

@@ -123,7 +123,10 @@ const QUERY_FIELD_HANDLERS: Record<string, QueryFieldHandler> = {
 
   // ECC
   "ecc.mode.current": (gpu) => (gpu.eccEnabled ? "Enabled" : "Disabled"),
-  "ecc.mode.pending": (gpu) => (gpu.eccEnabled ? "Enabled" : "Disabled"),
+  // Falls back to the current mode when nothing is staged, which also keeps
+  // clusters persisted before eccModePending existed reporting sensibly.
+  "ecc.mode.pending": (gpu) =>
+    (gpu.eccModePending ?? gpu.eccEnabled) ? "Enabled" : "Disabled",
   "ecc.errors.corrected.volatile.device_memory": (gpu) =>
     gpu.eccErrors.singleBit.toString(),
   "ecc.errors.corrected.volatile.dram": (gpu) =>
@@ -876,8 +879,12 @@ export class NvidiaSmiSimulator extends BaseSimulator {
     }
     const enable = eccValue === "1" || eccValue === true;
 
+    // Stage the change only. The success message below (and nvidia-smi.json)
+    // both say a reset/reboot is required, so flipping eccEnabled here would
+    // contradict the tool's own output and collapse ecc.mode.current and
+    // ecc.mode.pending into the same value. --gpu-reset promotes it.
     this.resolveMutator(context).updateGPU(node.id, gpuId, {
-      eccEnabled: enable,
+      eccModePending: enable,
     });
 
     return this.createSuccess(
@@ -1000,8 +1007,19 @@ export class NvidiaSmiSimulator extends BaseSimulator {
 
     const result = applyRemediation(gpu, node, "gpu-reset");
 
+    // A reset is what makes a staged `-e` mode take effect, so promote it on
+    // any reset that actually happens -- including the no-fault case, which is
+    // the normal path for the documented `-e 0` then `--gpu-reset` workflow.
+    const eccPromotion: Partial<GPU> =
+      gpu.eccModePending !== undefined
+        ? { eccEnabled: gpu.eccModePending, eccModePending: undefined }
+        : {};
+
     if (result.outcome === "fixed" && result.gpuUpdates) {
-      this.resolveMutator(context).updateGPU(node.id, gpuId, result.gpuUpdates);
+      this.resolveMutator(context).updateGPU(node.id, gpuId, {
+        ...result.gpuUpdates,
+        ...eccPromotion,
+      });
       return this.createSuccess(
         `GPU ${gpuId} reset successfully.\n` +
           `All compute applications using GPU ${gpuId} have been terminated.\n` +
@@ -1011,6 +1029,9 @@ export class NvidiaSmiSimulator extends BaseSimulator {
 
     // No fault to clear -> a reset still "succeeds" as a no-op.
     if (result.outcome === "not-applicable") {
+      if (gpu.eccModePending !== undefined) {
+        this.resolveMutator(context).updateGPU(node.id, gpuId, eccPromotion);
+      }
       return this.createSuccess(
         `GPU ${gpuId} reset successfully.\n` +
           `All compute applications using GPU ${gpuId} have been terminated.`,

@@ -83,6 +83,14 @@ export interface GPU {
   clocksSM: number; // MHz
   clocksMem: number; // MHz
   eccEnabled: boolean;
+  /**
+   * ECC mode staged by `nvidia-smi -e` but not yet in effect. Real hardware
+   * requires a GPU reset or reboot before the requested mode becomes current,
+   * which is why nvidia-smi exposes ecc.mode.current and ecc.mode.pending
+   * separately. Undefined means nothing is staged, i.e. pending == current.
+   * Optional so clusters persisted before this field existed stay valid.
+   */
+  eccModePending?: boolean;
   eccErrors: ECCErrors;
   migMode: boolean;
   migInstances: MIGInstance[];
