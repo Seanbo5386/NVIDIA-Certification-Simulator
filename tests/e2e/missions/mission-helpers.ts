@@ -184,13 +184,18 @@ export class MissionRunner {
 
     // The quiz options are buttons inside the InlineQuiz component.
     // They are siblings rendered in order, so we pick by index.
+    // Continue is a direct sibling of the h4 rather than nested in a div,
+    // so it is not matched here and the index stays aligned to the options.
     const quizButtons = this.page.locator(
       'h4:has-text("KNOWLEDGE CHECK") ~ div button',
     );
     await quizButtons.nth(correctIndex).click();
 
-    // Give time for feedback animation
-    await this.page.waitForTimeout(500);
+    // The explanation now stays on screen until dismissed — nothing advances
+    // on a timer, so the step only moves on once Continue is clicked.
+    const continueButton = this.page.locator('[data-testid="quiz-continue"]');
+    await continueButton.waitFor({ state: "visible", timeout: UI_TIMEOUT });
+    await continueButton.click();
   }
 
   /**
