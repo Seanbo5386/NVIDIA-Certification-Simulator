@@ -316,3 +316,41 @@ describe("setSystemType scenario guard (F8)", () => {
     expect(after.cluster.nodes).toHaveLength(8);
   });
 });
+
+// ---------------------------------------------------------------------------
+// The metrics tick must stay OFF by default in this release tranche.
+//
+// Phase 2 turned it on by default and made it reach the active scenario's
+// cluster. Phase 3 is what makes an injected fault survive that tick, by
+// representing it as a persistent activeFaultHeatWatts heat term instead of a
+// one-shot temperature value. Phase 3 is NOT in this tranche, so shipping the
+// on-by-default tick here would normalize fault evidence away: an idle GPU
+// injected at 95C measures 82.4C after a single one-second tick, already under
+// the 83C warning threshold, and a learner would never see the symptom the
+// mission is about.
+//
+// Keeping the default off matches main's behavior exactly, so this tranche
+// introduces no regression. The on-by-default UX ships with the Phase 3
+// tranche, where the persistent fault representation lands alongside it.
+// ---------------------------------------------------------------------------
+describe("metrics tick default (Phase 2/3 coupling)", () => {
+  it("does not run the simulation by default", () => {
+    useSimulationStore.setState(
+      useSimulationStore.getInitialState?.() ?? {},
+      false,
+    );
+    // Read the store's own initial value rather than whatever earlier tests set.
+    const initial = useSimulationStore.getInitialState
+      ? useSimulationStore.getInitialState()
+      : useSimulationStore.getState();
+    expect(initial.isRunning).toBe(false);
+  });
+
+  it("still lets the user start and stop it explicitly", () => {
+    useSimulationStore.getState().startSimulation();
+    expect(useSimulationStore.getState().isRunning).toBe(true);
+
+    useSimulationStore.getState().stopSimulation();
+    expect(useSimulationStore.getState().isRunning).toBe(false);
+  });
+});
