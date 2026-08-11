@@ -236,15 +236,27 @@ export class ClusterPhysicsEngine {
   tickGPU(gpu: GPU): GPU {
     const updated = { ...gpu };
     const thresholds = getThermalThresholds(gpu.name || "");
-    const faultHeat = gpu.activeFaultHeatWatts ?? 0;
     const boostClock = getBoostClock(gpu.name);
+
+    // A GPU that has fallen off the bus (XID 79) is powered down: it draws no
+    // work-related power and runs no clocks until a power-cycle brings it back
+    // (see remediationEngine's "off-bus" profile). It is still allowed to cool,
+    // because a halted GPU genuinely does, but it must not resume computing --
+    // otherwise it would silently revive itself a few ticks after shutdown.
+    const isHalted = gpu.xidErrors.some((x) => x.code === 79);
+    let isShuttingDownNow = false;
+
+    // A halted GPU generates no load heat; only an environmental fault term
+    // (blocked airflow, failed fan) can still warm it.
+    const faultHeat = gpu.activeFaultHeatWatts ?? 0;
 
     // Power follows utilization; displayed power draw stays clamped at the
     // rated limit (matches real nvidia-smi — a fault or cap never makes the
     // shown wattage exceed or bypass the limit itself).
-    const loadTargetPower =
-      gpu.powerLimit *
-      (IDLE_POWER_FLOOR + (gpu.utilization / 100) * (1 - IDLE_POWER_FLOOR));
+    const loadTargetPower = isHalted
+      ? 0
+      : gpu.powerLimit *
+        (IDLE_POWER_FLOOR + (gpu.utilization / 100) * (1 - IDLE_POWER_FLOOR));
     const targetPower = loadTargetPower + faultHeat;
 
     // gpu.powerDraw (this tick's input) already has LAST tick's throttle
@@ -323,6 +335,13 @@ export class ClusterPhysicsEngine {
         gpuUuid: gpu.uuid,
         value: newTemp,
       });
+      // Real hardware does not keep computing past its shutdown limit: NVIDIA's
+      // thermal protection halts the GPU and it drops off the PCIe bus. Record
+      // that as XID 79, which remediationEngine already classifies as
+      // "off-bus" -- recoverable by power-cycle and explicitly NOT by
+      // gpu-reset, matching both real recovery and this app's own XID drill
+      // content. Guarded on the crossing, so it is recorded once.
+      isShuttingDownNow = true;
     }
     this.previousTemps.set(gpu.uuid, newTemp);
 
@@ -350,6 +369,29 @@ export class ClusterPhysicsEngine {
     updated.powerDraw = Math.round(newPowerDraw * throttleFactor * 10) / 10;
     updated.temperature = Math.round(newTemp * 10) / 10;
     updated.clocksSM = newClocksSM;
+
+    if (isShuttingDownNow) {
+      // Protective halt: the GPU stops computing and falls off the bus.
+      updated.healthStatus = "Critical";
+      updated.xidErrors = [
+        ...gpu.xidErrors,
+        {
+          code: 79,
+          timestamp: new Date(),
+          description:
+            "GPU has fallen off the bus following a thermal shutdown",
+          severity: "Critical",
+        },
+      ];
+    }
+
+    if (isHalted || isShuttingDownNow) {
+      // Held down until a power-cycle clears the XID. Temperature above is left
+      // as computed so a halted GPU still cools realistically.
+      updated.clocksSM = 0;
+      updated.utilization = 0;
+      updated.powerDraw = 0;
+    }
 
     // ECC accumulation check — fire only on crossing the threshold
     const totalEcc = gpu.eccErrors.aggregated.singleBit;

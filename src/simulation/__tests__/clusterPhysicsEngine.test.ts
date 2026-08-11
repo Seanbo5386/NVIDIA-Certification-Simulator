@@ -443,7 +443,20 @@ describe("sustained throttle steady state", () => {
       powerLimit: 400,
       utilization: 100,
       clocksSM: 1410,
-      activeFaultHeatWatts: 400, // saturating fault holds temp at the ceiling, forcing sustained throttle
+      // Sized to settle between A100's maxOp (85C) and its shutdown limit
+      // (92C) so the GPU throttles continuously without tripping the
+      // protective halt. A saturating fault is no longer usable here: pinning
+      // a GPU at the thermal ceiling now shuts it down and zeroes its power,
+      // which is the point of the shutdown work but would defeat this test's
+      // purpose of observing a SUSTAINED throttle steady state.
+      //
+      // At 100% utilization the load term alone contributes the full
+      // NORMAL_FULL_LOAD_TEMP span (32 + 40 = 72C), so the fault only needs to
+      // add ~16C: 100W / 400W rated = 0.25 faultRatio, 0.25 * (95 - 32) ~= 16C,
+      // landing equilibrium near 88C. (heatWattsFraction is not usable for
+      // this: it solves for a fault acting on a NEAR-IDLE GPU, so it would
+      // overshoot badly at full load and trip the shutdown.)
+      activeFaultHeatWatts: 100,
     });
     for (let i = 0; i < 100; i++) {
       gpu = engine.tickGPU(gpu);
@@ -634,5 +647,88 @@ describe("thermal-critical reachability under a saturating fault", () => {
     }
     expect(gpu.temperature).toBeGreaterThanOrEqual(70);
     expect(gpu.temperature).toBeLessThanOrEqual(75);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Crossing the shutdown threshold must make the GPU unusable, as real hardware
+// does. NVIDIA's protection halts the GPU and it drops off the PCIe bus; the
+// app's own courseware already teaches this (xidErrors.ts lists "thermal
+// shutdown" as a cause of XID 79, and the XID drill says a GPU reset will NOT
+// recover it -- a power cycle is required). Before this, crossing shutdown only
+// appended an event and the GPU kept computing, contradicting that content.
+//
+// XID 79 is the marker because remediationEngine already classifies it as
+// "off-bus": resolvable only by power-cycle, with gpu-reset explicitly
+// rejected as insufficient. That is exactly the real recovery path, so the
+// existing lifecycle handles recovery with no new concepts.
+// ---------------------------------------------------------------------------
+describe("thermal shutdown makes the GPU unusable", () => {
+  function overheatToShutdown(name: string) {
+    const engine = new ClusterPhysicsEngine();
+    let gpu = createTestGPU({
+      name,
+      temperature: 85,
+      utilization: 100,
+      clocksSM: 1410,
+      powerLimit: getRatedTDP(name),
+      activeFaultHeatWatts: heatWattsFraction(120) * getRatedTDP(name),
+    });
+    for (let i = 0; i < 400; i++) {
+      gpu = engine.tickGPU(gpu);
+    }
+    return { engine, gpu };
+  }
+
+  it("halts the GPU and reports XID 79 once the shutdown threshold is crossed", () => {
+    const { gpu } = overheatToShutdown("NVIDIA H100 80GB HBM3");
+
+    expect(gpu.healthStatus).toBe("Critical");
+    expect(gpu.xidErrors.some((x) => x.code === 79)).toBe(true);
+    expect(gpu.clocksSM).toBe(0);
+    expect(gpu.utilization).toBe(0);
+  });
+
+  it("records the XID once, not on every subsequent tick", () => {
+    const { engine, gpu } = overheatToShutdown("NVIDIA H100 80GB HBM3");
+    let g = gpu;
+    for (let i = 0; i < 50; i++) {
+      g = engine.tickGPU(g);
+    }
+    expect(g.xidErrors.filter((x) => x.code === 79)).toHaveLength(1);
+  });
+
+  it("stays halted on later ticks instead of resuming once it cools", () => {
+    const { engine, gpu } = overheatToShutdown("NVIDIA H100 80GB HBM3");
+    // Annotated as GPU so activeFaultHeatWatts keeps its optional type; the
+    // object literal alone would narrow it to `number` and clash with what
+    // tickGPU returns.
+    let g: GPU = { ...gpu, activeFaultHeatWatts: 0 }; // fault cleared, not remediated
+    for (let i = 0; i < 200; i++) {
+      g = engine.tickGPU(g);
+    }
+
+    // It is allowed to cool -- it is powered off -- but it must not compute.
+    expect(g.clocksSM).toBe(0);
+    expect(g.utilization).toBe(0);
+    expect(g.healthStatus).toBe("Critical");
+    expect(g.xidErrors.some((x) => x.code === 79)).toBe(true);
+  });
+
+  it("leaves a GPU below its shutdown threshold running normally", () => {
+    const engine = new ClusterPhysicsEngine();
+    let gpu = createTestGPU({
+      name: "NVIDIA H100 80GB HBM3",
+      temperature: 40,
+      utilization: 100,
+      powerLimit: getRatedTDP("NVIDIA H100 80GB HBM3"),
+    });
+    for (let i = 0; i < 400; i++) {
+      gpu = engine.tickGPU(gpu);
+    }
+
+    expect(gpu.xidErrors.some((x) => x.code === 79)).toBe(false);
+    expect(gpu.healthStatus).toBe("OK");
+    expect(gpu.clocksSM).toBeGreaterThan(0);
   });
 });
