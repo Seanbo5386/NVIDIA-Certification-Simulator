@@ -198,6 +198,14 @@ export const useSimulationStore = create<SimulationState>()(
       cluster: createDefaultCluster(),
       systemType: "DGX-A100" as SystemType,
       selectedNode: null,
+      // ON by default, and correct here BECAUSE Phase 3 is present: an injected
+      // fault is a persistent activeFaultHeatWatts heat term, so the tick no
+      // longer normalizes the evidence away. These two are coupled and must
+      // ship together -- release/phase1-2 deliberately carries `false` since it
+      // predates Phase 3, so a merge of that branch into this line MUST resolve
+      // to `true` here. This comment exists so that resolution is an explicit
+      // conflict rather than a silent one: without a change on this side, git
+      // would keep the tranche's `false` and quietly ship the tick disabled.
       isRunning: true,
       simulationSpeed: 1.0,
       metricsInterval: 1000,

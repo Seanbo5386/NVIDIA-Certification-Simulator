@@ -505,3 +505,25 @@ describe("updateHCA action (K2 fault-injection infrastructure)", () => {
     expect(() => state.updateHCA(nodeId, 0, 999, { errors })).not.toThrow();
   });
 });
+
+// ---------------------------------------------------------------------------
+// The metrics tick is ON by default on this line, and that is only correct
+// because Phase 3 is present: an injected fault is a persistent
+// activeFaultHeatWatts heat term, so ticking no longer normalizes the symptom
+// away before a learner can inspect it.
+//
+// release/phase1-2 deliberately ships `false` because it predates Phase 3.
+// This test is the counterpart of the one on that branch: whichever way a
+// merge resolves, one of the two fails loudly rather than silently shipping
+// the wrong default. Do not "fix" a failure here by flipping the value --
+// check which branch you are on and whether Phase 3's fault representation
+// exists.
+// ---------------------------------------------------------------------------
+describe("metrics tick default on the Phase 3+ line", () => {
+  it("runs the simulation by default, because faults now survive the tick", () => {
+    const initial = useSimulationStore.getInitialState
+      ? useSimulationStore.getInitialState()
+      : useSimulationStore.getState();
+    expect(initial.isRunning).toBe(true);
+  });
+});
