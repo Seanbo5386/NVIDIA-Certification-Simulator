@@ -191,7 +191,16 @@ export const useSimulationStore = create<SimulationState>()(
       cluster: createDefaultCluster(),
       systemType: "DGX-A100" as SystemType,
       selectedNode: null,
-      isRunning: true,
+      // Deliberately OFF in this release tranche. Phase 2 defaulted this on and
+      // pointed the tick at the active scenario's cluster, but Phase 3 is what
+      // makes an injected fault survive that tick (a persistent
+      // activeFaultHeatWatts term rather than a one-shot temperature). Phase 3
+      // is not in this tranche, so an on-by-default tick would normalize fault
+      // evidence away before a learner could inspect it -- an idle GPU injected
+      // at 95C reads 82.4C one second later, already below the 83C warning
+      // threshold. Restored to main's default; the on-by-default UX ships with
+      // the Phase 3 tranche. See the test in simulationStore.test.ts.
+      isRunning: false,
       simulationSpeed: 1.0,
       metricsInterval: 1000,
       lastMetricsUpdate: Date.now(),
