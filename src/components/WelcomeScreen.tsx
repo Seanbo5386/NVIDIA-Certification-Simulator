@@ -85,7 +85,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onClose }) => {
         <div className="flex items-center justify-center gap-0 px-4 sm:px-6 py-1.5 sm:py-3 flex-shrink-0">
           <div className="flex items-center gap-0 divide-x divide-gray-700">
             <span className="px-2.5 sm:px-5 text-center text-xs sm:text-sm text-gray-400">
-              32 Missions
+              40 Missions
             </span>
             <span className="px-2.5 sm:px-5 text-center text-xs sm:text-sm text-gray-400">
               229 Commands

@@ -83,6 +83,14 @@ export interface GPU {
   clocksSM: number; // MHz
   clocksMem: number; // MHz
   eccEnabled: boolean;
+  /**
+   * ECC mode staged by `nvidia-smi -e` but not yet in effect. Real hardware
+   * requires a GPU reset or reboot before the requested mode becomes current,
+   * which is why nvidia-smi exposes ecc.mode.current and ecc.mode.pending
+   * separately. Undefined means nothing is staged, i.e. pending == current.
+   * Optional so clusters persisted before this field existed stay valid.
+   */
+  eccModePending?: boolean;
   eccErrors: ECCErrors;
   migMode: boolean;
   migInstances: MIGInstance[];
@@ -90,8 +98,14 @@ export interface GPU {
   healthStatus: HealthStatus;
   xidErrors: XIDError[];
   persistenceMode: boolean;
+  computeMode:
+    | "Default"
+    | "Exclusive_Thread"
+    | "Prohibited"
+    | "Exclusive_Process";
   allocatedJobId?: number; // Slurm job ID if GPU is allocated
   rmaStatus?: "none" | "pending"; // set to "pending" when flagged for RMA
+  activeFaultHeatWatts?: number; // persistent cooling-deficit/heat-source term from an active thermal fault; added to load-driven power every tick until a remediation clears it
 }
 
 export interface BlueFieldMode {
@@ -120,6 +134,13 @@ export interface InfiniBandPort {
   lid: number;
   guid: string;
   linkLayer: "InfiniBand" | "Ethernet";
+  // Persistent traffic counters (PHYS-7) -- advance under active load via
+  // MetricsSimulator.updateHcaMetrics, read directly by perfquery so two
+  // calls in a row on a busy port show a real, nonzero delta.
+  xmitDataBytes: number;
+  rcvDataBytes: number;
+  xmitPkts: number;
+  rcvPkts: number;
   errors: {
     symbolErrors: number;
     linkDowned: number;
@@ -133,7 +154,8 @@ export interface InfiniBandHCA {
   id: number;
   devicePath: string;
   pciAddress?: string; // Optional for backward compatibility/simplicity
-  caType: string; // ConnectX-6, ConnectX-7, ConnectX-8
+  caType: string; // RDMA device name, e.g. "mlx5_0" -- unique per HCA on a node
+  model: string; // Vendor model, e.g. "ConnectX-7" -- was previously encoded (lossily, identically for every HCA) inside caType
   firmwareVersion: string;
   ports: InfiniBandPort[];
 }

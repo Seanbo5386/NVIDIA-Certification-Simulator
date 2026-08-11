@@ -36,6 +36,13 @@ export interface HardwareSpec {
     memoryType: string;
     memoryBandwidthTBs: number;
     tdpWatts: number;
+    minPowerLimitW: number;
+    maxPowerLimitW: number;
+    // All three below are DENSE (non-sparse) Tensor-Core rates, in
+    // TFLOPS. Do not populate with a vendor's advertised "with
+    // sparsity" figure (2x higher) or a non-Tensor-Core CUDA-core
+    // figure (PHYS-13 -- H100/H200 held sparse fp16/tf32 and a
+    // non-Tensor fp64 value here until corrected).
     fp16Tflops: number;
     tf32Tflops: number;
     fp64Tflops: number;
@@ -90,6 +97,8 @@ export const HARDWARE_SPECS: Record<SystemType, HardwareSpec> = {
       memoryType: "HBM2e",
       memoryBandwidthTBs: 2.039,
       tdpWatts: 400,
+      minPowerLimitW: 100,
+      maxPowerLimitW: 400,
       fp16Tflops: 312,
       tf32Tflops: 156,
       fp64Tflops: 19.5,
@@ -143,9 +152,19 @@ export const HARDWARE_SPECS: Record<SystemType, HardwareSpec> = {
       memoryType: "HBM3",
       memoryBandwidthTBs: 3.35,
       tdpWatts: 700,
-      fp16Tflops: 1979,
-      tf32Tflops: 989,
-      fp64Tflops: 34,
+      minPowerLimitW: 200,
+      maxPowerLimitW: 700,
+      // Dense (non-sparse) Tensor-Core rates -- matches the basis every
+      // other architecture in this file uses (A100/B200 blocks are
+      // already dense). H100's PUBLISHED sparse rates are exactly 2x
+      // these (fp16 1979, tf32 989); fp64Tflops is H100's dense FP64
+      // TENSOR-CORE rate (67), not its separate non-Tensor CUDA-core
+      // rate (34) -- HPL and similar FP64 HPC benchmarks target the
+      // Tensor-Core path (PHYS-13; previously used the wrong 34 value,
+      // making simulated H100 HPL results ~2x too low).
+      fp16Tflops: 989,
+      tf32Tflops: 495,
+      fp64Tflops: 67,
       pciDeviceId: "2330",
       baseClockMHz: 1590,
       boostClockMHz: 1980,
@@ -196,9 +215,13 @@ export const HARDWARE_SPECS: Record<SystemType, HardwareSpec> = {
       memoryType: "HBM3e",
       memoryBandwidthTBs: 4.8,
       tdpWatts: 700,
-      fp16Tflops: 1979,
-      tf32Tflops: 989,
-      fp64Tflops: 34,
+      minPowerLimitW: 200,
+      maxPowerLimitW: 700,
+      // Same GH100 compute die as H100 -- dense Tensor-Core rates,
+      // see the H100 block's comment above for the full rationale.
+      fp16Tflops: 989,
+      tf32Tflops: 495,
+      fp64Tflops: 67,
       pciDeviceId: "2335",
       baseClockMHz: 1590,
       boostClockMHz: 1980,
@@ -249,6 +272,8 @@ export const HARDWARE_SPECS: Record<SystemType, HardwareSpec> = {
       memoryType: "HBM3e",
       memoryBandwidthTBs: 7.7,
       tdpWatts: 1000,
+      minPowerLimitW: 300,
+      maxPowerLimitW: 1000,
       fp16Tflops: 2250,
       tf32Tflops: 1200,
       fp64Tflops: 40,
@@ -302,6 +327,8 @@ export const HARDWARE_SPECS: Record<SystemType, HardwareSpec> = {
       memoryType: "HBM3e",
       memoryBandwidthTBs: 7.7,
       tdpWatts: 1000,
+      minPowerLimitW: 300,
+      maxPowerLimitW: 1000,
       fp16Tflops: 2250,
       tf32Tflops: 1200,
       fp64Tflops: 40,
@@ -355,6 +382,8 @@ export const HARDWARE_SPECS: Record<SystemType, HardwareSpec> = {
       memoryType: "HBM4",
       memoryBandwidthTBs: 22.0,
       tdpWatts: 1800,
+      minPowerLimitW: 500,
+      maxPowerLimitW: 1800,
       fp16Tflops: 8000,
       tf32Tflops: 4000,
       fp64Tflops: 90,

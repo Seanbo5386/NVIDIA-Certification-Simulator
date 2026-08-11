@@ -1,18 +1,23 @@
 import type { GPU, InfiniBandHCA } from "@/types/hardware";
-import { HARDWARE_SPECS } from "@/data/hardwareSpecs";
-import { ClusterPhysicsEngine } from "@/simulation/clusterPhysicsEngine";
-
-/** Look up the boost clock for a GPU by its model name. Falls back to A100's 1410 MHz. */
-function getBoostClock(gpuName: string): number {
-  for (const spec of Object.values(HARDWARE_SPECS)) {
-    if (spec.gpu.model === gpuName) return spec.gpu.boostClockMHz;
-  }
-  return 1410;
-}
+import {
+  ClusterPhysicsEngine,
+  AMBIENT_TEMP,
+  NORMAL_FULL_LOAD_TEMP,
+  THERMAL_CEILING,
+  IDLE_POWER_FLOOR,
+  getRatedTDP,
+} from "@/simulation/clusterPhysicsEngine";
 
 export interface MetricsUpdate {
   gpus: GPU[];
   hcas: InfiniBandHCA[];
+}
+
+/** Per-node input for one metrics tick (PHYS-7: slurmState drives HCA traffic). */
+export interface MetricsTickInput {
+  gpus: GPU[];
+  hcas: InfiniBandHCA[];
+  slurmState: "idle" | "alloc" | "drain" | "down";
 }
 
 /**
@@ -38,7 +43,7 @@ export class MetricsSimulator {
 
   start(
     updateCallback: (
-      updater: (data: { gpus: GPU[]; hcas: InfiniBandHCA[] }) => MetricsUpdate,
+      updater: (data: MetricsTickInput) => MetricsUpdate,
     ) => void,
     interval: number = 1000,
   ) {
@@ -71,31 +76,50 @@ export class MetricsSimulator {
     this.isRunning = false;
   }
 
-  private updateMetrics(data: {
-    gpus: GPU[];
-    hcas: InfiniBandHCA[];
-  }): MetricsUpdate {
+  private updateMetrics(data: MetricsTickInput): MetricsUpdate {
     return {
       gpus: this.updateGpuMetrics(data.gpus),
-      hcas: this.updateHcaMetrics(data.hcas),
+      hcas: this.updateHcaMetrics(data.hcas, data.slurmState),
     };
   }
 
-  private updateHcaMetrics(hcas: InfiniBandHCA[]): InfiniBandHCA[] {
-    // HCA metrics remain stable during normal operation.
-    // Errors should only be injected through explicit fault scenarios,
-    // not accumulated randomly during regular simulation ticks.
-    return hcas;
+  private updateHcaMetrics(
+    hcas: InfiniBandHCA[],
+    slurmState: "idle" | "alloc" | "drain" | "down",
+  ): InfiniBandHCA[] {
+    // Error counters remain stable during normal operation -- errors
+    // should only be injected through explicit fault scenarios (unchanged
+    // from before). Traffic counters, however, advance under genuine load
+    // (an allocated Slurm job actually using the node), not tick-count-
+    // driven randomness -- this is what makes perfquery's delta-sampling
+    // methodology actually work (PHYS-7).
+    if (slurmState !== "alloc") return hcas;
+
+    return hcas.map((hca) => ({
+      ...hca,
+      ports: hca.ports.map((port) => {
+        // A Down/Polling port (e.g. the ib-port-error fault) carries no
+        // traffic -- accumulating counters on it would contradict the very
+        // fault a learner is meant to diagnose via perfquery/ibporterrors.
+        // Leave it as the SAME reference so the tick's shallow-compare
+        // write-back gate correctly treats it as unchanged.
+        if (port.state !== "Active") return port;
+        return {
+          ...port,
+          xmitDataBytes: port.xmitDataBytes + 12500000, // ~100 Mb/s sustained, per tick
+          rcvDataBytes: port.rcvDataBytes + 11000000,
+          xmitPkts: port.xmitPkts + 8500,
+          rcvPkts: port.rcvPkts + 7800,
+        };
+      }),
+    }));
   }
 
   private updateGpuMetrics(gpus: GPU[]): GPU[] {
     return gpus.map((gpu) => {
       // A GPU is under load if Slurm has allocated a job to it OR a workload
       // has been applied directly (sandbox "Apply Workload" sets a high
-      // utilization without an allocatedJobId). The threshold separates real
-      // loads from idle jitter and the "idle" workload pattern, so applied
-      // workloads sustain and drive power/temperature instead of being reset
-      // to idle on the next tick (see ACTIVE_UTILIZATION_THRESHOLD).
+      // utilization without an allocatedJobId).
       const isActive =
         gpu.allocatedJobId != null ||
         gpu.utilization > ACTIVE_UTILIZATION_THRESHOLD;
@@ -119,32 +143,6 @@ export class MetricsSimulator {
           )
         : 50 + Math.random() * 150;
 
-      // Power: correlates with utilization (15% TDP idle floor)
-      const idlePower = gpu.powerLimit * 0.15;
-      const targetPower =
-        idlePower + (newUtilization / 100) * (gpu.powerLimit - idlePower);
-      const powerChange = (targetPower - gpu.powerDraw) * 0.15;
-      const newPower = Math.max(
-        idlePower * 0.8,
-        Math.min(gpu.powerLimit, gpu.powerDraw + powerChange),
-      );
-
-      // Temperature: derives from power draw, not utilization directly
-      const ambientTemp = 32;
-      const tempRange = 48;
-      const targetTemp = ambientTemp + (newPower / gpu.powerLimit) * tempRange;
-      const tempChange = (targetTemp - gpu.temperature) * 0.1;
-      const newTemp = gpu.temperature + tempChange;
-
-      // SM clock: architecture-aware boost with thermal throttling
-      const boostClock = getBoostClock(gpu.name);
-      const targetSMClock =
-        boostClock - (newTemp > 70 ? (newTemp - 70) * 10 : 0);
-      const smClockChange = (targetSMClock - gpu.clocksSM) * 0.2;
-      const newSMClock = Math.round(
-        Math.max(300, gpu.clocksSM + smClockChange),
-      );
-
       // ECC errors: only accumulate under load, at realistic rates
       const eccSingleBitIncrement = isActive && Math.random() < 0.00005 ? 1 : 0;
       const eccDoubleBitIncrement =
@@ -154,9 +152,6 @@ export class MetricsSimulator {
         ...gpu,
         utilization: Math.round(newUtilization * 10) / 10,
         memoryUsed: Math.round(newMemoryUsed),
-        temperature: Math.round(newTemp * 10) / 10,
-        powerDraw: Math.round(newPower * 10) / 10,
-        clocksSM: newSMClock,
         eccErrors: {
           ...gpu.eccErrors,
           singleBit: gpu.eccErrors.singleBit + eccSingleBitIncrement,
@@ -170,7 +165,8 @@ export class MetricsSimulator {
         },
       };
 
-      // Apply causal physics adjustments (temperature, power, clock throttling)
+      // Power, temperature, and clock throttling are computed entirely by
+      // the physics engine now — no second, competing formula (PHYS-8).
       return this.physicsEngine.tickGPU(jittered);
     });
   }
@@ -187,16 +183,47 @@ export class MetricsSimulator {
       stress: 100,
     }[pattern];
 
-    return gpus.map((gpu) => ({
-      ...gpu,
-      utilization: utilizationTarget + (Math.random() - 0.5) * 10,
-      memoryUsed:
+    return gpus.map((gpu) => {
+      const utilization = Math.max(
+        0,
+        Math.min(100, utilizationTarget + (Math.random() - 0.5) * 10),
+      );
+      const memoryUsed =
         pattern === "idle"
           ? gpu.memoryTotal * 0.01
           : pattern === "training"
             ? gpu.memoryTotal * 0.9
-            : gpu.memoryTotal * 0.6,
-    }));
+            : gpu.memoryTotal * 0.6;
+
+      // Jump directly to tickGPU's steady state for the new utilization
+      // (same load-ratio/NORMAL_FULL_LOAD_TEMP split it uses every tick) so
+      // the GPU is internally consistent immediately and ticking it forward
+      // afterward barely moves it, instead of visibly re-settling.
+      //
+      // Same rule as tickGPU: the RATIO divides by the fixed rated TDP, not
+      // by gpu.powerLimit (which -pl can lower) — only the DISPLAYED power
+      // number is computed relative to the current limit.
+      const targetPower =
+        gpu.powerLimit *
+        (IDLE_POWER_FLOOR + (utilization / 100) * (1 - IDLE_POWER_FLOOR));
+      const ratedTDP = getRatedTDP(gpu.name);
+      const loadRatio = Math.min(targetPower / ratedTDP, 1);
+      const faultRatio = (gpu.activeFaultHeatWatts ?? 0) / ratedTDP;
+      const targetTemp = Math.min(
+        AMBIENT_TEMP +
+          loadRatio * (NORMAL_FULL_LOAD_TEMP - AMBIENT_TEMP) +
+          faultRatio * (THERMAL_CEILING - AMBIENT_TEMP),
+        THERMAL_CEILING,
+      );
+
+      return {
+        ...gpu,
+        utilization: Math.round(utilization * 10) / 10,
+        memoryUsed: Math.round(memoryUsed),
+        powerDraw: Math.round(targetPower * 10) / 10,
+        temperature: Math.round(targetTemp * 10) / 10,
+      };
+    });
   }
 
   // Inject a fault for troubleshooting practice
@@ -231,15 +258,42 @@ export class MetricsSimulator {
         };
 
       case "thermal": {
-        const thermalTemp = 85;
-        const boostClock = getBoostClock(gpu.name);
-        const throttledClocks = Math.round(
-          boostClock - (thermalTemp - 70) * 10,
-        );
+        // A moderate persistent fault (48% of RATED TDP as extra heat, on
+        // top of whatever load-driven power already exists) — replaces the
+        // old one-shot `temperature: 85` snap, which self-erased within a
+        // few ticks once the next physics pass pulled it back toward the
+        // (unaffected) load-derived target (PHYS-9/LIVE-2). This value
+        // persists until a remediation action clears it. Uses the GPU's
+        // RATED TDP (not the current, possibly-capped powerLimit) so the
+        // fault's severity matches what tickGPU's faultRatio calculation
+        // expects — see the formula note in Task 2.
+        //
+        // 48% (not 60%) is deliberate: this represents a SINGLE-GPU cooling
+        // fault (e.g. degraded fan/paste) — remediationEngine's
+        // classifyFault() treats it as recoverable via `set-power-limit`
+        // ("thermal", 85-89.9°C) as opposed to a node-wide "thermal-alert"
+        // (>=90°C) that demands a power-cycle. At 60%, a lone idle GPU's
+        // equilibrium temperature overshoots past 90°C and into
+        // "thermal-alert" territory, making `set-power-limit` always
+        // "insufficient" for a fault this UI labels as a single-GPU "Thermal
+        // Issue" — 48% settles in the mid-80s across architectures instead,
+        // squarely in the fault kind its own remediation profile expects.
+        //
+        // That 48% was verified against an IDLE GPU. If this fault is
+        // injected on a GPU already under a training/stress workload, 48%
+        // added on top of near-full load saturates the ceiling (95°C) —
+        // crossing back into "thermal-alert" territory and making
+        // set-power-limit insufficient again, for the exact same reason 60%
+        // was rejected. Scale the added heat down as current utilization
+        // rises (the GPU's own load is already contributing thermal load,
+        // so less additional heat is needed to reach the same target), with
+        // a floor so the fault stays meaningfully diagnosable even under
+        // heavy load.
         return {
           ...gpu,
-          temperature: thermalTemp,
-          clocksSM: throttledClocks,
+          activeFaultHeatWatts:
+            getRatedTDP(gpu.name) *
+            (0.2 + 0.28 * Math.max(0, 1 - gpu.utilization / 100)),
           healthStatus: "Warning",
         };
       }
@@ -281,4 +335,39 @@ export class MetricsSimulator {
         return gpu;
     }
   }
+}
+
+/**
+ * Inject an ib-port-error fault onto a specific port of the given HCA
+ * (K2). Sets a real (non-zero) symbol-error count and flips the port to
+ * the "Polling" physical state (no active peer -- the real IBTA state a
+ * degraded/flapping cable produces), unlocking the perfquery/ibporterrors/
+ * ibcableerrors/iblinkinfo diagnosis toolchain this phase made state-aware.
+ *
+ * A standalone sibling to MetricsSimulator.injectFault, not a new case
+ * inside it: injectFault operates on a GPU, this operates on an
+ * InfiniBandHCA (a different object shape living on DGXNode.hcas).
+ * Follows the same "return a new object, don't mutate in place" pattern.
+ */
+export function injectHCAFault(
+  hca: InfiniBandHCA,
+  portIndex: number,
+): InfiniBandHCA {
+  return {
+    ...hca,
+    ports: hca.ports.map((port, idx) =>
+      idx === portIndex
+        ? {
+            ...port,
+            physicalState: "Polling" as const,
+            state: "Down" as const,
+            errors: {
+              ...port.errors,
+              symbolErrors: port.errors.symbolErrors + 150,
+              linkDowned: port.errors.linkDowned + 1,
+            },
+          }
+        : port,
+    ),
+  };
 }

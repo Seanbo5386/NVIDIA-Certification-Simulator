@@ -199,7 +199,7 @@ describe("DcgmiSimulator", () => {
       expect(result.exitCode).toBe(0);
     });
 
-    it("should fail Page Retirement/Row Remap and GPU Memory at level 1 on uncorrectable ECC", () => {
+    it("should fail Page Retirement/Row Remap at level 1 on uncorrectable ECC", () => {
       // Mirror nvidia-smi's "Volatile Uncorr. ECC = 1": double-bit ECC error
       const state = vi.mocked(useSimulationStore.getState)();
       state.cluster.nodes[0].gpus[0].eccErrors = {
@@ -242,6 +242,30 @@ describe("DcgmiSimulator", () => {
       expect(result.exitCode).toBe(0);
       expect(result.output).toContain("All tests passed successfully");
       expect(result.output).not.toContain("\x1b[31mFail\x1b[0m");
+    });
+
+    it("accepts diag run level 4 and includes the Pulse Test", () => {
+      const result = simulator.execute(parse("dcgmi diag -r 4"), context);
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain("Pulse Test");
+    });
+
+    it("rejects diag run level 5", () => {
+      const result = simulator.execute(parse("dcgmi diag -r 5"), context);
+      expect(result.exitCode).not.toBe(0);
+      expect(result.output).toContain(
+        "mode must be 1 (short), 2 (medium), 3 (long), or 4 (xlong)",
+      );
+    });
+
+    it("runs software-only checks at level 1 (no hardware/stress tests)", () => {
+      const result = simulator.execute(parse("dcgmi diag -r 1"), context);
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain("Denylist");
+      expect(result.output).toContain("Inforom");
+      expect(result.output).not.toContain("Pulse Test");
+      expect(result.output).not.toContain("GPU Memory");
+      expect(result.output).not.toContain("SM Stress");
     });
   });
 
@@ -392,6 +416,33 @@ describe("DcgmiSimulator", () => {
       expect(result.output.length).toBeGreaterThan(0);
       expect(result.output).toContain("+---");
       expect(result.output).toContain("|");
+    });
+  });
+
+  describe("Group Command", () => {
+    it("creates a named group with 'dcgmi group -c <name>' via the schema-aware parser (regression: -c must resolve as value-taking, not boolean)", async () => {
+      // dcgmi.json defines -c six times across subcommands with mixed
+      // semantics: discovery's boolean -c/--compute-instances is defined
+      // FIRST in the file, while group's value-taking -c/--create (plus
+      // diag/dmon/fieldgroup's value-taking -c) come later. getFlagSchema
+      // must preserve last-write-wins among subcommands so group's -c
+      // resolves as value-taking here — this is exactly the ordering the
+      // real dcgmi tool relies on. Wait for the async definition registry
+      // to finish loading so execute() takes the schema-aware
+      // parseWithSchema path instead of the heuristic fallback parser.
+      await vi.waitFor(
+        () => {
+          expect(simulator["definitionRegistry"]).not.toBeNull();
+        },
+        { timeout: 5000 },
+      );
+
+      const parsed = parse("dcgmi group -c my-group");
+      const result = simulator.execute(parsed, context);
+
+      expect(result.exitCode).toBe(0);
+      expect(result.output).toContain('Successfully created group "my-group"');
+      expect(result.output).not.toContain("default-group");
     });
   });
 

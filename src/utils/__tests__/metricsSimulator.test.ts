@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { MetricsSimulator } from "../metricsSimulator";
-import type { GPU } from "@/types/hardware";
+import { MetricsSimulator, injectHCAFault } from "../metricsSimulator";
+import { ClusterPhysicsEngine } from "@/simulation/clusterPhysicsEngine";
+import type { GPU, InfiniBandHCA } from "@/types/hardware";
 
 function createMockGPU(overrides: Partial<GPU> = {}): GPU {
   return {
@@ -29,6 +30,7 @@ function createMockGPU(overrides: Partial<GPU> = {}): GPU {
     healthStatus: "OK",
     xidErrors: [],
     persistenceMode: true,
+    computeMode: "Default",
     ...overrides,
   };
 }
@@ -67,6 +69,76 @@ describe("MetricsSimulator", () => {
 
       expect(training[0].memoryUsed).toBeGreaterThan(idle[0].memoryUsed);
     });
+
+    it("should set powerDraw consistent with the new utilization, not the GPU's previous value", () => {
+      // Idle GPU (idle powerDraw ~60W for a 400W-limit A100) gets a training
+      // workload applied — before this fix, powerDraw stayed at 60W while
+      // utilization jumped to ~95%. It should immediately reflect ~95% load.
+      const gpus = [
+        createMockGPU({ powerLimit: 400, powerDraw: 60, utilization: 0 }),
+      ];
+      const result = simulator.simulateWorkload(gpus, "training");
+      // Physics floor/target: 400 * (0.15 + 0.90*0.85) = 366 minimum-ish for
+      // 90% utilization; allow for the +/-5 utilization jitter simulateWorkload
+      // applies, so assert a wide-but-meaningful band clearly above idle.
+      expect(result[0].powerDraw).toBeGreaterThan(300);
+      expect(result[0].powerDraw).toBeLessThanOrEqual(400);
+    });
+
+    it("should set temperature consistent with the new powerDraw, not the GPU's previous value", () => {
+      const gpus = [
+        createMockGPU({ powerLimit: 400, temperature: 35, utilization: 0 }),
+      ];
+      const result = simulator.simulateWorkload(gpus, "training");
+      // AMBIENT_TEMP(32) + powerRatio * (THERMAL_CEILING(95) - 32); a ~90%+
+      // power ratio should land temperature well above the idle 35°C.
+      expect(result[0].temperature).toBeGreaterThan(60);
+    });
+
+    it("should leave idle-pattern GPUs near the idle power/temp floor", () => {
+      const gpus = [
+        createMockGPU({
+          powerLimit: 400,
+          powerDraw: 300,
+          temperature: 80,
+          utilization: 90,
+        }),
+      ];
+      const result = simulator.simulateWorkload(gpus, "idle");
+      expect(result[0].powerDraw).toBeLessThan(150);
+      expect(result[0].temperature).toBeLessThan(55);
+    });
+
+    it("should set powerDraw/temperature using the SAME equilibrium formula tickGPU converges toward (no post-apply re-jump)", () => {
+      // Regression guard for the Phase-3 model split: if this snapshot used
+      // a different formula than tickGPU's steady state, applying a
+      // workload would visibly jump to one value then re-settle at another
+      // within a few ticks.
+      const gpus = [
+        createMockGPU({
+          powerLimit: 400,
+          powerDraw: 60,
+          temperature: 35,
+          utilization: 0,
+        }),
+      ];
+      const [snapshot] = simulator.simulateWorkload(gpus, "training");
+
+      const engine = new ClusterPhysicsEngine();
+      let converged = { ...snapshot };
+      for (let i = 0; i < 50; i++) {
+        converged = engine.tickGPU(converged);
+      }
+      // Ticking the snapshot forward should barely move it (within a few
+      // degrees/watts of noise), not drift toward a materially different
+      // equilibrium.
+      expect(
+        Math.abs(converged.temperature - snapshot.temperature),
+      ).toBeLessThan(6);
+      expect(Math.abs(converged.powerDraw - snapshot.powerDraw)).toBeLessThan(
+        40,
+      );
+    });
   });
 
   describe("injectFault", () => {
@@ -87,25 +159,54 @@ describe("MetricsSimulator", () => {
       expect(result.healthStatus).toBe("Critical");
     });
 
-    it("should inject thermal throttling with reduced clocks", () => {
-      const gpu = createMockGPU({ temperature: 40, clocksSM: 1410 });
-      const result = simulator.injectFault(gpu, "thermal");
+    it("should inject a persistent thermal fault that gradually drives temperature up and throttles clocks (not a one-shot snap)", () => {
+      // Post-Phase-3: injectFault no longer snaps temperature/clocksSM
+      // directly (that self-erased within a few ticks once the next
+      // physics pass pulled it back toward the unaffected load-derived
+      // target — PHYS-9/LIVE-2). It sets a persistent activeFaultHeatWatts
+      // term instead, so the returned GPU is unchanged until the physics
+      // engine ticks it forward.
+      const gpu = createMockGPU({
+        temperature: 40,
+        clocksSM: 1410,
+        powerLimit: 400,
+      });
+      const faulted = simulator.injectFault(gpu, "thermal");
 
-      expect(result.temperature).toBe(85);
-      expect(result.clocksSM).toBeLessThan(1410);
-      expect(result.healthStatus).toBe("Warning");
+      expect(faulted.healthStatus).toBe("Warning");
+      expect(faulted.activeFaultHeatWatts).toBeGreaterThan(0);
+      expect(faulted.temperature).toBe(40);
+      expect(faulted.clocksSM).toBe(1410);
+
+      const engine = new ClusterPhysicsEngine();
+      let state = faulted;
+      for (let i = 0; i < 60; i++) {
+        state = engine.tickGPU(state);
+      }
+      // Sustained fault heat should push temperature well past the A100's
+      // ~85°C throttle threshold and pull clocks down from boost.
+      expect(state.temperature).toBeGreaterThan(70);
+      expect(state.clocksSM).toBeLessThan(1410);
     });
 
     it("should use architecture-appropriate boost clock for thermal throttle", () => {
       const h100Gpu = createMockGPU({
         name: "NVIDIA H100-SXM5-80GB",
         clocksSM: 1980,
+        temperature: 40,
+        powerLimit: 700,
       });
-      const result = simulator.injectFault(h100Gpu, "thermal");
+      const faulted = simulator.injectFault(h100Gpu, "thermal");
 
-      // H100 boost is 1980 MHz; at 85°C: 1980 - (85-70)*10 = 1830
-      expect(result.clocksSM).toBe(1830);
-      expect(result.clocksSM).toBeLessThan(1980);
+      const engine = new ClusterPhysicsEngine();
+      let state = faulted;
+      for (let i = 0; i < 60; i++) {
+        state = engine.tickGPU(state);
+      }
+      // H100 boost is 1980 MHz; sustained fault heat should push it past
+      // the H100's ~83°C throttle threshold and pull clocks down from boost.
+      expect(state.temperature).toBeGreaterThan(80);
+      expect(state.clocksSM).toBeLessThan(1980);
     });
 
     it("should inject NVLink failure", () => {
@@ -144,6 +245,19 @@ describe("MetricsSimulator", () => {
     });
   });
 
+  describe("injectFault thermal persistence", () => {
+    it("should set activeFaultHeatWatts instead of a one-shot temperature/clock snap", () => {
+      const gpu = createMockGPU({
+        temperature: 40,
+        clocksSM: 1410,
+        powerLimit: 400,
+      });
+      const faulted = simulator.injectFault(gpu, "thermal");
+      expect(faulted.activeFaultHeatWatts).toBeGreaterThan(0);
+      expect(faulted.healthStatus).toBe("Warning");
+    });
+  });
+
   describe("start and stop", () => {
     it("should not start twice", () => {
       let callCount = 0;
@@ -178,12 +292,12 @@ describe("MetricsSimulator", () => {
       vi.useRealTimers();
     });
 
-    /** Run one metrics update tick via startGpuOnly + fake timer */
+    /** Run one metrics update tick via start() + fake timer — the production path (CODE-7: previously used the legacy startGpuOnly() shim, which no production caller uses). */
     function tickMetrics(gpus: GPU[]): GPU[] {
       let result: GPU[] = gpus;
       const sim = new MetricsSimulator();
-      sim.startGpuOnly((updater) => {
-        result = updater(gpus);
+      sim.start((updater) => {
+        result = updater({ gpus, hcas: [], slurmState: "idle" }).gpus;
       }, 1000);
       vi.advanceTimersByTime(1000);
       sim.stop();
@@ -344,5 +458,239 @@ describe("MetricsSimulator", () => {
       expect(gpu.clocksSM).toBeGreaterThan(1600);
       expect(gpu.clocksSM).toBeLessThanOrEqual(1980);
     });
+  });
+});
+
+describe("ib-port-error fault injection (K2)", () => {
+  function createMockHCA(
+    overrides: Partial<InfiniBandHCA> = {},
+  ): InfiniBandHCA {
+    return {
+      id: 0,
+      devicePath: "/sys/class/infiniband/mlx5_0",
+      caType: "mlx5_0",
+      model: "ConnectX-7",
+      firmwareVersion: "28.39.1002",
+      ports: [
+        {
+          portNumber: 1,
+          state: "Active",
+          physicalState: "LinkUp",
+          rate: 400,
+          lid: 100,
+          guid: "0x00155dfffe334455",
+          linkLayer: "InfiniBand",
+          xmitDataBytes: 500000000,
+          rcvDataBytes: 450000000,
+          xmitPkts: 5000000,
+          rcvPkts: 4800000,
+          errors: {
+            symbolErrors: 0,
+            linkDowned: 0,
+            portRcvErrors: 0,
+            portXmitDiscards: 0,
+            portXmitWait: 0,
+          },
+        },
+        {
+          portNumber: 2,
+          state: "Active",
+          physicalState: "LinkUp",
+          rate: 400,
+          lid: 101,
+          guid: "0x00155dfffe334456",
+          linkLayer: "InfiniBand",
+          xmitDataBytes: 500000000,
+          rcvDataBytes: 450000000,
+          xmitPkts: 5000000,
+          rcvPkts: 4800000,
+          errors: {
+            symbolErrors: 0,
+            linkDowned: 0,
+            portRcvErrors: 0,
+            portXmitDiscards: 0,
+            portXmitWait: 0,
+          },
+        },
+      ],
+      ...overrides,
+    };
+  }
+
+  it("injectHCAFault sets nonzero error counters and Polling physical state on the target port", () => {
+    const hca = createMockHCA();
+    const result = injectHCAFault(hca, 0);
+    expect(result.ports[0].errors.symbolErrors).toBeGreaterThan(0);
+    expect(result.ports[0].errors.linkDowned).toBeGreaterThan(0);
+    expect(result.ports[0].physicalState).toBe("Polling");
+    expect(result.ports[0].state).toBe("Down");
+  });
+
+  it("injectHCAFault accumulates onto existing error counters", () => {
+    const hca = createMockHCA();
+    hca.ports[0].errors.symbolErrors = 10;
+    hca.ports[0].errors.linkDowned = 2;
+    const result = injectHCAFault(hca, 0);
+    expect(result.ports[0].errors.symbolErrors).toBe(160);
+    expect(result.ports[0].errors.linkDowned).toBe(3);
+  });
+
+  it("injectHCAFault leaves other ports untouched", () => {
+    const hca = createMockHCA();
+    const result = injectHCAFault(hca, 0);
+    expect(result.ports[1].physicalState).toBe("LinkUp");
+    expect(result.ports[1].state).toBe("Active");
+    expect(result.ports[1].errors.symbolErrors).toBe(0);
+  });
+
+  it("injectHCAFault returns a new object and does not mutate the input HCA", () => {
+    const hca = createMockHCA();
+    const result = injectHCAFault(hca, 0);
+    expect(result).not.toBe(hca);
+    expect(hca.ports[0].physicalState).toBe("LinkUp");
+    expect(hca.ports[0].state).toBe("Active");
+    expect(hca.ports[0].errors.symbolErrors).toBe(0);
+  });
+
+  it("injectHCAFault targets the port at the given index", () => {
+    const hca = createMockHCA();
+    const result = injectHCAFault(hca, 1);
+    expect(result.ports[1].physicalState).toBe("Polling");
+    expect(result.ports[0].physicalState).toBe("LinkUp");
+  });
+});
+
+describe("updateHcaMetrics advances traffic counters under load (PHYS-7)", () => {
+  function createTrafficHCA(): InfiniBandHCA {
+    return {
+      id: 0,
+      devicePath: "/sys/class/infiniband/mlx5_0",
+      caType: "mlx5_0",
+      model: "ConnectX-7",
+      firmwareVersion: "28.39.1002",
+      ports: [
+        {
+          portNumber: 1,
+          state: "Active",
+          physicalState: "LinkUp",
+          rate: 400,
+          lid: 100,
+          guid: "0x00155dfffe334455",
+          linkLayer: "InfiniBand",
+          xmitDataBytes: 1000,
+          rcvDataBytes: 900,
+          xmitPkts: 10,
+          rcvPkts: 9,
+          errors: {
+            symbolErrors: 5,
+            linkDowned: 1,
+            portRcvErrors: 2,
+            portXmitDiscards: 3,
+            portXmitWait: 4,
+          },
+        },
+      ],
+    };
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /**
+   * Run one metrics update tick via start() + fake timer — the production
+   * path (mirrors the job-aware GPU metrics helper above).
+   */
+  function tickHcas(
+    hcas: InfiniBandHCA[],
+    slurmState: "idle" | "alloc" | "drain" | "down",
+  ): InfiniBandHCA[] {
+    let result: InfiniBandHCA[] = hcas;
+    const sim = new MetricsSimulator();
+    sim.start((updater) => {
+      result = updater({ gpus: [], hcas, slurmState }).hcas;
+    }, 1000);
+    vi.advanceTimersByTime(1000);
+    sim.stop();
+    return result;
+  }
+
+  it("counters increase when the node has an active (allocated) Slurm job", () => {
+    const updated = tickHcas([createTrafficHCA()], "alloc");
+    expect(updated[0].ports[0].xmitDataBytes).toBeGreaterThan(1000);
+    expect(updated[0].ports[0].rcvDataBytes).toBeGreaterThan(900);
+    expect(updated[0].ports[0].xmitPkts).toBeGreaterThan(10);
+    expect(updated[0].ports[0].rcvPkts).toBeGreaterThan(9);
+  });
+
+  it("counters keep growing tick after tick under sustained load", () => {
+    let hcas = [createTrafficHCA()];
+    hcas = tickHcas(hcas, "alloc");
+    const afterOneTick = hcas[0].ports[0].xmitDataBytes;
+    hcas = tickHcas(hcas, "alloc");
+    expect(hcas[0].ports[0].xmitDataBytes).toBeGreaterThan(afterOneTick);
+  });
+
+  it("counters stay unchanged when the node is idle (no job running)", () => {
+    const hcas = [createTrafficHCA()];
+    const updated = tickHcas(hcas, "idle");
+    expect(updated[0].ports[0].xmitDataBytes).toBe(1000);
+    expect(updated[0].ports[0].rcvDataBytes).toBe(900);
+    expect(updated[0].ports[0].xmitPkts).toBe(10);
+    expect(updated[0].ports[0].rcvPkts).toBe(9);
+    // Same reference back: an idle tick has nothing to write back
+    expect(updated).toBe(hcas);
+  });
+
+  it("drained and down nodes do not accumulate traffic either", () => {
+    const drained = tickHcas([createTrafficHCA()], "drain");
+    expect(drained[0].ports[0].xmitDataBytes).toBe(1000);
+    const down = tickHcas([createTrafficHCA()], "down");
+    expect(down[0].ports[0].xmitDataBytes).toBe(1000);
+  });
+
+  it("error counters remain completely untouched under load (errors are fault-injection-only)", () => {
+    const updated = tickHcas([createTrafficHCA()], "alloc");
+    expect(updated[0].ports[0].errors).toEqual({
+      symbolErrors: 5,
+      linkDowned: 1,
+      portRcvErrors: 2,
+      portXmitDiscards: 3,
+      portXmitWait: 4,
+    });
+  });
+
+  it("a Down (fault-injected) port does not accumulate traffic even while the node has an active job (final review finding)", () => {
+    // A learner injecting ib-port-error then applying perfquery's own
+    // taught delta-sampling technique should see the downed port's
+    // counters frozen, not still passing ~100 Mb/s of "traffic" that
+    // would contradict the very fault being diagnosed.
+    const downHCA = createTrafficHCA();
+    downHCA.ports[0].state = "Down";
+    downHCA.ports[0].physicalState = "Polling";
+
+    const updated = tickHcas([downHCA], "alloc");
+    expect(updated[0].ports[0].xmitDataBytes).toBe(1000);
+    expect(updated[0].ports[0].rcvDataBytes).toBe(900);
+    expect(updated[0].ports[0].xmitPkts).toBe(10);
+    expect(updated[0].ports[0].rcvPkts).toBe(9);
+  });
+
+  it("only the Down port is frozen; a sibling Active port on the same HCA still advances", () => {
+    const hca = createTrafficHCA();
+    hca.ports.push({
+      ...hca.ports[0],
+      portNumber: 2,
+      state: "Down",
+      physicalState: "Polling",
+    });
+
+    const updated = tickHcas([hca], "alloc");
+    expect(updated[0].ports[0].xmitDataBytes).toBeGreaterThan(1000);
+    expect(updated[0].ports[1].xmitDataBytes).toBe(1000);
   });
 });

@@ -143,7 +143,7 @@ describe("WelcomeScreen", () => {
 
   it("renders stats bar with key numbers", () => {
     render(<WelcomeScreen onClose={onClose} />);
-    expect(screen.getByText(/32 Missions/i)).toBeInTheDocument();
+    expect(screen.getByText(/40 Missions/i)).toBeInTheDocument();
     expect(screen.getByText(/229 Commands/i)).toBeInTheDocument();
     expect(screen.getByText(/6 Architectures/i)).toBeInTheDocument();
     expect(screen.getByText(/400\+ Questions/i)).toBeInTheDocument();

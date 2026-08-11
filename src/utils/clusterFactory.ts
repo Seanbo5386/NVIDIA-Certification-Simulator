@@ -15,6 +15,7 @@ import {
   type SystemType,
   type HardwareSpec,
 } from "@/data/hardwareSpecs";
+import { IDLE_POWER_FLOOR } from "@/simulation/clusterPhysicsEngine";
 
 const GPU_TYPE_MAP: Record<SystemType, GPUType> = {
   "DGX-A100": "A100-80GB",
@@ -105,8 +106,14 @@ function createGPU(id: number, specs: HardwareSpec): GPU {
     type: GPU_TYPE_MAP[specs.system.type] || "A100-80GB",
     pciAddress: `00000000:${(0x10 + id).toString(16).padStart(2, "0")}:00.0`,
     temperature: 30 + Math.random() * 10,
+    // Idle equilibrium: 0% utilization should draw ~IDLE_POWER_FLOOR of TDP
+    // (the same floor ClusterPhysicsEngine.tickGPU() converges every GPU
+    // toward at 0% utilization), not 60-80% of TDP — PHYS-4's "0% util at
+    // 249-318W" symptom. Temperature is left as-is: it already lands close
+    // to this same floor's implied ~41.5-44.6°C equilibrium.
     powerDraw:
-      specs.gpu.tdpWatts * 0.6 + Math.random() * specs.gpu.tdpWatts * 0.2,
+      specs.gpu.tdpWatts * IDLE_POWER_FLOOR +
+      Math.random() * specs.gpu.tdpWatts * 0.05,
     powerLimit: specs.gpu.tdpWatts,
     memoryTotal: specs.gpu.memoryMiB,
     memoryUsed: 0,
@@ -128,6 +135,7 @@ function createGPU(id: number, specs: HardwareSpec): GPU {
     healthStatus: "OK",
     xidErrors: [],
     persistenceMode: true,
+    computeMode: "Default",
   };
 }
 
@@ -155,6 +163,7 @@ function createBlueFieldDPU(id: number, systemType: SystemType): BlueFieldDPU {
 
 function createInfiniBandPort(
   portNum: number,
+  lid: number,
   specs: HardwareSpec,
 ): InfiniBandPort {
   return {
@@ -162,11 +171,25 @@ function createInfiniBandPort(
     state: "Active",
     physicalState: "LinkUp",
     rate: specs.network.portRateGbs as 100 | 200 | 400 | 800,
-    lid: 100 + portNum,
-    guid: `0x${Math.floor(Math.random() * 0xffffffffffff)
+    lid,
+    // Real IB GUIDs are 64-bit (16 hex digits), not 48-bit (SIM-13). The
+    // string is padded to 16 digits; Number.MAX_SAFE_INTEGER only gives
+    // Math.random() ~2^53 of usable range (the top two hex digits are
+    // always "00"), but that's still ample entropy to avoid a collision
+    // within one simulated cluster's small port count.
+    guid: `0x${Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
       .toString(16)
-      .padStart(12, "0")}`,
+      .padStart(16, "0")}`,
     linkLayer: "InfiniBand",
+    // Seeded from the same LID-derived baseline perfquery previously
+    // computed fresh on every call -- kept here as the STARTING value so a
+    // freshly-built cluster's first perfquery still looks like a
+    // long-running port, not a suspiciously-zeroed one. Ticks/load advance
+    // these further (PHYS-7); perfquery no longer recomputes them.
+    xmitDataBytes: 500000000 + ((lid * 7919) % 500000000),
+    rcvDataBytes: 450000000 + ((lid * 7919 * 3) % 500000000),
+    xmitPkts: 5000000 + ((lid * 7919) % 5000000),
+    rcvPkts: 4800000 + ((lid * 7919 * 3) % 5000000),
     errors: {
       symbolErrors: 0,
       linkDowned: 0,
@@ -177,7 +200,11 @@ function createInfiniBandPort(
   };
 }
 
-function createInfiniBandHCA(id: number, specs: HardwareSpec): InfiniBandHCA {
+function createInfiniBandHCA(
+  id: number,
+  specs: HardwareSpec,
+  nodeId: number,
+): InfiniBandHCA {
   const hcaDeviceIds: Record<string, string> = {
     "ConnectX-6": "mt4123",
     "ConnectX-7": "mt4129",
@@ -188,7 +215,11 @@ function createInfiniBandHCA(id: number, specs: HardwareSpec): InfiniBandHCA {
   return {
     id,
     devicePath: `/dev/mst/${deviceId}_pciconf${id}`,
-    caType: `${specs.network.hcaModel} HCA`,
+    // Real Linux/Mellanox RDMA device name -- unique per HCA on a node via
+    // its own id, not the single node-wide "ConnectX-N HCA" string every
+    // HCA previously shared (SIM-3).
+    caType: `mlx5_${id}`,
+    model: specs.network.hcaModel,
     firmwareVersion:
       specs.network.hcaModel === "ConnectX-9"
         ? "34.42.1000"
@@ -197,7 +228,20 @@ function createInfiniBandHCA(id: number, specs: HardwareSpec): InfiniBandHCA {
           : specs.network.hcaModel === "ConnectX-7"
             ? "28.39.1002"
             : "20.35.1012",
-    ports: [createInfiniBandPort(1, specs)],
+    // Unique LID per port across the FABRIC, not just within one node. A
+    // subnet manager hands out fabric-unique LIDs -- that is what makes a LID
+    // an address -- but HCA ids restart at 0 on each node, so `100 + id`
+    // alone gave every node's mlx5_0 LID 100 and left ibping/iblinkinfo
+    // unable to say which host a LID belonged to. Offsetting by the node's
+    // index keeps them distinct cluster-wide. This function only ever builds
+    // one port per HCA (portNum always 1), so the HCA id is the port index.
+    ports: [
+      createInfiniBandPort(
+        1,
+        100 + nodeId * specs.network.hcaCount + id,
+        specs,
+      ),
+    ],
   };
 }
 
@@ -336,7 +380,7 @@ export function createDGXNode(
       createBlueFieldDPU(i, systemType),
     ),
     hcas: Array.from({ length: specs.network.hcaCount }, (_, i) =>
-      createInfiniBandHCA(i, specs),
+      createInfiniBandHCA(i, specs, id),
     ),
     bmc: createBMC(id),
     cpuModel: `${cpu.model} ${cpu.coresPerSocket}-Core Processor`,

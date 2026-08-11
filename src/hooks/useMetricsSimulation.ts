@@ -11,6 +11,10 @@ import { MetricsSimulator } from "@/utils/metricsSimulator";
 import { useSimulationStore } from "@/store/simulationStore";
 import { shallowCompareGPU, shallowCompareHCAs } from "@/utils/shallowCompare";
 import { scenarioContextManager } from "@/store/scenarioContext";
+import {
+  resolveEffectiveCluster,
+  resolveEffectiveMutator,
+} from "@/utils/effectiveState";
 import type { ThresholdEvent } from "@/simulation/clusterPhysicsEngine";
 import type {
   ClusterEventInput,
@@ -80,14 +84,31 @@ export function useMetricsSimulation(isRunning: boolean): void {
     if (isRunning) {
       simulator.start((updater) => {
         const store = useSimulationStore.getState();
+        // Tick whichever cluster the learner is actually looking at: the
+        // active ScenarioContext's isolated cluster (mission/incident/free
+        // sandbox) when one exists, otherwise the global dashboard cluster.
+        // Previously this always ticked the global cluster even while a
+        // scenario was active, so sandbox GPUs never moved (PHYS-4) and
+        // Apply Workload's one-shot values never converged.
+        const targetCluster = resolveEffectiveCluster(store.cluster);
+        const mutator = resolveEffectiveMutator();
+        const isTickingScenario = targetCluster !== store.cluster;
 
         // Build gpuUuid -> nodeId mapping for threshold event routing.
         // Keyed on uuid (not gpu.id) because gpu.id is node-local and repeats
         // across nodes — keying on it would collide and misroute events.
+        // Built from targetCluster (whichever cluster is actually ticked) so
+        // events describe the same cluster they're routed into (PHYS-14) —
+        // previously this was always built from the global cluster even when
+        // a scenario's cluster was the one that mattered.
         const gpuToNode = new Map<string, string>();
 
-        store.cluster.nodes.forEach((node) => {
-          const updated = updater({ gpus: node.gpus, hcas: node.hcas });
+        targetCluster.nodes.forEach((node) => {
+          const updated = updater({
+            gpus: node.gpus,
+            hcas: node.hcas,
+            slurmState: node.slurmState,
+          });
 
           // Track GPU-to-node mapping for threshold events
           for (const gpu of node.gpus) {
@@ -97,13 +118,37 @@ export function useMetricsSimulation(isRunning: boolean): void {
           // Update GPUs - use shallow comparison for better performance
           updated.gpus.forEach((gpu, idx) => {
             if (!shallowCompareGPU(gpu, node.gpus[idx])) {
-              store.updateGPU(node.id, gpu.id, gpu);
+              mutator.updateGPU(node.id, gpu.id, gpu);
             }
           });
 
-          // Update HCAs (InfiniBand port errors) - use shallow comparison
+          // Update HCAs - use shallow comparison. Error counters still only
+          // change via explicit fault injection, never from ticking, but
+          // traffic counters now advance while the node has an allocated
+          // Slurm job (PHYS-7), so ticks genuinely produce HCA changes to
+          // write back. The global cluster takes the bulk updateHCAs path;
+          // a ticking sandbox writes just the changed ports' traffic
+          // counters through the mutator (ScenarioContext.updateHCA, added
+          // for K2 fault injection) so perfquery delta-sampling works
+          // inside missions too — srun routes setSlurmState("alloc") into
+          // the sandbox, so sandbox nodes are exactly where load shows up.
           if (!shallowCompareHCAs(updated.hcas, node.hcas)) {
-            store.updateHCAs(node.id, updated.hcas);
+            if (isTickingScenario) {
+              updated.hcas.forEach((hca, hcaIdx) => {
+                hca.ports.forEach((port, portIdx) => {
+                  if (port !== node.hcas[hcaIdx]?.ports[portIdx]) {
+                    mutator.updateHCA(node.id, hca.id, port.portNumber, {
+                      xmitDataBytes: port.xmitDataBytes,
+                      rcvDataBytes: port.rcvDataBytes,
+                      xmitPkts: port.xmitPkts,
+                      rcvPkts: port.rcvPkts,
+                    });
+                  }
+                });
+              });
+            } else {
+              store.updateHCAs(node.id, updated.hcas);
+            }
           }
         });
 

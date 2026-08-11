@@ -49,37 +49,52 @@ describe("InlineQuiz", () => {
     expect(screen.getByText(/not quite/i)).toBeInTheDocument();
   });
 
-  it("should call onComplete with result after delay", () => {
+  it("should keep the explanation on screen instead of advancing on a timer", () => {
     const onComplete = vi.fn();
     render(<InlineQuiz quiz={mockQuiz} onComplete={onComplete} />);
     fireEvent.click(screen.getByText("System Event Log"));
-    // Not called immediately
-    expect(onComplete).not.toHaveBeenCalled();
-    // Called after the delay
+
+    // No timer may advance the step out from under the reader.
     act(() => {
-      vi.advanceTimersByTime(1500);
+      vi.advanceTimersByTime(10000);
     });
+    expect(onComplete).not.toHaveBeenCalled();
+    expect(screen.getByText(/SEL = System Event Log/i)).toBeInTheDocument();
+  });
+
+  it("should call onComplete with true when Continue is clicked after a right answer", () => {
+    const onComplete = vi.fn();
+    render(<InlineQuiz quiz={mockQuiz} onComplete={onComplete} />);
+    fireEvent.click(screen.getByText("System Event Log"));
+    expect(onComplete).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId("quiz-continue"));
     expect(onComplete).toHaveBeenCalledWith(true);
   });
 
-  it("should call onComplete with false on wrong answer after delay", () => {
+  it("should call onComplete with false when Continue is clicked after a wrong answer", () => {
     const onComplete = vi.fn();
     render(<InlineQuiz quiz={mockQuiz} onComplete={onComplete} />);
     fireEvent.click(screen.getByText("Serial Error Log"));
     expect(onComplete).not.toHaveBeenCalled();
-    act(() => {
-      vi.advanceTimersByTime(1500);
-    });
+
+    fireEvent.click(screen.getByTestId("quiz-continue"));
     expect(onComplete).toHaveBeenCalledWith(false);
   });
 
-  it("should disable options after answering", () => {
+  it("should not render Continue until an option is chosen", () => {
+    render(<InlineQuiz quiz={mockQuiz} onComplete={vi.fn()} />);
+    expect(screen.queryByTestId("quiz-continue")).not.toBeInTheDocument();
+  });
+
+  it("should disable option buttons after answering but leave Continue clickable", () => {
     render(<InlineQuiz quiz={mockQuiz} onComplete={vi.fn()} />);
     fireEvent.click(screen.getByText("System Event Log"));
-    const buttons = screen.getAllByRole("button");
-    buttons.forEach((button) => {
-      expect(button).toBeDisabled();
+
+    mockQuiz.options.forEach((option) => {
+      expect(screen.getByText(option).closest("button")).toBeDisabled();
     });
+    expect(screen.getByTestId("quiz-continue")).toBeEnabled();
   });
 
   it("substitutes hardware placeholders in question, options, and explanation", () => {

@@ -19,6 +19,17 @@ describe("createDefaultCluster", () => {
     expect(gpu.memoryTotal).toBe(81920);
   });
 
+  it("should set idle powerDraw near the physics idle floor (15% of TDP), not 60-80% of TDP", () => {
+    const gpu = cluster.nodes[0].gpus[0];
+    // A100 TDP is 400W (powerLimit). 0% utilization should start near the
+    // physics engine's own idle floor (IDLE_POWER_FLOOR = 15% of TDP), not
+    // the 60-80% range a fresh cluster started at before this fix (PHYS-4:
+    // "0% utilization at 249-318W" is physically impossible).
+    expect(gpu.utilization).toBe(0);
+    expect(gpu.powerDraw).toBeGreaterThanOrEqual(gpu.powerLimit * 0.15);
+    expect(gpu.powerDraw).toBeLessThan(gpu.powerLimit * 0.25);
+  });
+
   it("should initialize NVLink arrays with 12 connections for A100", () => {
     const gpu = cluster.nodes[0].gpus[0];
     expect(gpu.nvlinks).toHaveLength(12);
@@ -98,7 +109,7 @@ describe("createCustomCluster", () => {
   it("should create GB200 nodes with ConnectX-8 HCAs", () => {
     const cluster = createCustomCluster(1, "DGX-GB200");
     const hca = cluster.nodes[0].hcas[0];
-    expect(hca.caType).toContain("ConnectX-8");
+    expect(hca.model).toBe("ConnectX-8");
     expect(hca.ports[0].rate).toBe(800); // XDR
   });
 
@@ -125,7 +136,7 @@ describe("createCustomCluster", () => {
   it("should create VR200 nodes with ConnectX-9 HCAs", () => {
     const cluster = createCustomCluster(1, "DGX-VR200");
     const hca = cluster.nodes[0].hcas[0];
-    expect(hca.caType).toContain("ConnectX-9");
+    expect(hca.model).toBe("ConnectX-9");
     expect(hca.ports[0].rate).toBe(800); // XDR
   });
 
@@ -147,5 +158,117 @@ describe("createCustomCluster", () => {
     const gpu = cluster.nodes[0].gpus[0];
     expect(gpu.memoryTotal).toBe(294912); // 288GB in MiB
     expect(gpu.powerLimit).toBe(1800);
+  });
+});
+
+describe("InfiniBand HCA/port identity (SIM-3/SIM-13)", () => {
+  it("each HCA on a node gets a unique mlx5_N-style device name, not an identical 'ConnectX-N HCA' string", () => {
+    const cluster = createCustomCluster(1, "DGX-H100");
+    const node = cluster.nodes[0];
+    expect(node.hcas.length).toBeGreaterThan(1);
+    const caTypes = node.hcas.map((h) => h.caType);
+    expect(new Set(caTypes).size).toBe(node.hcas.length);
+    expect(caTypes[0]).toBe("mlx5_0");
+    expect(caTypes[1]).toBe("mlx5_1");
+    // The vendor model string is preserved on a separate field, not lost.
+    expect(node.hcas[0].model).toBe("ConnectX-7");
+  });
+
+  it("each port across the whole node gets a unique LID, not the same 101 for every port", () => {
+    const cluster = createCustomCluster(1, "DGX-H100");
+    const node = cluster.nodes[0];
+    const lids = node.hcas.flatMap((h) => h.ports.map((p) => p.lid));
+    expect(new Set(lids).size).toBe(lids.length);
+  });
+
+  it("GUIDs are real 64-bit (16 hex digit) values, not 48-bit", () => {
+    const cluster = createCustomCluster(1, "DGX-H100");
+    const node = cluster.nodes[0];
+    for (const hca of node.hcas) {
+      for (const port of hca.ports) {
+        expect(port.guid).toMatch(/^0x[0-9a-f]{16}$/);
+      }
+    }
+  });
+
+  it("GUIDs are unique across the whole node", () => {
+    const cluster = createCustomCluster(1, "DGX-H100");
+    const node = cluster.nodes[0];
+    const guids = node.hcas.flatMap((h) => h.ports.map((p) => p.guid));
+    expect(new Set(guids).size).toBe(guids.length);
+  });
+
+  it("ports start with nonzero LID-seeded traffic counters so a fresh cluster's first perfquery is not suspiciously zeroed (PHYS-7)", () => {
+    const cluster = createCustomCluster(1, "DGX-H100");
+    const node = cluster.nodes[0];
+    for (const hca of node.hcas) {
+      for (const port of hca.ports) {
+        // Same LID-derived baseline perfquery previously computed on the fly
+        expect(port.xmitDataBytes).toBe(
+          500000000 + ((port.lid * 7919) % 500000000),
+        );
+        expect(port.rcvDataBytes).toBe(
+          450000000 + ((port.lid * 7919 * 3) % 500000000),
+        );
+        expect(port.xmitPkts).toBe(5000000 + ((port.lid * 7919) % 5000000));
+        expect(port.rcvPkts).toBe(4800000 + ((port.lid * 7919 * 3) % 5000000));
+        expect(port.xmitDataBytes).toBeGreaterThan(0);
+      }
+    }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// InfiniBand LIDs must be unique across the whole fabric (bot review P2).
+//
+// A subnet manager assigns each port a fabric-unique LID; that is what makes
+// a LID an address. HCA ids restart at 0 on every node, so deriving the LID
+// as `100 + hcaId` gave every node's mlx5_0 LID 100 -- 64 ports sharing only
+// 8 distinct addresses, which makes ibping/iblinkinfo unable to say which
+// host a LID refers to.
+// ---------------------------------------------------------------------------
+describe("InfiniBand LID assignment", () => {
+  function allPorts(cluster: ReturnType<typeof createCustomCluster>) {
+    return cluster.nodes.flatMap((node) =>
+      node.hcas.flatMap((hca) =>
+        hca.ports.map((port) => ({
+          nodeId: node.id,
+          caType: hca.caType,
+          lid: port.lid,
+        })),
+      ),
+    );
+  }
+
+  it("assigns every port in the fabric a distinct LID", () => {
+    const cluster = createCustomCluster(8, "DGX-H100");
+    const ports = allPorts(cluster);
+
+    expect(ports.length).toBe(64);
+    expect(new Set(ports.map((p) => p.lid)).size).toBe(ports.length);
+  });
+
+  it("does not repeat the same LID for mlx5_0 on different nodes", () => {
+    const cluster = createCustomCluster(8, "DGX-H100");
+    const firstHcaLids = allPorts(cluster)
+      .filter((p) => p.caType === "mlx5_0")
+      .map((p) => p.lid);
+
+    expect(firstHcaLids.length).toBe(8);
+    expect(new Set(firstHcaLids).size).toBe(8);
+  });
+
+  it("keeps LIDs unique across every supported architecture", () => {
+    for (const systemType of [
+      "DGX-A100",
+      "DGX-H100",
+      "DGX-H200",
+      "DGX-B200",
+      "DGX-GB200",
+      "DGX-VR200",
+    ] as const) {
+      const ports = allPorts(createCustomCluster(8, systemType));
+      expect(new Set(ports.map((p) => p.lid)).size).toBe(ports.length);
+    }
   });
 });

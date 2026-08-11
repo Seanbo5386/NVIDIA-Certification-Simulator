@@ -1,0 +1,115 @@
+{
+  "command": "nvsm",
+  "category": "gpu_management",
+  "description": "NVIDIA System Management (NVSM) provides cluster-wide health monitoring and diagnostics for DGX systems, covering GPUs, NVLink, InfiniBand, storage, and chassis sensors from a single interactive shell or one-shot command. NVSM aggregates per-component health checks into a single pass/fail rollup and can produce a diagnostic tarball for support tickets.",
+  "synopsis": "nvsm [OPTIONS] [COMMAND]",
+  "version_documented": "24.03",
+  "source_urls": [
+    "https://docs.nvidia.com/datacenter/nvsm/nvsm-user-guide/latest/using-nvsm-cli.html"
+  ],
+  "installation": {
+    "package": "nvsm",
+    "notes": "Ships preinstalled on DGX OS. Requires the nvsm-core service to be running and typically requires root/sudo privileges to run."
+  },
+  "global_options": [
+    {
+      "short": "-h",
+      "long": "--help",
+      "description": "Display usage information and available commands"
+    },
+    {
+      "short": "-v",
+      "long": "--version",
+      "description": "Display NVSM version information"
+    }
+  ],
+  "subcommands": [
+    {
+      "name": "show",
+      "description": "Show properties, targets, and verbs for the current or specified target in the NVSM address hierarchy (e.g. /systems/localhost, /systems/localhost/gpus/GPU0).",
+      "synopsis": "nvsm show [health [--detailed]] | nvsm <path> show",
+      "options": [
+        {
+          "long": "--detailed",
+          "description": "Show every individual health check instead of a truncated summary list"
+        }
+      ]
+    },
+    {
+      "name": "dump",
+      "description": "Generate a diagnostic tarball capturing the current health report, suitable for attaching to an NVIDIA support ticket.",
+      "synopsis": "nvsm dump health",
+      "options": []
+    },
+    {
+      "name": "cd",
+      "description": "Change the current working target (CWT) within the NVSM address hierarchy. Interactive-shell only.",
+      "synopsis": "nvsm> cd <path>",
+      "options": []
+    }
+  ],
+  "output_formats": {
+    "default": "Human-readable text: dot-leader-formatted health check lines (\"description....... Status\") in one-shot mode, or a Properties/Targets/Verbs listing when navigating the address hierarchy in the interactive shell."
+  },
+  "exit_codes": [
+    {
+      "code": 0,
+      "meaning": "Success - command completed, though individual health checks may report Warning or Critical status in the output"
+    },
+    {
+      "code": 1,
+      "meaning": "Error - unknown command/target, invalid path, or the nvsm-core daemon is unreachable"
+    }
+  ],
+  "common_usage_patterns": [
+    {
+      "description": "Enter the interactive NVSM shell",
+      "command": "nvsm",
+      "output_example": "nvsm> ",
+      "requires_root": true
+    },
+    {
+      "description": "One-shot system health summary",
+      "command": "nvsm show health",
+      "output_example": "\nChecks\n------\nVerify installed DIMM memory sticks.......................... Healthy\nNumber of logical CPU cores................................... Healthy\nGPU link speed [0000:39:00.0].................................. Healthy\n...\n\nHealth Summary\n--------------\n42 out of 42 checks are Healthy\nOverall system status is Healthy",
+      "requires_root": true
+    },
+    {
+      "description": "Full, untruncated health check list",
+      "command": "nvsm show health --detailed",
+      "output_example": "(same format as 'show health', with every check listed instead of the first 20)",
+      "requires_root": true
+    },
+    {
+      "description": "Generate a diagnostic tarball for a support ticket",
+      "command": "nvsm dump health",
+      "output_example": "Writing output to /tmp/nvsm-health-dgx-1-20260721120000.tar.xz\nDone.",
+      "requires_root": true
+    }
+  ],
+  "error_messages": [
+    {
+      "message": "Error: Cannot connect to NVSM daemon. Is nvsm-core service running?",
+      "meaning": "The nvsm-core background service isn't running or isn't reachable",
+      "resolution": "Check the service with 'sudo systemctl status nvsm-core' and start it with 'sudo systemctl start nvsm-core' if it's down."
+    },
+    {
+      "message": "Error: Target does not exist",
+      "meaning": "A 'cd' or path-based command referenced an address that isn't in the NVSM hierarchy",
+      "resolution": "Run 'show' with no arguments at the current target to list valid child targets, then 'cd' into one of those."
+    }
+  ],
+  "interoperability": {
+    "related_commands": ["nvidia-smi", "dcgmi", "bcm", "ipmitool"],
+    "notes": "NVSM's health rollup surfaces the same underlying GPU/NVLink/InfiniBand state that nvidia-smi and dcgmi report individually — an XID error or thermal fault visible in nvidia-smi will also show up as a failing NVSM health check. NVSM is scoped to a single DGX node; bcm handles fleet-wide/cluster-level management."
+  },
+  "permissions": {
+    "read_operations": "Requires root/sudo for both interactive and one-shot invocations, per NVIDIA's documented usage.",
+    "write_operations": "None — nvsm in this simulator is read-only (health reporting and diagnostic dump); it does not modify GPU or system configuration."
+  },
+  "limitations": [
+    "Requires the nvsm-core service to be running",
+    "Scoped to the local DGX node only — no cluster-wide fleet view (use bcm for that)",
+    "'show health' without --detailed truncates the check list; use --detailed for the full report"
+  ]
+}

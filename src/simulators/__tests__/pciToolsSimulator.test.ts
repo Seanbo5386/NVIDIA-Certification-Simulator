@@ -41,6 +41,7 @@ const createMockGPU = (id: number, overrides?: Partial<GPU>): GPU => ({
   healthStatus: "OK",
   xidErrors: [],
   persistenceMode: true,
+  computeMode: "Default",
   ...overrides,
 });
 
@@ -55,7 +56,8 @@ const createMockNode = (overrides?: Partial<DGXNode>): DGXNode =>
       {
         id: 0,
         devicePath: "/dev/infiniband/mlx5_0",
-        caType: "ConnectX-7",
+        caType: "mlx5_0",
+        model: "ConnectX-7",
         firmwareVersion: "28.39.1002",
         ports: [],
       },

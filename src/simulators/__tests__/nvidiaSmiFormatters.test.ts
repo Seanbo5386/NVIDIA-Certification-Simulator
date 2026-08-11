@@ -5,6 +5,8 @@ import {
   formatDisplayECC,
   formatDisplayTemperature,
   formatDisplayPids,
+  formatDisplayPerformance,
+  formatDisplayPower,
   DISPLAY_FORMATTERS,
 } from "../nvidiaSmiFormatters";
 
@@ -34,6 +36,7 @@ const makeGpu = (overrides?: Partial<GPU>): GPU => ({
   healthStatus: "OK",
   xidErrors: [],
   persistenceMode: false,
+  computeMode: "Default",
   ...overrides,
 });
 
@@ -102,6 +105,31 @@ describe("nvidiaSmiFormatters", () => {
       const gpu = makeGpu({ temperature: 45 });
       const output = formatDisplayTemperature(gpu);
       expect(output).toContain("Memory Current Temp               : 50 C");
+    });
+  });
+
+  describe("formatDisplayPerformance", () => {
+    it("should use the GPU's per-arch slowdown threshold for HW Thermal Slowdown, not a flat 80C", () => {
+      // H100's slowdown threshold (90C) differs from A100's (89C) and from
+      // the old flat hardcoded 80C this line used regardless of temperature.
+      const h100 = makeGpu({ name: "NVIDIA H100-SXM5-80GB", temperature: 85 });
+      const output = formatDisplayPerformance(h100);
+      // 85C is below H100's 90C slowdown threshold -> must read Not Active,
+      // where the OLD hardcoded ">80" check would have wrongly said Active.
+      expect(output).toContain("HW Thermal Slowdown           : Not Active");
+    });
+  });
+
+  describe("formatDisplayPower", () => {
+    it("reports the fixed architecture Min/Max Power Limit, not values derived from the current (capped) limit", () => {
+      // A prior -pl already lowered the current limit to 150W (well below
+      // A100's real fixed ceiling of 400W). Min/Max Power Limit must still
+      // reflect the fixed 100-400W bounds, not "75.00 W" / "150.00 W"
+      // derived from the current (capped) powerLimit (SIM-2).
+      const gpu = makeGpu({ powerLimit: 150 });
+      const output = formatDisplayPower(gpu);
+      expect(output).toContain("Min Power Limit                   : 100.00 W");
+      expect(output).toContain("Max Power Limit                   : 400.00 W");
     });
   });
 

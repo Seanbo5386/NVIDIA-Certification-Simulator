@@ -17,10 +17,9 @@ export function InlineQuiz({ quiz, onComplete }: InlineQuizProps) {
   const handleSelect = (index: number) => {
     if (isAnswered) return;
     setSelectedIndex(index);
-    // Delay onComplete so the user can see the feedback before the step advances
-    setTimeout(() => {
-      onComplete(index === quiz.correctIndex);
-    }, 1500);
+    // onComplete advances the scenario step, which unmounts this component.
+    // It is deliberately NOT called here: the explanation stays on screen
+    // until the user clicks Continue, so they can read it at their own pace.
   };
 
   return (
@@ -83,6 +82,17 @@ export function InlineQuiz({ quiz, onComplete }: InlineQuizProps) {
           </p>
           <p>{sub(quiz.explanation)}</p>
         </div>
+      )}
+
+      {/* Continue — the only thing that advances the step */}
+      {isAnswered && (
+        <button
+          data-testid="quiz-continue"
+          onClick={() => onComplete(isCorrect)}
+          className="mt-3 w-full bg-nvidia-green hover:bg-green-500 text-black text-sm font-bold py-2.5 rounded transition-colors"
+        >
+          Continue →
+        </button>
       )}
     </div>
   );

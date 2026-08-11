@@ -8,6 +8,7 @@ import type {
   HealthStatus,
   XIDError,
   InfiniBandHCA,
+  InfiniBandPort,
 } from "@/types/hardware";
 import type {
   Scenario,
@@ -107,6 +108,12 @@ interface SimulationState {
   setSystemType: (systemType: SystemType) => void;
   selectNode: (nodeId: string) => void;
   updateGPU: (nodeId: string, gpuId: number, updates: Partial<GPU>) => void;
+  updateHCA: (
+    nodeId: string,
+    hcaId: number,
+    portNumber: number,
+    updates: Partial<InfiniBandPort>,
+  ) => void;
   updateHCAs: (nodeId: string, hcas: InfiniBandHCA[]) => void;
   updateNodeHealth: (nodeId: string, health: HealthStatus) => void;
   setBugReportCollected: (nodeId: string, value: boolean) => void;
@@ -191,7 +198,15 @@ export const useSimulationStore = create<SimulationState>()(
       cluster: createDefaultCluster(),
       systemType: "DGX-A100" as SystemType,
       selectedNode: null,
-      isRunning: false,
+      // ON by default, and correct here BECAUSE Phase 3 is present: an injected
+      // fault is a persistent activeFaultHeatWatts heat term, so the tick no
+      // longer normalizes the evidence away. These two are coupled and must
+      // ship together -- release/phase1-2 deliberately carries `false` since it
+      // predates Phase 3, so a merge of that branch into this line MUST resolve
+      // to `true` here. This comment exists so that resolution is an explicit
+      // conflict rather than a silent one: without a change on this side, git
+      // would keep the tranche's `false` and quietly ship the tick disabled.
+      isRunning: true,
       simulationSpeed: 1.0,
       metricsInterval: 1000,
       lastMetricsUpdate: Date.now(),
@@ -275,6 +290,17 @@ export const useSimulationStore = create<SimulationState>()(
           }
 
           Object.assign(gpu, updates);
+        }),
+
+      updateHCA: (nodeId, hcaId, portNumber, updates) =>
+        set((state) => {
+          const node = state.cluster.nodes.find((n) => n.id === nodeId);
+          if (!node) return;
+          const hca = node.hcas.find((h) => h.id === hcaId);
+          if (!hca) return;
+          const port = hca.ports.find((p) => p.portNumber === portNumber);
+          if (!port) return;
+          Object.assign(port, updates);
         }),
 
       updateHCAs: (nodeId, hcas) =>
@@ -735,20 +761,36 @@ export const useSimulationStore = create<SimulationState>()(
     })),
     {
       name: "nvidia-simulator-storage",
-      version: 1,
+      version: 3,
       migrate: (persistedState: unknown, version: number) => {
         // v0 → v1: cpuCount was persisted as socket count (2) instead of total
-        // cores (sockets × coresPerSocket). Drop ONLY the stale cluster so the
-        // factory rebuilds it with correct values; preserve the user's
-        // scenarioProgress, completedScenarios, and settings rather than wiping
-        // everything.
+        // cores (sockets × coresPerSocket).
+        // v1 → v2 (Phase 6): InfiniBandHCA/InfiniBandPort's shape changed --
+        // caType was redefined from a display string to the real per-HCA
+        // RDMA device name, a new required `model` field was added, and 4
+        // new required traffic-counter fields (xmitDataBytes/rcvDataBytes/
+        // xmitPkts/rcvPkts) were added. isValidCluster's shape check never
+        // inspects `hcas` at all, so an old v1 blob would otherwise survive
+        // merge() verbatim with these fields undefined -- the tick loop's
+        // `port.xmitDataBytes + 12500000` would compute NaN on the very
+        // first tick under load and never recover (NaN + anything is NaN).
         //
-        // Any non-v1 version (older OR a future build's newer schema) is treated
-        // the same way: drop the cluster and let merge()/the factory rebuild it,
-        // rather than trusting a cluster shaped by an unknown schema version.
+        // v2 → v3: InfiniBand port LIDs were only unique within a node, so
+        // every node's mlx5_0 shared LID 100. LIDs are addresses that
+        // ibping/iblinkinfo resolve to a host, so a persisted v2 fabric would
+        // keep answering ambiguously forever. Values, not shape -- nothing
+        // crashes -- but the cluster must be rebuilt to pick up unique ones.
+        //
+        // All migrations drop ONLY the stale cluster so the factory
+        // rebuilds it with the current shape; preserve the user's
+        // scenarioProgress, completedScenarios, and settings rather than
+        // wiping everything. Any version below the current one (older OR
+        // an unrecognized future build) is treated the same way: drop the
+        // cluster and let merge()/the factory rebuild it, rather than
+        // trusting a cluster shaped by an unknown schema version.
         if (persistedState && typeof persistedState === "object") {
           const next = { ...(persistedState as Record<string, unknown>) };
-          if (version !== 1) {
+          if (version !== 3) {
             delete next.cluster;
           }
           return next;
@@ -765,8 +807,20 @@ export const useSimulationStore = create<SimulationState>()(
       merge: (persisted, current) => {
         const c = current as SimulationState;
         const p = (persisted ?? {}) as Partial<SimulationState>;
+        // Backfill fields added after a user's cluster was first persisted
+        // (e.g. GPU.computeMode) so isValidCluster's shape-only check doesn't
+        // let older blobs through with those fields silently undefined.
         const safeCluster = isValidCluster(p.cluster)
-          ? p.cluster
+          ? {
+              ...p.cluster,
+              nodes: p.cluster.nodes.map((node) => ({
+                ...node,
+                gpus: node.gpus.map((gpu) => ({
+                  ...gpu,
+                  computeMode: gpu.computeMode ?? "Default",
+                })),
+              })),
+            }
           : createCustomCluster(8, p.systemType ?? c.systemType);
         return { ...c, ...p, cluster: safeCluster };
       },
