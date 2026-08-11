@@ -40,6 +40,7 @@ export function handleInteractiveShellInput(
   term: XTerm,
   currentState: ShellState,
   promptFn: () => void,
+  publishState?: (state: ShellState) => void,
 ): ShellState {
   // Execute command through the interactive shell
   const result = simulator.executeInteractive(cmdLine, context);
@@ -58,6 +59,13 @@ export function handleInteractiveShellInput(
   if (result.output) {
     term.write("\r\n" + result.output);
   }
+
+  // Publish the new state BEFORE drawing the prompt. promptFn renders from
+  // state the caller owns (Terminal's shellStateRef), so prompting first would
+  // draw the state we are leaving: `exit` from nvsm printed "nvsm> " even
+  // though the next keystroke was already routed to bash, and a prompt-
+  // changing cmsh command drew the previous prompt.
+  publishState?.(newState);
 
   // New line and display next prompt
   term.write("\r\n");

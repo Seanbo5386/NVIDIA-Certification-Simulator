@@ -1245,8 +1245,12 @@ export const Terminal: React.FC<TerminalProps> = ({
           term,
           shellStateRef.current,
           prompt,
+          // prompt() renders from shellStateRef, so the ref has to be current
+          // before the prompt is drawn — otherwise `exit` prints "nvsm> ".
+          (s) => {
+            shellStateRef.current = s;
+          },
         );
-        shellStateRef.current = newState;
         setShellState(newState);
         return;
       }
@@ -1259,8 +1263,10 @@ export const Terminal: React.FC<TerminalProps> = ({
           term,
           shellStateRef.current,
           prompt,
+          (s) => {
+            shellStateRef.current = s;
+          },
         );
-        shellStateRef.current = newState;
         setShellState(newState);
         return;
       }
